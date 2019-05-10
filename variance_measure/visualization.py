@@ -1,8 +1,7 @@
-from . import variance
+from variance_measure import variance
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
-from collections import namedtuple
 import os
 
 def plot_class_outputs(class_index,class_id, cvs,vmin,vmax, names,model_name,dataset_name,savefig,savefig_suffix):
@@ -191,7 +190,7 @@ def plot_all(model,rotated_model,dataset,conv_aggregation,results):
                             , ["stratified","all"], savefig=folderpath, savefig_suffix="global")
 
 def run_and_plot_all(model,rotated_model,dataset, config, n_rotations = 16):
-    results=variance.run_all(model,rotated_model,dataset, config, n_rotations)
+    results= variance.run_all(model, rotated_model, dataset, config, n_rotations)
     plot_all(model,rotated_model,dataset,results)
 
 

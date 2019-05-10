@@ -1,6 +1,4 @@
-from pytorch.model.old_conv import *
 from pytorch.model.simple_conv import *
-from pytorch.model.gconv import *
 from pytorch.model.stn import *
 from pytorch.model.all_conv import *
 from pytorch.model.vgg_like import *

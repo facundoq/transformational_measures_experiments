@@ -23,8 +23,8 @@ def get_model(name,dataset,use_cuda):
         return optimizer
 
     def simple_conv():
-        conv_filters = {"mnist": 32, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 64, "lsa16": 32}
-        fc_filters = {"mnist": 64, "mnist_rot": 64, "cifar10": 128, "fashion_mnist": 128, "lsa16": 64}
+        conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
+        fc_filters = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
         model = models.SimpleConv(dataset.input_shape, dataset.num_classes,
                                   conv_filters=conv_filters[dataset.name], fc_filters=fc_filters[dataset.name])
         optimizer=setup_model(model,0.001,1e-9)
@@ -35,7 +35,7 @@ def get_model(name,dataset,use_cuda):
         return model, optimizer, rotated_model, rotated_optimizer
 
     def all_convolutional():
-        filters = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32, "lsa16": 16}
+        filters = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32}
         model = models.AllConvolutional(dataset.input_shape, dataset.num_classes,
                                         filters=filters[dataset.name])
         optimizer=setup_model(model,1e-3,1e-13)
@@ -46,8 +46,8 @@ def get_model(name,dataset,use_cuda):
         return model, optimizer, rotated_model, rotated_optimizer
 
     def vgglike():
-        filters = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32, "lsa16": 16}
-        fc= {"mnist": 64, "mnist_rot": 64, "cifar10": 128, "fashion_mnist": 128, "lsa16": 64}
+        filters = {"mnist": 16, "cifar10": 64,}
+        fc= {"mnist": 64,  "cifar10": 128, }
         model = models.VGGLike(dataset.input_shape, dataset.num_classes,
                                conv_filters=filters[dataset.name], fc=fc[dataset.name])
         optimizer=setup_model(model,0.00001,1e-13)
@@ -58,10 +58,9 @@ def get_model(name,dataset,use_cuda):
         return model, optimizer, rotated_model, rotated_optimizer
     def resnet():
         resnet_version = {"mnist": models.ResNet18,
-                          "mnist_rot": models.ResNet18,
                           "cifar10": models.ResNet50,
                           "fashion_mnist": models.ResNet34,
-                          "lsa16": models.ResNet34}
+                          }
 
         model = resnet_version[dataset.name](dataset.input_shape, dataset.num_classes)
         optimizer=setup_model(model,0.00001,1e-13)
@@ -82,20 +81,17 @@ def get_model(name,dataset,use_cuda):
 
 def get_epochs(dataset,model):
     if model== models.SimpleConv.__name__:
-        epochs={'cifar10':70,'mnist':5,'fashion_mnist':12,'cluttered_mnist':10,'lsa16':50,'mnist_rot':5,'pugeault':15}
-        rotated_epochs={'cifar10':120,'mnist':15,'fashion_mnist':60,'cluttered_mnist':30,'lsa16':100,'mnist_rot':5,'pugeault':40}
+        epochs={'cifar10':70,'mnist':5,'fashion_mnist':12}
+        rotated_epochs={'cifar10':120,'mnist':15,'fashion_mnist':60,}
     elif model== models.AllConvolutional.__name__:
-        epochs={'cifar10':32,'mnist':15,'fashion_mnist':12,'cluttered_mnist':10,'lsa16':50,'mnist_rot':5,'pugeault':15}
-        rotated_epochs={'cifar10':60,'mnist':50,'fashion_mnist':60,'cluttered_mnist':30,'lsa16':100,'mnist_rot':5,
-                        'pugeault':40}
+        epochs={'cifar10':32,'mnist':15,'fashion_mnist':12}
+        rotated_epochs={'cifar10':60,'mnist':50,'fashion_mnist':60,}
     elif model== models.VGGLike.__name__:
-        epochs={'cifar10':70,'mnist':15,'fashion_mnist':12,'cluttered_mnist':10,'lsa16':50,'mnist_rot':5,'pugeault':15}
-        rotated_epochs={'cifar10':150,'mnist':50,'fashion_mnist':60,'cluttered_mnist':30,'lsa16':100,'mnist_rot':5,
-                        'pugeault':40}
+        epochs={'cifar10':70,'mnist':15,'fashion_mnist':12,}
+        rotated_epochs={'cifar10':150,'mnist':50,'fashion_mnist':60,}
     elif model== models.ResNet.__name__:
-        epochs={'cifar10':70,'mnist':15,'fashion_mnist':12,'cluttered_mnist':10,'lsa16':50,'mnist_rot':5,'pugeault':15}
-        rotated_epochs={'cifar10':150,'mnist':50,'fashion_mnist':60,'cluttered_mnist':30,'lsa16':100,'mnist_rot':5,
-                        'pugeault':40}
+        epochs={'cifar10':70,'mnist':15,'fashion_mnist':12}
+        rotated_epochs={'cifar10':150,'mnist':50,'fashion_mnist':60}
     else:
         raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(get_model_names().keys())}")
     return epochs[dataset],rotated_epochs[dataset]

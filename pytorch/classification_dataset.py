@@ -27,7 +27,7 @@ class ClassificationDataset:
 
 class ImageDataset(Dataset):
 
-    def __init__(self, x,y,rotation=None):
+    def __init__(self, x,y,rotation=None,translation=None,scale=None):
 
         self.x=x
         self.y=y
@@ -41,11 +41,17 @@ class ImageDataset(Dataset):
 
                          ]
 
-        if rotation:
-            self.rotation_transformation=transforms.RandomRotation(180, resample=Image.BILINEAR)
-            transformations.insert(1,self.rotation_transformation)
-        else:
-            pass
+        if not rotation is None:
+            rotation_transformation=transforms.RandomRotation(rotation, resample=Image.BILINEAR)
+            transformations.insert(1,rotation_transformation)
+
+        if not translation is None:
+            translation_transformation=transforms.CenterCrop(translation)
+            transformations.insert(1,translation_transformation)
+
+        if not scale is None:
+            scale_transformation=transforms.Scale(scale)
+            transformations.insert(1,scale_transformation)
 
         self.transform=transforms.Compose(transformations)
 

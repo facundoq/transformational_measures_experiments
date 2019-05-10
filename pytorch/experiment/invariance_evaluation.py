@@ -4,7 +4,7 @@ import numpy as np
 from torch.utils.data import Dataset,DataLoader
 import torch
 
-from pytorch.dataset import ImageDataset
+from pytorch.classification_dataset import ImageDataset
 from pytorch import training
 
 def run(model,dataset,config,n_rotations,batch_size=256):

@@ -1,11 +1,11 @@
 
-from pytorch.experiment.utils import RunningMeanAndVariance,RunningMean
+from .utils import RunningMeanAndVariance,RunningMean
 
 import numpy as np
 from torch.utils.data import Dataset,DataLoader
 import torch
 import os
-from pytorch.dataset import ImageDataset
+from pytorch.classification_dataset import ImageDataset
 
 
 

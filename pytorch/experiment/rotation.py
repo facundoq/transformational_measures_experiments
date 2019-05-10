@@ -5,7 +5,7 @@ from pytorch.training import test,train,eval_scores
 import numpy as np
 import os
 
-from pytorch.dataset import get_data_generator
+from pytorch.classification_dataset import get_data_generator
 import torch
 
 import logging

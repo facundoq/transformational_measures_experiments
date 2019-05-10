@@ -9,17 +9,19 @@ import torch
 use_cuda=torch.cuda.is_available()
 
 # DATASET
-from pytorch import dataset as datasets, models
+from pytorch import classification_dataset as datasets, models
 
 from pytorch.experiment import model_loading,rotation
 
 import pytorch.experiment.utils as utils
+import transformations
 
 if __name__ == "__main__":
-    model_name,dataset_name=utils.parse_model_and_dataset("Experiment: accuracy of model for rotated vs unrotated dataset.")
+    model_name,dataset_name,transformation_names=utils.parse_model_and_dataset("Experiment: train vanilla and transformed models.")
 else:
     dataset_name="cifar10"
     model_name= models.AllConvolutional.__name__
+    transformation_names=["vanilla","rotation"]
 
 
 
@@ -34,6 +36,7 @@ if verbose:
 
 model, optimizer, rotated_model, rotated_optimizer = model_loading.get_model(model_name, dataset, use_cuda)
 
+transformations=transformations.get(transformation_names)
 
 if verbose:
     print(f"Training with model {model_name}.")
