@@ -40,16 +40,13 @@ if verbose:
     print("### Scores obtained:")
     rotation.print_scores(scores)
 
-from variance_measure import variance
+from variance_measure import variance,visualization
 
 n_rotations=16
 conv_aggregation_function="sum"
 logging.info(f"Calculating measure with aggregation function {conv_aggregation_function} for conv layers and {n_rotations} rotations...")
-results= variance.run_all(model, rotated_model, dataset, config, n_rotations, conv_aggregation_function, batch_size=64)
+
+results= variance.run_models([model, rotated_model], dataset,"stratified", config, n_rotations, conv_aggregation_function, batch_size=64)
+
 logging.info("Saving results...")
-variance.save_results(model.name, dataset.name, results, conv_aggregation_function)
-
-
-# logging.info("Plotting results...")
-# results=variance.load_results(model.name,dataset.name)
-# variance.plot_all(model,rotated_model,dataset,results)
+visualization.save_results(model.name, dataset.name, results, conv_aggregation_function)

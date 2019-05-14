@@ -142,6 +142,7 @@ def plot_all(results):
         del model
         del dataset
 
+
 results_folderpath=os.path.expanduser("~/variance_results/")
 results=load_results(visualization.results_folder)
 #plot_last_layers_per_class(results,results_folderpath)

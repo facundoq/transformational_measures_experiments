@@ -190,7 +190,7 @@ def plot_all(model,rotated_model,dataset,conv_aggregation,results):
                             , ["stratified","all"], savefig=folderpath, savefig_suffix="global")
 
 def run_and_plot_all(model,rotated_model,dataset, config, n_rotations = 16):
-    results= variance.run_all(model, rotated_model, dataset, config, n_rotations)
+    results= variance.run_models(model, rotated_model, dataset, config, n_rotations)
     plot_all(model,rotated_model,dataset,results)
 
 

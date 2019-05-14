@@ -9,21 +9,21 @@ from pytorch.classification_dataset import ImageDataset
 
 
 
-def run_all_dataset(model,dataset,config,rotations,conv_aggregation_function,batch_size=256):
+def eval(model, dataset, config, rotations, conv_aggregation_function, batch_size=256):
     n=dataset.x_test.shape[0]
     effective_batch_size = min(n, batch_size)
     dataset= ImageDataset(dataset.x_test,dataset.y_test, rotation=True)
     layer_vars = eval_var(dataset, model, config, rotations, effective_batch_size,conv_aggregation_function)
     return [layer_vars],[0]
 
-def run(model,dataset,config,rotations,conv_aggregation_function,batch_size=256):
+def variance_stratified(model, dataset, config, rotations, conv_aggregation_function, batch_size=256):
     x = dataset.x_test
     y=dataset.y_test
     y_ids=y.argmax(axis=1)
     classes=np.unique(y_ids)
     classes.sort()
 
-    class_layer_vars=[]
+    per_class_variance=[]
     # calculate the var measure for each class
     for i, c in enumerate(classes):
         # logging.debug(f"Evaluating vars for class {c}...")
@@ -34,13 +34,14 @@ def run(model,dataset,config,rotations,conv_aggregation_function,batch_size=256)
         class_dataset=ImageDataset(x_class,y_class,rotation=True)
         effective_batch_size=min(n,batch_size)
         layer_vars=eval_var(class_dataset, model, config, rotations, effective_batch_size,conv_aggregation_function)
-        class_layer_vars.append(layer_vars)
-    stratified_layer_vars=eval_stratified_var(class_layer_vars)
+        per_class_variance.append(layer_vars)
+    variance=mean_variance_over_classes(per_class_variance)
 
-    return class_layer_vars,stratified_layer_vars,classes
+    return per_class_variance,variance,classes
 
-# calculate the mean activation of each unit in each layer over the set of classes
-def eval_stratified_var(class_layer_vars):
+
+def mean_variance_over_classes(class_layer_vars):
+    # calculate the mean activation of each unit in each layer over the set of classes
 
     layer_class_vars=[list(i) for i in zip(*class_layer_vars)]
     layer_vars=[ sum(layer_values)/len(layer_values) for layer_values in layer_class_vars]
@@ -49,9 +50,9 @@ def eval_stratified_var(class_layer_vars):
 # calculate the var measure for a given dataset and model
 def eval_var(dataset,model,config,rotations,batch_size,conv_aggregation_function):
     #baseline vars
-    layer_vars_baselines=get_baseline_variance_class(dataset,model,config,rotations,batch_size,conv_aggregation_function)
-    layer_vars = eval_var_class(dataset, model, config, rotations,batch_size,conv_aggregation_function)
-    normalized_layer_vars = calculate_var(layer_vars_baselines,layer_vars)
+    layer_vars_baselines=variance_transformation(dataset, model, config, rotations, batch_size, conv_aggregation_function)
+    layer_vars = variance_class(dataset, model, config, rotations, batch_size, conv_aggregation_function)
+    normalized_layer_vars = variance_normalized(layer_vars_baselines, layer_vars)
 
     # for i in range(len(layer_vars_baselines)):
     #     print(f"class {i}")
@@ -63,7 +64,7 @@ def eval_var(dataset,model,config,rotations,batch_size,conv_aggregation_function
 
     return normalized_layer_vars
 
-def calculate_var(layer_baselines, layer_measures):
+def variance_normalized(layer_baselines, layer_measures):
     eps=0
     measures = []  # coefficient of variations
 
@@ -78,7 +79,7 @@ def calculate_var(layer_baselines, layer_measures):
         measures.append(normalized_measure)
     return measures
 
-def get_baseline_variance_class(dataset,model,config,rotations,batch_size,conv_aggregation_function):
+def variance_transformation(dataset, model, config, rotations, batch_size, conv_aggregation_function):
     n_intermediates = model.n_intermediates()
     baseline_variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
 
@@ -119,7 +120,8 @@ def get_dataset_var(model,dataloader,config,conv_aggregation_function):
 # one for each intermediate output of the model.
 #Each RunningMeanAndVariance contains the mean and std of each intermediate
 # output over the set of rotations
-def eval_var_class(dataset,model,config,rotations,batch_size,conv_aggregation_function):
+
+def variance_class(dataset, model, config, rotations, batch_size, conv_aggregation_function):
     n_intermediates = model.n_intermediates()
     layer_vars= [RunningMeanAndVariance() for i in range(n_intermediates)]
     n = len(dataset)
@@ -180,10 +182,7 @@ def transform_activations(activations_gpu,conv_aggregation_function):
         assert (len(flat_activations.shape) == 2)
     else:
         flat_activations = activations
-
     return flat_activations
-
-
 
 def global_average_variance(result):
     rm=RunningMean()
@@ -194,16 +193,37 @@ def global_average_variance(result):
                     rm.update(act)
     return rm.mean()
 
-def run_all(model,rotated_model,dataset, config, n_rotations,conv_aggregation_function,batch_size=256):
+
+
+
+def run_models(models,dataset,version, config, n_rotations,conv_aggregation_function,batch_size=256):
     rotations = np.linspace(-180, 180, n_rotations, endpoint=False)
+    results={}
+    for model in models:
+        if version=="stratified":
+            variance, rotated_stratified_layer_vars, classes = variance_stratified(model, dataset, config, rotations, conv_aggregation_function, batch_size=batch_size, )
+            results[model.name] = (variance,classes,rotated_stratified_layer_vars)
+        else:
 
-    print("Calculating variance for all samples by class...")
-    rotated_var, rotated_stratified_layer_vars, classes = run(rotated_model, dataset, config, rotations,conv_aggregation_function,batch_size=batch_size,)
-    var, stratified_layer_vars, classes = run(model, dataset, config, rotations,conv_aggregation_function,batch_size=batch_size)
+            variance, classes = eval(model, dataset, config,
+                                                    rotations, conv_aggregation_function, batch_size=batch_size)
+            results[model.name] = (variance, classes)
 
-    # Plot variance for all
-    print("Calculating variance for all samples...")
-    rotated_var_all_dataset, classes = run_all_dataset(rotated_model, dataset, config,
-                                                       rotations,conv_aggregation_function,batch_size=batch_size)
-    var_all_dataset, classes = run_all_dataset(model, dataset, config, rotations,conv_aggregation_function,batch_size=batch_size)
-    return var,stratified_layer_vars,var_all_dataset,rotated_var,rotated_stratified_layer_vars,rotated_var_all_dataset
+
+
+
+# def run_models(model, rotated_model, dataset, config, n_rotations, conv_aggregation_function, batch_size=256):
+#     rotations = np.linspace(-180, 180, n_rotations, endpoint=False)
+#
+#     print("Calculating variance for all samples by class...")
+#     rotated_var, rotated_stratified_layer_vars, classes = variance_stratified(rotated_model, dataset, config, rotations, conv_aggregation_function, batch_size=batch_size, )
+#
+#     var, stratified_layer_vars, classes = variance_stratified(model, dataset, config, rotations, conv_aggregation_function, batch_size=batch_size)
+#
+#     # Plot variance for all
+#     print("Calculating variance for all samples...")
+#     rotated_var_all_dataset, classes = eval(rotated_model, dataset, config,
+#                                             rotations, conv_aggregation_function, batch_size=batch_size)
+#     var_all_dataset, classes = eval(model, dataset, config, rotations, conv_aggregation_function, batch_size=batch_size)
+#
+#     return var,stratified_layer_vars,var_all_dataset,rotated_var,rotated_stratified_layer_vars,rotated_var_all_dataset
