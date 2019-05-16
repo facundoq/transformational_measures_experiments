@@ -51,7 +51,7 @@ def mean_variance_over_classes(class_layer_vars):
 def eval_var(dataset,model,config,rotations,batch_size,conv_aggregation_function):
     #baseline vars
     layer_vars_baselines=variance_transformation(dataset, model, config, rotations, batch_size, conv_aggregation_function)
-    layer_vars = variance_class(dataset, model, config, rotations, batch_size, conv_aggregation_function)
+    layer_vars = variance_samples(dataset, model, config, rotations, batch_size, conv_aggregation_function)
     normalized_layer_vars = variance_normalized(layer_vars_baselines, layer_vars)
 
     # for i in range(len(layer_vars_baselines)):
@@ -91,6 +91,7 @@ def variance_transformation(dataset, model, config, rotations, batch_size, conv_
         # calculate std for all examples and this rotation
         dataset_var=get_dataset_var(model,dataloader,config,conv_aggregation_function)
         #update the mean of the stds for every rotation
+
         # each std is intra rotation/class, so it measures the baseline
         # std for that activation
         for j,m in enumerate(dataset_var):
@@ -121,7 +122,7 @@ def get_dataset_var(model,dataloader,config,conv_aggregation_function):
 #Each RunningMeanAndVariance contains the mean and std of each intermediate
 # output over the set of rotations
 
-def variance_class(dataset, model, config, rotations, batch_size, conv_aggregation_function):
+def variance_samples(dataset, model, config, rotations, batch_size, conv_aggregation_function):
     n_intermediates = model.n_intermediates()
     layer_vars= [RunningMeanAndVariance() for i in range(n_intermediates)]
     n = len(dataset)

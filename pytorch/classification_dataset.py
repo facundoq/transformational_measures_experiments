@@ -55,8 +55,13 @@ class ImageDataset(Dataset):
 
         self.transform=transforms.Compose(transformations)
 
-    def update_rotation_angle(self,degrees):
-        self.rotation_transformation.degrees=degrees
+    def update_transformation(self,rotation,translation,scale):
+        if not rotation is None:
+            self.update_rotation_angle(rotation)
+        # TODO add other transformations
+
+    def update_rotation_angle(self,degrees_range):
+        self.rotation_transformation.degrees=degrees_range
 
     def __len__(self):
         return self.x.shape[0]
