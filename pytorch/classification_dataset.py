@@ -24,13 +24,18 @@ class ClassificationDataset:
         result+=f"min class/max class: {self.y_train.min()} {self.y_train.max()}"
         return result
 
+def check_equal(lst):
+    return not lst or lst.count(lst[0]) == len(lst)
+
 
 class ImageDataset(Dataset):
 
-    def __init__(self, x,y,rotation=None,translation=None,scale=None):
 
-        self.x=x
-        self.y=y
+    def __init__(self, dataset,rotation=None,translation=None,scale=None):
+
+
+        self.dataset=dataset
+        x,y=dataset.get_all()
         mu = x.mean(axis=(0, 1, 2))/255
         std = x.std(axis=(0, 1, 2))/255
         std[std == 0] = 1
@@ -38,7 +43,6 @@ class ImageDataset(Dataset):
         transformations=[transforms.ToPILImage(),
                         transforms.ToTensor(),
                         transforms.Normalize(mu, std),
-
                          ]
 
         if not rotation is None:
@@ -74,16 +78,16 @@ class ImageDataset(Dataset):
 
     def get_batch(self,idx):
         if isinstance(idx,int):
-            idx=[idx]
+            idx = [idx]
         images = []
         for i in idx:
-            image= self.transform(self.x[i, :, :, :])
+            image = self.transform(self.x[i, :, :, :])
             images.append(image)
         y = torch.from_numpy(self.y[idx, :].argmax(axis=1))
-        x= torch.stack(images,0)
+        x = torch.stack(images,0)
         return x,y
     def get_all(self):
-        ids=list(range(len(self)))
+        ids = list(range(len(self)))
         return self.get_batch(ids)
 
 

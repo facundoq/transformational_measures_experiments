@@ -20,7 +20,7 @@ class PytorchActivationsIterator(ActivationsIterator):
         translation=[None for r in self.transformations["rotation"]]
         rotation=[(r - 1, r + 1) for r in self.transformations["rotation"]]
 
-        return rotation,translation,scale
+        return zip(rotation,translation,scale)
 
     def transformations_first(self,batch_size):
         dataloader= DataLoader(self.dataset, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=True)

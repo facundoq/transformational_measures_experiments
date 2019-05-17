@@ -45,6 +45,8 @@ n_rotations=16
 from variance_measure.pytorch_activations_iterator import PytorchActivationsIterator
 import numpy as np
 
+image_dataset=
+
 rotations = np.linspace(-180, 180, n_rotations, endpoint=False)
 transformations={"rotation":rotations}
 iterator = PytorchActivationsIterator(model,dataset,transformations,config)
