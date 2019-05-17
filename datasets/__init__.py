@@ -32,11 +32,10 @@ def get_data(dataset="mnist",dataformat="NHWC",path=os.path.expanduser("~/.datas
 
     num_classes=len(labels)
     # convert class vectors to binary class matrices
-    y_train = to_categorical(y_train, num_classes)
-    y_test  = to_categorical(y_test, num_classes)
+    #y_train = to_categorical(y_train, num_classes)
+    #y_test  = to_categorical(y_test, num_classes)
 
-    return (x_train, y_train), (x_test, y_test), input_shape,len(labels),labels
-
+    return ClassificationDataset(dataset, x_train, x_test, y_train, y_test, num_classes, input_shape, labels)
 
 
 def to_categorical(y, num_classes=None, dtype='float32'):
@@ -68,3 +67,24 @@ def to_categorical(y, num_classes=None, dtype='float32'):
     output_shape = input_shape + (num_classes,)
     categorical = np.reshape(categorical, output_shape)
     return categorical
+
+
+class ClassificationDataset:
+    def __init__(self,name,x_train,x_test,y_train,y_test,num_classes,input_shape,labels):
+        self.name=name
+        self.x_train=x_train
+        self.x_test=x_test
+        self.y_train=y_train
+        self.y_test=y_test
+        self.num_classes=num_classes
+        self.input_shape=input_shape
+        self.labels=labels
+    def summary(self):
+        result=""
+        result+=f"x_train: {self.x_train.shape}, {self.x_train.dtype}\n"
+        result+=f"x_test: {self.x_test.shape}, {self.x_test.dtype}\n"
+        result+=f"y_train: {self.y_train.shape}, {self.y_train.dtype}\n"
+        result+=f"y_test: {self.y_test.shape}, {self.y_test.dtype}\n"
+        result+=f"Classes {np.unique(self.y_train.argmax(axis=1))}\n"
+        result+=f"min class/max class: {self.y_train.min()} {self.y_train.max()}"
+        return result
