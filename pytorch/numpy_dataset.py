@@ -25,8 +25,9 @@ class NumpyDataset(Dataset):
     def get_batch(self, idx):
         if isinstance(idx, int):
             idx = [idx]
-
-        return ( torch.from_numpy(d[idx,]) for d in self.data_sources)
+        batch=( torch.from_numpy(d[idx,]) for d in self.data_sources)
+        #print(list(batch)[0].shape)
+        return batch
 
         #return (d[idx,] for d in self.data_sources)
 

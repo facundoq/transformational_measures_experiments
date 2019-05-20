@@ -11,7 +11,7 @@ import imgaug.augmenters as aug
 class ImageDataset(Dataset):
 
 
-    def __init__(self, image_dataset,rotation=None,translation=None,scale=None):
+    def __init__(self, image_dataset,rotation=None,translation=None,scale=None,dataformat="NCHW"):
 
 
         self.dataset=image_dataset
@@ -21,8 +21,15 @@ class ImageDataset(Dataset):
         #mu = image_dataset.mean()/255
         #std = image_dataset.std()/255
         xf=x.float()
-        mu = xf.mean(dim=(0,2,3)) / 255
-        std = xf.std(dim=(0,2,3)) /255
+        if dataformat=="NCHW":
+            dims=(0, 2, 3)
+        elif dataformat=="NHWC":
+            dims = (0, 1, 2)
+        else:
+            raise ValueError()
+
+        mu = xf.mean(dim=dims) / 255
+        std = xf.std(dim=dims) /255
 
         std[std == 0] = 1
         print(f"u {mu} std {std}")
@@ -48,7 +55,7 @@ class ImageDataset(Dataset):
                               scale=scale,resample=Image.BILINEAR)
                                      #,fillcolor=0)
         affine=transforms.Lambda(affine_transform)
-        transformations.append(affine)
+        #transformations.append(affine)
 
         # if not rotation is None:
         #     rotation_transformation=transforms.RandomRotation(rotation, resample=Image.BILINEAR)
@@ -65,11 +72,11 @@ class ImageDataset(Dataset):
 
         if not translation is None or not scale is None:
             scale_transformation = transforms.Resize((h,w))
-            transformations.append(scale_transformation)
+            #transformations.append(scale_transformation)
 
 
         transformations.append(transforms.ToTensor())
-        transformations.append(transforms.Normalize(mu, std))
+        #transformations.append(transforms.Normalize(mu, std))
         self.transform=transforms.Compose(transformations)
 
 
@@ -91,9 +98,14 @@ class ImageDataset(Dataset):
         if isinstance(idx,int):
             idx = [idx]
         x,y=self.dataset.get_batch(idx)
+        print("initial batch shape/type:",x.shape,x.dtype)
+        images=[]
         for i in range(x.shape[0]):
-            t=self.transform(x[i,:,:,:])
-            x[i,:,:,:]= t
+            asd=x[i,:,:,:]
+            t=self.transform(asd)
+            print(t.shape,t.dtype)
+            images.append(self.transform(x[i,:,:,:]))
+        x=torch.stack(images,dim=0)
         return x,y
 
 
