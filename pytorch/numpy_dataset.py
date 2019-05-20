@@ -25,10 +25,10 @@ class NumpyDataset(Dataset):
     def get_batch(self, idx):
         if isinstance(idx, int):
             idx = [idx]
-        print(idx)
-        print([ d.shape for d in  self.data_sources])
 
         return ( torch.from_numpy(d[idx,]) for d in self.data_sources)
+
+        #return (d[idx,] for d in self.data_sources)
 
     def get_all(self):
         ids = list(range(len(self)))

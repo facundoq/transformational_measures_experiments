@@ -27,7 +27,7 @@ verbose=False
 
 use_cuda=torch.cuda.is_available()
 
-dataset = datasets.get_dataset(dataset_name)
+dataset = datasets.get(dataset_name)
 if verbose:
     print(dataset.summary())
 

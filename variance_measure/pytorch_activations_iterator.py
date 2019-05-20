@@ -1,11 +1,12 @@
 from .activations_iterator import ActivationsIterator
 import torch
 from torchvision import transforms
+from torchvision.transforms import functional
 import torch
-
+from PIL import Image
 from torch.utils.data import Dataset,DataLoader
 #from pytorch.classification_dataset import ImageDataset
-
+import imgaug.augmenters as aug
 
 class ImageDataset(Dataset):
 
@@ -15,27 +16,60 @@ class ImageDataset(Dataset):
 
         self.dataset=image_dataset
         x,y=image_dataset.get_all()
-        mu = x.mean(axis=(0, 1, 2))/255
-        std = x.std(axis=(0, 1, 2))/255
+        n,h,w,c=x.shape
+
+        #mu = image_dataset.mean()/255
+        #std = image_dataset.std()/255
+        xf=x.float()
+        mu = xf.mean(dim=(0,2,3)) / 255
+        std = xf.std(dim=(0,2,3)) /255
+
         std[std == 0] = 1
+        print(f"u {mu} std {std}")
 
-        transformations=[transforms.ToPILImage(),
-                         transforms.ToTensor(),
-                         transforms.Normalize(mu, std),
-                        ]
+        transformations=[transforms.ToPILImage(),]
 
-        if not rotation is None:
-            rotation_transformation=transforms.RandomRotation(rotation, resample=Image.BILINEAR)
-            transformations.insert(1,rotation_transformation)
+        # def debug(img):
+        #     print(img)
+        #     return img
+        # transformations.append(transforms.Lambda(debug))
 
-        if not translation is None:
-            translation_transformation=transforms.CenterCrop(translation)
-            transformations.insert(1,translation_transformation)
+        if rotation is None:
+            rotation = 0
+        if translation is None:
+            translation = (0,0)
+        if scale is None:
+            scale = 1
 
-        if not scale is None:
-            scale_transformation=transforms.Scale(scale)
-            transformations.insert(1,scale_transformation)
 
+        def affine_transform(image):
+
+            return functional.affine(image,shear=0,angle=rotation,translate=translation,
+                              scale=scale,resample=Image.BILINEAR)
+                                     #,fillcolor=0)
+        affine=transforms.Lambda(affine_transform)
+        transformations.append(affine)
+
+        # if not rotation is None:
+        #     rotation_transformation=transforms.RandomRotation(rotation, resample=Image.BILINEAR)
+        #     transformations.append(rotation_transformation)
+        #
+        # if not translation is None:
+        #     translation_transformation=transforms.CenterCrop((h-translation,w-translation)
+        #     transformations.apend(translation_transformation)
+        #
+        # if not scale is None:
+        #
+        #     scale_transformation=transforms.Resize((h+scale,))
+        #     transformations.append(scale_transformation)
+
+        if not translation is None or not scale is None:
+            scale_transformation = transforms.Resize((h,w))
+            transformations.append(scale_transformation)
+
+
+        transformations.append(transforms.ToTensor())
+        transformations.append(transforms.Normalize(mu, std))
         self.transform=transforms.Compose(transformations)
 
 
@@ -48,7 +82,7 @@ class ImageDataset(Dataset):
         self.rotation_transformation.degrees=degrees_range
 
     def __len__(self):
-        return self.x.shape[0]
+        return len(self.dataset)
 
     def __getitem__(self, idx):
         return self.get_batch(idx)
@@ -56,14 +90,13 @@ class ImageDataset(Dataset):
     def get_batch(self,idx):
         if isinstance(idx,int):
             idx = [idx]
-        images = []
         x,y=self.dataset.get_batch(idx)
-        x=x.copy()
-        y=y.copy()
-        for i in idx:
-            self.x[i, :]= self.transform(self.x[i, :])
-        #y = torch.from_numpy(self.y[idx, :].argmax(axis=1))
+        for i in range(x.shape[0]):
+            t=self.transform(x[i,:,:,:])
+            x[i,:,:,:]= t
         return x,y
+
+
 
     def get_all(self):
         ids = list(range(len(self)))

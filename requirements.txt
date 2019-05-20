@@ -14,3 +14,10 @@ progressbar2
 torchsummary
 requests
 nose
+
+scipy
+Pillow
+opencv-python
+imageio
+Shapely
+imgaug

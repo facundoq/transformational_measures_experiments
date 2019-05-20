@@ -1,18 +1,3 @@
-import datasets
-import numpy as np
-
-from pytorch.numpy_dataset import NumpyDataset
-from variance_measure.pytorch_activations_iterator import ImageDataset
-
-
-dataset = datasets.get("mnist")
-print(dataset.summary())
-
-numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
-image_dataset=ImageDataset(numpy_dataset,rotation=90)
-
-print(image_dataset)
-
 import matplotlib.pyplot as plt
 
 def plot_image_grid(x,y,samples=64):
@@ -39,7 +24,7 @@ def plot_image_grid(x,y,samples=64):
         row=i // grid_cols
         col=i % grid_cols
         ax=axes[row,col]
-        if x.shape[3]==1:
+        if d.input_shape[2]==1:
             ax.imshow(x[i_sample,:,:,0], cmap='gray')
         else:
             ax.imshow(x[i_sample, :, :,:])
@@ -47,14 +32,4 @@ def plot_image_grid(x,y,samples=64):
         ax.get_yaxis().set_visible(False)
 
     plt.show()
-
-
-for i in range(1):
-    x,y= image_dataset.get_batch(list(range(i*32,(i+1)*32)))
-    x=x.data.numpy()
-    y=y.data.numpy()
-    x=np.moveaxis(x,1,-1)
-    #from tests.utils import plot_image_grid
-    plot_image_grid(x,y)
-
 

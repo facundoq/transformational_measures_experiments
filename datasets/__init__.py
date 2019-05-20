@@ -6,7 +6,7 @@ import numpy as np
 import os
 names=["mnist","fashion_mnist","cifar10","mnist_rot","cluttered_mnist","lsa16","pugeault"]
 
-def get_data(dataset="mnist",dataformat="NHWC",path=os.path.expanduser("~/.datasets/")):
+def get(dataset="mnist",dataformat="NCHW",path=os.path.expanduser("~/.datasets/")):
     # the data, shuffled and split between train and test sets
     if not os.path.exists(path):
         os.makedirs(path)
@@ -35,7 +35,7 @@ def get_data(dataset="mnist",dataformat="NHWC",path=os.path.expanduser("~/.datas
     #y_train = to_categorical(y_train, num_classes)
     #y_test  = to_categorical(y_test, num_classes)
 
-    return ClassificationDataset(dataset, x_train, x_test, y_train, y_test, num_classes, input_shape, labels)
+    return ClassificationDataset(dataset, x_train, x_test, y_train, y_test, num_classes, input_shape, labels,dataformat)
 
 
 def to_categorical(y, num_classes=None, dtype='float32'):
@@ -70,7 +70,7 @@ def to_categorical(y, num_classes=None, dtype='float32'):
 
 
 class ClassificationDataset:
-    def __init__(self,name,x_train,x_test,y_train,y_test,num_classes,input_shape,labels):
+    def __init__(self,name,x_train,x_test,y_train,y_test,num_classes,input_shape,labels,dataformat):
         self.name=name
         self.x_train=x_train
         self.x_test=x_test
@@ -79,12 +79,15 @@ class ClassificationDataset:
         self.num_classes=num_classes
         self.input_shape=input_shape
         self.labels=labels
+        self.dataformat=dataformat
+
     def summary(self):
-        result=""
+        result=f"Image Classification Dataset {self.name}\n" \
+            f"Dataformat {self.dataformat}\n"
         result+=f"x_train: {self.x_train.shape}, {self.x_train.dtype}\n"
         result+=f"x_test: {self.x_test.shape}, {self.x_test.dtype}\n"
         result+=f"y_train: {self.y_train.shape}, {self.y_train.dtype}\n"
         result+=f"y_test: {self.y_test.shape}, {self.y_test.dtype}\n"
-        result+=f"Classes {np.unique(self.y_train.argmax(axis=1))}\n"
+        result+=f"Classes {np.unique(self.y_train)}\n"
         result+=f"min class/max class: {self.y_train.min()} {self.y_train.max()}"
         return result
