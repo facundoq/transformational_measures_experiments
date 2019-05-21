@@ -4,13 +4,12 @@ import numpy as np
 from pytorch.numpy_dataset import NumpyDataset
 from variance_measure.pytorch_activations_iterator import ImageDataset
 
-
-dataset = datasets.get("mnist",dataformat="NHWC")
+dataformat="NCHW"
+dataset = datasets.get("mnist",dataformat=dataformat)
 print(dataset.summary())
 
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
-#image_dataset=ImageDataset(numpy_dataset,rotation=90)
-image_dataset=ImageDataset(numpy_dataset,dataformat="NHWC")
+image_dataset=ImageDataset(numpy_dataset,rotation=90,scale=0.5,translation=(-10,0),dataformat=dataformat)
 print(image_dataset)
 
 import matplotlib.pyplot as plt
@@ -51,12 +50,12 @@ def plot_image_grid(x,y,samples=64):
 
 for i in range(1):
     x,y= image_dataset.get_batch(list(range(i*32,(i+1)*32)))
-    print(x.shape,x.dtype)
+    print("pytorch_iterators",x.shape,x.dtype)
+    x = x.permute(0, 2, 3, 1)
     x=x.data.numpy()
     y=y.data.numpy()
-    #x=np.moveaxis(x,1,-1)
-    print(x.dtype)
     #from tests.utils import plot_image_grid
+
     plot_image_grid(x,y)
 
 
