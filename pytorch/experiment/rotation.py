@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from collections import namedtuple
 
-from pytorch.training import test,train,eval_scores
+from pytorch.training import train,eval_scores
 import numpy as np
 import os
 
@@ -10,7 +10,7 @@ import torch
 
 import logging
 
-from utils import autolabel
+from pytorch.utils import autolabel
 
 
 TrainRotatedConfig = namedtuple('TrainRotatedConfig', 'batch_size epochs pre_rotated_epochs rotated_epochs optimizer rotated_optimizer use_cuda')
@@ -182,7 +182,7 @@ def save_models(dataset,model,rotated_model,scores,config):
 from pytorch.experiment import model_loading
 
 def load_models(dataset,model_name,use_cuda):
-    models_state=load_models_state(dataset.name,model_name)
+    models_state=load_models_state(dataset.name,model_name,use_cuda)
     model,optimizer,rotated_model,rotated_optimizer=model_loading.get_model(model_name, dataset, use_cuda)
     model.load_state_dict(models_state["unrotated"])
     rotated_model.load_state_dict(models_state["rotated"])
@@ -190,7 +190,7 @@ def load_models(dataset,model_name,use_cuda):
     rotated_model.eval()
     return model,rotated_model,models_state["scores"],models_state["config"]
 
-def load_models_state(dataset_name,model_name):
+def load_models_state(dataset_name,model_name,use_cuda):
     model_folderpath = experiment_model_path(model_name, dataset_name)
     homedir = os.path.expanduser("~")
     model_filepath=os.path.join(homedir,model_folderpath,MODEL_SAVE_FILENAME)
@@ -201,7 +201,10 @@ def load_models_state(dataset_name,model_name):
         raise ValueError(message)
     else:
         logging.info(f"Loading model from {model_filepath}...")
-    models=torch.load(model_filepath)
+    if use_cuda:
+        models = torch.load(model_filepath)
+    else:
+        models=torch.load(model_filepath,map_location='cpu')
     return models
 
 

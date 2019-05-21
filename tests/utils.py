@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 
 
-def plot_image_grid(x,y,samples=64):
+def plot_image_grid(x,y,samples=64,show=True,save=None):
 
 
     initial_sample=0
@@ -32,5 +32,7 @@ def plot_image_grid(x,y,samples=64):
             ax.imshow(x[i_sample, :, :,:])
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)
-
-    plt.show()
+    if show:
+        plt.show()
+    if not save is None:
+        plt.savefig(save)

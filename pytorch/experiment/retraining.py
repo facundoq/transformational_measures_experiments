@@ -1,4 +1,4 @@
-from utils import autolabel
+from pytorch.utils import autolabel
 import matplotlib.pyplot as plt
 from collections import namedtuple
 import numpy as np
