@@ -7,6 +7,46 @@ import torch
 import os
 from pytorch.classification_dataset import ImageDataset
 
+class StratifiedVariance:
+    pass
+
+class Measure:
+    def __init__(self,activations_iterator,options):
+        self.activations_iterator=activations_iterator
+        self.options=options
+
+class NormalizedMeasure(Measure):
+    def __init__(self, activations_iterator, options):
+        super().__init__(activations_iterator,options)
+
+
+    def eval(self):
+        v_samples=self.eval_v_samples()
+        v_transformations=self.eval_v_transformations()
+        v=self.normalize()
+        return v
+
+
+    def eval_v_samples(self):
+        n_intermediates = self.activations_iterator.n_intermediates()
+
+        baseline_variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
+
+        for transformation, batch_activations in self.activations_iterator.transformations_first():
+            for x, batch_activation in batch_activations:
+                pass
+
+
+    def eval_v_transformations(self,):
+        n_intermediates = self.activations_iterator.n_intermediates()
+        baseline_variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
+        for activations, x_transformed in iterator.activations_iterator():
+            pass
+
+        for j, m in enumerate(dataset_var):
+            baseline_variances[j].update(m.std())
+        mean_baseline_variances = [b.mean() for b in baseline_variances]
+        return mean_baseline_variances
 
 
 def eval(model, dataset, config, rotations, conv_aggregation_function, batch_size=256):

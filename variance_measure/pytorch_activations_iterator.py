@@ -10,7 +10,7 @@ from .pytorch_image_dataset import ImageDataset
 
 class PytorchActivationsIterator(ActivationsIterator):
 
-    def __init__(self, model, dataset, transformations, config):
+    def __init__(self, model, dataset, transformations, config,batch_size=32):
         '''
         model: a pytorch model that implements the forward_intermediate() method
         dataset: a dataset that yields x,y tuples
@@ -20,14 +20,15 @@ class PytorchActivationsIterator(ActivationsIterator):
         super().__init__(model, dataset, transformations)
         self.model_config=config
         self.image_dataset=ImageDataset(self.dataset)
+        self.batch_size=batch_size
 
     def activation_count(self):
         return self.model.n_intermediates()
 
 
-    def transformations_first(self,batch_size):
+    def transformations_first(self):
         for transformation in self.transformations:
-            dataloader = DataLoader(self.image_dataset, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=True)
+            dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
             yield transformation, self.samples_activation(transformation,dataloader)
 
 
@@ -72,8 +73,8 @@ class PytorchActivationsIterator(ActivationsIterator):
             batch_activations = [a.detach().cpu().numpy() for a in batch_activations]
             return batch_activations,x_transformed
 
-    def samples_first(self,batch_size):
-        dataloader = DataLoader(self.image_dataset, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=True)
+    def samples_first(self):
+        dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
 
         for x, y_true in dataloader:
             for i in range(x.shape[0]):
