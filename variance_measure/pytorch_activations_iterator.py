@@ -7,6 +7,8 @@ from PIL import Image
 from torch.utils.data import Dataset,DataLoader
 #from pytorch.classification_dataset import ImageDataset
 import imgaug.augmenters as aug
+from skimage import transform as tf
+import skimage
 
 class ImageDataset(Dataset):
 
@@ -55,7 +57,6 @@ class ImageDataset(Dataset):
         def affine_transform(image):
             return functional.affine(image,shear=0,angle=rotation,translate=translation,
                               scale=scale,resample=Image.BILINEAR)
-                                     #,fillcolor=0)
         affine=transforms.Lambda(affine_transform)
         transformations.append(affine)
 
@@ -138,25 +139,28 @@ class PytorchActivationsIterator(ActivationsIterator):
         self.model_config=config
 
     def activation_count(self):
-        n_intermediates = self.model.n_intermediates()
+        return self.model.n_intermediates()
 
     def generate_transformations(self):
 
         # logging.debug(f"    Rotation {degrees}...")
-        scale=[None for r in self.transformations["rotation"]]
-        translation=[None for r in self.transformations["rotation"]]
+        scale=[0 for r in self.transformations["rotation"]]
+        translation=[0 for r in self.transformations["rotation"]]
         rotation=[(r - 1, r + 1) for r in self.transformations["rotation"]]
 
         return zip(rotation,translation,scale)
 
     def transformations_first(self,batch_size):
-        dataloader= DataLoader(self.dataset, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=True)
+        dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=False, num_workers=0, drop_last=True)
         transformation_list=self.generate_transformations()
         for transformation in transformation_list:
             rotation,translation,scale=transformation
-            self.dataset.update_transformation(rotation,translation,scale)
+            transform=skimage.transform.AffineTransform(scale=scale, rotation=rotation, shear=None, translation=translation)
+
+            rotation,translation,scale=transformation
+
             print(rotation)
-            yield transformation,1
+            yield self.samples_activation(transformation,self.dataset)
             # for x, y_true in dataloader:
             #     if self.model_config.use_cuda:
             #         x = x.cuda()
@@ -165,6 +169,7 @@ class PytorchActivationsIterator(ActivationsIterator):
             #         batch_activations = batch_activations.detach().cpu().numpy()
             #         yield batch_activations
             #
+    def samples(self,transformation,dataset):
 
 
     def samples_first(self,batch_size):

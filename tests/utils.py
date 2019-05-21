@@ -1,4 +1,6 @@
+
 import matplotlib.pyplot as plt
+
 
 def plot_image_grid(x,y,samples=64):
 
@@ -24,7 +26,7 @@ def plot_image_grid(x,y,samples=64):
         row=i // grid_cols
         col=i % grid_cols
         ax=axes[row,col]
-        if d.input_shape[2]==1:
+        if x.shape[3]==1:
             ax.imshow(x[i_sample,:,:,0], cmap='gray')
         else:
             ax.imshow(x[i_sample, :, :,:])
@@ -32,4 +34,3 @@ def plot_image_grid(x,y,samples=64):
         ax.get_yaxis().set_visible(False)
 
     plt.show()
-
