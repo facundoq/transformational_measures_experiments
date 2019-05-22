@@ -8,21 +8,57 @@ import os
 from pytorch.classification_dataset import ImageDataset
 
 class StratifiedVariance:
-    pass
+
+    def eval(self,model, dataset, config, rotations, conv_aggregation_function, batch_size=256):
+        x = dataset.x_test
+        y=dataset.y_test
+        y_ids=y.argmax(axis=1)
+        classes=np.unique(y_ids)
+        classes.sort()
+
+        per_class_variance=[]
+        # calculate the var measure for each class
+        for i, c in enumerate(classes):
+            # logging.debug(f"Evaluating vars for class {c}...")
+            ids=np.where(y_ids==c)
+            ids=ids[0]
+            x_class,y_class=x[ids,:],y[ids]
+            n=x_class.shape[0]
+            class_dataset=ImageDataset(x_class,y_class,rotation=True)
+            effective_batch_size=min(n,batch_size)
+            layer_vars=eval_var(class_dataset, model, config, rotations, effective_batch_size,conv_aggregation_function)
+            per_class_variance.append(layer_vars)
+        variance= self.mean_variance_over_classes(per_class_variance)
+
+        return per_class_variance,variance,classes
+
+
+    def mean_variance_over_classes(class_layer_vars):
+        # calculate the mean activation of each unit in each layer over the set of classes
+
+        layer_class_vars=[list(i) for i in zip(*class_layer_vars)]
+        layer_vars=[ sum(layer_values)/len(layer_values) for layer_values in layer_class_vars]
+        return [layer_vars]
+
 
 class Measure:
-    def __init__(self,activations_iterator,options):
+    def __init__(self,activations_iterator):
         self.activations_iterator=activations_iterator
-        self.options=options
 
 class NormalizedMeasure(Measure):
-    def __init__(self, activations_iterator, options):
-        super().__init__(activations_iterator,options)
-
+    def __init__(self, activations_iterator):
+        super().__init__(activations_iterator)
 
     def eval(self):
+        print("Evaluating v_samples")
         v_samples=self.eval_v_samples()
+        for layer in v_samples:
+            print(layer.shape)
+        print("layers",len(v_samples))
+        print("Evaluating v_transformations")
         v_transformations=self.eval_v_transformations()
+        print("layers", len(v_transformations))
+        print("Evaluating v_normalized")
         v=self.eval_v_normalized(v_transformations,v_samples)
         return v
 
@@ -45,7 +81,7 @@ class NormalizedMeasure(Measure):
         return measures
 
     def eval_v_samples(self):
-        n_intermediates = self.activations_iterator.n_intermediates()
+        n_intermediates = len(self.activations_iterator.layer_names())
         mean_variances_running = [RunningMean() for i in range(n_intermediates)]
 
         for transformation, batch_activations in self.activations_iterator.transformations_first():
@@ -59,7 +95,7 @@ class NormalizedMeasure(Measure):
         return mean_variances
 
     def eval_v_transformations(self,):
-        n_intermediates = self.activations_iterator.n_intermediates()
+        n_intermediates = len(self.activations_iterator.layer_names())
         mean_variances_running= [RunningMean() for i in range(n_intermediates)]
         for activations, x_transformed in self.activations_iterator.samples_first():
             for j, layer_activations in enumerate(activations):
@@ -68,128 +104,6 @@ class NormalizedMeasure(Measure):
         return mean_variances
 
 
-def eval(model, dataset, config, rotations, conv_aggregation_function, batch_size=256):
-    n=dataset.x_test.shape[0]
-    effective_batch_size = min(n, batch_size)
-    dataset= ImageDataset(dataset.x_test,dataset.y_test, rotation=True)
-    layer_vars = eval_var(dataset, model, config, rotations, effective_batch_size,conv_aggregation_function)
-    return [layer_vars],[0]
-
-def variance_stratified(model, dataset, config, rotations, conv_aggregation_function, batch_size=256):
-    x = dataset.x_test
-    y=dataset.y_test
-    y_ids=y.argmax(axis=1)
-    classes=np.unique(y_ids)
-    classes.sort()
-
-    per_class_variance=[]
-    # calculate the var measure for each class
-    for i, c in enumerate(classes):
-        # logging.debug(f"Evaluating vars for class {c}...")
-        ids=np.where(y_ids==c)
-        ids=ids[0]
-        x_class,y_class=x[ids,:],y[ids]
-        n=x_class.shape[0]
-        class_dataset=ImageDataset(x_class,y_class,rotation=True)
-        effective_batch_size=min(n,batch_size)
-        layer_vars=eval_var(class_dataset, model, config, rotations, effective_batch_size,conv_aggregation_function)
-        per_class_variance.append(layer_vars)
-    variance=mean_variance_over_classes(per_class_variance)
-
-    return per_class_variance,variance,classes
-
-
-def mean_variance_over_classes(class_layer_vars):
-    # calculate the mean activation of each unit in each layer over the set of classes
-
-    layer_class_vars=[list(i) for i in zip(*class_layer_vars)]
-    layer_vars=[ sum(layer_values)/len(layer_values) for layer_values in layer_class_vars]
-    return [layer_vars]
-
-# calculate the var measure for a given dataset and model
-def eval_var(dataset,model,config,rotations,batch_size,conv_aggregation_function):
-    #baseline vars
-    layer_vars_baselines=variance_transformation(dataset, model, config, rotations, batch_size, conv_aggregation_function)
-    layer_vars = variance_samples(dataset, model, config, rotations, batch_size, conv_aggregation_function)
-    normalized_layer_vars = variance_normalized(layer_vars_baselines, layer_vars)
-
-    # for i in range(len(layer_vars_baselines)):
-    #     print(f"class {i}")
-    #     n=len(layer_vars_baselines[i])
-    #     print([ type(layer_vars_baselines[i][j]) for j in range(n)])
-    #     print([type(layer_vars[i][j]) for j in range(n)])
-    #     print([type(normalized_layer_vars[i][j]) for j in range(n)])
-
-
-    return normalized_layer_vars
-
-
-
-def variance_transformation(dataset, model, config, rotations, batch_size, conv_aggregation_function):
-    n_intermediates = model.n_intermediates()
-    baseline_variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
-
-    for i, r in enumerate(rotations):
-        degrees = (r - 1, r + 1)
-        # logging.debug(f"    Rotation {degrees}...")
-        dataset.update_rotation_angle(degrees)
-        dataloader=DataLoader(dataset,batch_size=batch_size,shuffle=False, num_workers=0,drop_last=True)
-        # calculate std for all examples and this rotation
-        dataset_var=get_dataset_var(model,dataloader,config,conv_aggregation_function)
-        #update the mean of the stds for every rotation
-
-        # each std is intra rotation/class, so it measures the baseline
-        # std for that activation
-        for j,m in enumerate(dataset_var):
-            baseline_variances[j].update(m.std())
-    mean_baseline_variances=[b.mean() for b in baseline_variances]
-    return mean_baseline_variances
-
-def get_dataset_var(model,dataloader,config,conv_aggregation_function):
-    n_intermediates = model.n_intermediates()
-    var = [RunningMeanAndVariance() for i in range(n_intermediates)]
-    for x,y_true in dataloader:
-        if config.use_cuda:
-            x = x.cuda()
-        with torch.no_grad():
-            y, intermediates = model.forward_intermediates(x)
-            for j, intermediate in enumerate(intermediates):
-                flat_activations=transform_activations(intermediate,conv_aggregation_function)
-                for h in range(flat_activations.shape[0]):
-                    var[j].update(flat_activations[h,:])
-    return var
-
-
-
-
-
-#returns a list of RunningMeanAndVariance objects,
-# one for each intermediate output of the model.
-#Each RunningMeanAndVariance contains the mean and std of each intermediate
-# output over the set of rotations
-
-def variance_samples(dataset, model, config, rotations, batch_size, conv_aggregation_function):
-    n_intermediates = model.n_intermediates()
-    layer_vars= [RunningMeanAndVariance() for i in range(n_intermediates)]
-    n = len(dataset)
-    batch_ranges=[ range(i,i+batch_size) for i in range(n//batch_size)]
-
-    for batch_range in batch_ranges:
-        batch_var=BatchvarMeasure(batch_size,n_intermediates)
-        for r in rotations:
-            degrees = (r - 1, r + 1)
-            dataset.update_rotation_angle(degrees)
-            x,y_true=dataset.get_batch(batch_range)
-            if config.use_cuda:
-                x = x.cuda()
-            with torch.no_grad():
-                y, batch_activations= model.forward_intermediates(x)
-                batch_activations=[transform_activations(a,conv_aggregation_function) for a in batch_activations]
-                batch_var.update(batch_activations)
-        batch_var.update_global_measures(layer_vars)
-
-    mean_layer_vars = [b.mean() for b in layer_vars]
-    return mean_layer_vars
 
 class BatchvarMeasure:
     def __init__(self,batch_size,n_intermediates):

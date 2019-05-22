@@ -4,10 +4,6 @@ import torch
 from torch.utils.data import DataLoader
 from .pytorch_image_dataset import ImageDataset
 
-
-
-
-
 class PytorchActivationsIterator(ActivationsIterator):
 
     def __init__(self, model, dataset, transformations, config,batch_size=32):
@@ -22,9 +18,8 @@ class PytorchActivationsIterator(ActivationsIterator):
         self.image_dataset=ImageDataset(self.dataset)
         self.batch_size=batch_size
 
-    def activation_count(self):
-        return self.model.n_intermediates()
-
+    def layer_names(self):
+        return self.model.intermediates_names()
 
     def transformations_first(self):
         for transformation in self.transformations:

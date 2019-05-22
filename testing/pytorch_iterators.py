@@ -1,5 +1,5 @@
 import datasets
-from tests.utils import plot_image_grid
+from testing.utils import plot_image_grid
 
 from pytorch.numpy_dataset import NumpyDataset
 from variance_measure.pytorch_activations_iterator import ImageDataset

@@ -1,4 +1,4 @@
-from tests.utils import plot_image_grid
+from testing.utils import plot_image_grid
 import datasets
 
 
