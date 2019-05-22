@@ -23,13 +23,29 @@ class NormalizedMeasure(Measure):
     def eval(self):
         v_samples=self.eval_v_samples()
         v_transformations=self.eval_v_transformations()
-        v=self.normalize()
+        v=self.eval_v_normalized(v_transformations,v_samples)
         return v
 
+    def eval_v_normalized(v_transformations,v_samples):
+        eps = 0
+        measures = []  # coefficient of variations
+
+        for layer_v_transformations,layer_v_samples in zip(v_transformations,v_samples):
+            # print(layer_baseline.shape, layer_measure.shape)
+            normalized_measure = layer_v_transformations.copy()
+            normalized_measure[layer_v_samples  > eps] /= layer_v_samples [layer_v_samples  > eps]
+            both_below_eps = np.logical_and(layer_v_samples  <= eps,
+                                            layer_v_transformations <= eps)
+            normalized_measure[both_below_eps] = 1
+            only_baseline_below_eps = np.logical_and(
+                layer_v_samples  <= eps,
+                layer_v_transformations > eps)
+            normalized_measure[only_baseline_below_eps] = np.inf
+            measures.append(normalized_measure)
+        return measures
 
     def eval_v_samples(self):
         n_intermediates = self.activations_iterator.n_intermediates()
-
         baseline_variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
 
         for transformation, batch_activations in self.activations_iterator.transformations_first():
@@ -37,15 +53,14 @@ class NormalizedMeasure(Measure):
                 pass
 
 
+
     def eval_v_transformations(self,):
         n_intermediates = self.activations_iterator.n_intermediates()
-        baseline_variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
-        for activations, x_transformed in iterator.activations_iterator():
-            pass
-
-        for j, m in enumerate(dataset_var):
-            baseline_variances[j].update(m.std())
-        mean_baseline_variances = [b.mean() for b in baseline_variances]
+        variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
+        for activations, x_transformed in self.activations_iterator.samples_first():
+            for j, layer_activations in enumerate(activations):
+                variances[j].update(layer_activations.var())
+        mean_baseline_variances = [b.mean() for b in variances]
         return mean_baseline_variances
 
 
@@ -104,20 +119,7 @@ def eval_var(dataset,model,config,rotations,batch_size,conv_aggregation_function
 
     return normalized_layer_vars
 
-def variance_normalized(layer_baselines, layer_measures):
-    eps=0
-    measures = []  # coefficient of variations
 
-    for layer_baseline, layer_measure in zip(layer_baselines, layer_measures):
-        #print(layer_baseline.shape, layer_measure.shape)
-        normalized_measure= layer_measure.copy()
-        normalized_measure[layer_baseline > eps] /= layer_baseline[layer_baseline > eps]
-        both_below_eps=np.logical_and(layer_baseline <= eps,layer_measure <= eps )
-        normalized_measure[both_below_eps] = 1
-        only_baseline_below_eps=np.logical_and(layer_baseline <= eps,layer_measure > eps )
-        normalized_measure[only_baseline_below_eps] = np.inf
-        measures.append(normalized_measure)
-    return measures
 
 def variance_transformation(dataset, model, config, rotations, batch_size, conv_aggregation_function):
     n_intermediates = model.n_intermediates()

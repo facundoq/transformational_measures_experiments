@@ -37,7 +37,7 @@ iterator = PytorchActivationsIterator(model,numpy_dataset,transformations,config
 batch_size=64
 i=0
 
-for activations,x_transformed in iterator.samples_first(batch_size):
+for activations,x_transformed in iterator.samples_first():
 
     x=x_transformed.transpose( (0,2,3,1))
     plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=f"t{i}.png")
