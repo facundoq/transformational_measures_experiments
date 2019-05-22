@@ -26,7 +26,7 @@ class NormalizedMeasure(Measure):
         v=self.eval_v_normalized(v_transformations,v_samples)
         return v
 
-    def eval_v_normalized(v_transformations,v_samples):
+    def eval_v_normalized(self,v_transformations,v_samples):
         eps = 0
         measures = []  # coefficient of variations
 
@@ -46,22 +46,26 @@ class NormalizedMeasure(Measure):
 
     def eval_v_samples(self):
         n_intermediates = self.activations_iterator.n_intermediates()
-        baseline_variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
+        mean_variances_running = [RunningMean() for i in range(n_intermediates)]
 
         for transformation, batch_activations in self.activations_iterator.transformations_first():
+            samples_variances_running = [RunningMeanAndVariance() for i in range(n_intermediates)]
             for x, batch_activation in batch_activations:
-                pass
-
-
+                for j, m in enumerate(batch_activation):
+                    samples_variances_running[j].update(m)
+            for j, m in enumerate(mean_variances_running):
+                mean_variances_running[j].update(samples_variances_running[j].var())
+        mean_variances = [b.mean() for b in mean_variances_running]
+        return mean_variances
 
     def eval_v_transformations(self,):
         n_intermediates = self.activations_iterator.n_intermediates()
-        variances = [RunningMeanAndVariance() for i in range(n_intermediates)]
+        mean_variances_running= [RunningMean() for i in range(n_intermediates)]
         for activations, x_transformed in self.activations_iterator.samples_first():
             for j, layer_activations in enumerate(activations):
-                variances[j].update(layer_activations.var())
-        mean_baseline_variances = [b.mean() for b in variances]
-        return mean_baseline_variances
+                mean_variances_running[j].update(layer_activations.var(axis=0))
+        mean_variances = [b.mean() for b in mean_variances_running]
+        return mean_variances
 
 
 def eval(model, dataset, config, rotations, conv_aggregation_function, batch_size=256):

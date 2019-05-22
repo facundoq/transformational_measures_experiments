@@ -18,13 +18,6 @@ class ImageDataset(Dataset):
 
         self.transform=self.setup_transformation_pipeline(image_dataset,dataformat,rotation,translation,scale)
 
-
-        # def debug(img):
-        #     print(img)
-        #     return img
-        # transformations.append(transforms.Lambda(debug))
-
-
     def setup_transformation_pipeline(self,image_dataset,dataformat,rotation,translation,scale):
         x, y = image_dataset.get_all()
 
