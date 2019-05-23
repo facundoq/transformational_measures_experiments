@@ -4,8 +4,9 @@ from torchvision.transforms import functional
 from torch.utils.data import Dataset
 from PIL import Image
 
-class ImageDataset(Dataset):
 
+
+class ImageDataset(Dataset):
 
     def __init__(self, image_dataset,rotation=None,translation=None,scale=None,dataformat="NCHW"):
 

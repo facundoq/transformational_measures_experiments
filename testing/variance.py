@@ -24,17 +24,40 @@ from variance_measure import transformations as tf
 import matplotlib
 matplotlib.use('Agg')
 
+# samples=512
+# dataset.x_test=dataset.x_test[:samples,]
+# dataset.y_test=dataset.y_test[:samples]
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
 
 n_rotations=4
 rotations = np.linspace(-np.pi, np.pi, n_rotations, endpoint=False)
+
 transformations_parameters={"rotation":rotations,"scale":[(1, 1)],"translation":[(0,10)]}
+
 transformations_parameters_combinations=tf.generate_transformation_parameter_combinations(transformations_parameters)
+
 transformations=tf.generate_transformations(transformations_parameters_combinations,dataset.input_shape[0:2])
 
-iterator = PytorchActivationsIterator(model,numpy_dataset,transformations,config)
+iterator = PytorchActivationsIterator(model,numpy_dataset,transformations,config,batch_size=256 )
 
 from variance_measure import variance
 
-measure=variance.NormalizedMeasure(iterator)
-variance_result=measure.eval()
+measure=variance.NormalizedVarianceMeasure(iterator)
+
+import time
+
+# begin = time.time()
+# variance_result = measure.eval()
+# print(f"Time elapsed(normal): {time.time()-begin}")
+
+
+
+begin = time.time()
+stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test,dataset.x_test)
+stratified_iterators = [PytorchActivationsIterator(model,numpy_dataset,transformations,config,batch_size=16) for numpy_dataset in stratified_numpy_datasets]
+stratified_measure = variance.StratifiedVarianceMeasure(stratified_iterators)
+stratified_variance_result,class_variance_result = stratified_measure.eval()
+print(f"Time elapsed (stratified): {time.time()-begin}")
+
+
+

@@ -1,6 +1,6 @@
 from torch.utils.data import Dataset
 import torch
-
+import numpy as np
 def check_equal(lst):
     return not lst or lst.count(lst[0]) == len(lst)
 
@@ -8,32 +8,51 @@ def check_equal(lst):
 
 class NumpyDataset(Dataset):
 
-    def __init__(self, *data_sources):
-        ''''''
+    @classmethod
+    def stratify_dataset(cls,y,*data_sources):
 
+        classes = np.unique(y)
+        classes.sort()
+
+        per_class_variance = []
+        # calculate the var measure for each class
+        iterators=[]
+        for i, c in enumerate(classes):
+            # logging.debug(f"Evaluating vars for class {c}...")
+            ids = np.where(y == c)
+            ids = ids[0]
+            data_sources_class=[ x[ids, :] for x in data_sources ]
+            y_class = y[ids]
+            data_sources_class.append(y_class)
+            iterators.append(NumpyDataset(*data_sources_class))
+        return iterators
+
+    def __init__(self, *data_sources):
         assert(len(data_sources)>0)
         self.data_sources=data_sources
         lengths=[ d.shape[0] for d in self.data_sources]
         assert(check_equal(lengths))
 
-    def __len__(self):
-        return self.data_sources[0].shape[0]
-
     def __getitem__(self, idx):
         return self.get_batch(idx)
+
+    def __len__(self):
+        return self.data_sources[0].shape[0]
 
     def get_batch(self, idx):
         if isinstance(idx, int):
             idx = [idx]
         batch=( torch.from_numpy(d[idx,]) for d in self.data_sources)
-        #print(list(batch)[0].shape)
         return batch
-
-        #return (d[idx,] for d in self.data_sources)
 
     def get_all(self):
         ids = list(range(len(self)))
         return self.get_batch(ids)
+
+
+
+
+
 
 class NumpyKeyValueDataset(Dataset):
 
@@ -60,3 +79,4 @@ class NumpyKeyValueDataset(Dataset):
     def get_all(self):
         ids = list(range(len(self)))
         return self.get_batch(ids)
+
