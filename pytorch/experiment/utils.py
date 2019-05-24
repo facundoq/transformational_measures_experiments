@@ -21,5 +21,4 @@ def parse_model_and_dataset(description):
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
-    print(args.transformation)
     return args.model,args.dataset,args.transformation

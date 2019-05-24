@@ -39,7 +39,7 @@ def test(model, dataset, use_cuda,loss_function):
 
             output = model(data)
 
-            loss += loss_function(output,target).item()*data.shape[0]
+            loss += loss_function(output,target[:,0]).item()*data.shape[0]
             #loss += F.nll_loss(output, target, size_average=False).item() # sum up batch loss
             pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
             correct += pred.eq(target.data.view_as(pred)).cpu().sum().item()
@@ -69,8 +69,7 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function):
         optimizer.zero_grad()
         #MODEL OUTPUT
         output = model(data)
-
-        loss = loss_function(output, target)
+        loss = loss_function(output, target[:,0])
         # loss = F.nll_loss(output, target)
 
         # UPDATE PARAMETERS
@@ -80,6 +79,7 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function):
 
         # ESTIMATE BATCH LOSS AND ACCURACY
         pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
+
         matches = pred.eq(target.data.view_as(pred)).cpu()
         correct += matches.sum()
         accuracies[batch_idx] = matches.float().mean().item()

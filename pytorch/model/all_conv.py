@@ -71,9 +71,9 @@ class AllConvolutional(nn.Module):
         return self.layers[index]
 
     def n_intermediates(self):
-        return len(self.intermediates_names())
+        return len(self.activation_names())
 
-    def intermediates_names(self):
+    def activation_names(self):
         names=[ [x,x+"act"] for x in self.layer_names()]
         names = sum(names,[])
         names+=["ap","smax"]

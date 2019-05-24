@@ -91,7 +91,7 @@ def model_optimizer_generator(previous_model=None, trainable_layers=None):
         model.load_state_dict(previous_model.state_dict())
 
     if trainable_layers:
-        freeze_layers_except(model.layers(), model.layer_names(), trainable_layers)
+        freeze_layers_except(model.layers(), model.activation_names(), trainable_layers)
 
     parameters = pytorch_experiment.add_weight_decay(model.named_parameters(), 1e-9)
     optimizer = optim.Adam(parameters, lr=0.001)

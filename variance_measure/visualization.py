@@ -4,16 +4,18 @@ import pickle
 import matplotlib.pyplot as plt
 import os
 
-def plot_class_outputs(class_index,class_id, cvs,vmin,vmax, names,model_name,dataset_name,savefig,savefig_suffix):
-    n = len(names)
+def plot_heatmap(title, activations, activation_names,vmin=0,vmax=None,savefig=None, savefig_name=None):
+    n = len(activation_names)
     f, axes = plt.subplots(1, n, dpi=150)
 
-
-    for i, (cv, name) in enumerate(zip(cvs, names)):
+    for i, (activation, name) in enumerate(zip(activations, activation_names)):
         ax = axes[i]
         ax.axis("off")
-        cv = cv[:, np.newaxis]
-        mappable=ax.imshow(cv,vmin=vmin,vmax=vmax,cmap='inferno',aspect="auto")
+        activation = activation[:, np.newaxis]
+        if vmax is not None:
+            mappable=ax.imshow(activation,vmin=vmin,vmax=vmax,cmap='inferno',aspect="auto")
+        else:
+            mappable = ax.imshow(activation, vmin=vmin, cmap='inferno', aspect="auto")
         #mappable = ax.imshow(cv, cmap='inferno')
         if n<40:
             if len(name)>6:
@@ -21,14 +23,14 @@ def plot_class_outputs(class_index,class_id, cvs,vmin,vmax, names,model_name,dat
             ax.set_title(name, fontsize=4)
 
         # logging.debug(f"plotting stats of layer {name} of class {class_id}, shape {stat.mean().shape}")
-    f.suptitle(f"Variance of activations for class {class_index} ({class_id})")
+    f.suptitle(f"{title}", fontsize=12)
     f.subplots_adjust(right=0.8)
     cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
     cbar=f.colorbar(mappable, cax=cbar_ax, extend='max')
     cbar.cmap.set_over('green')
     cbar.cmap.set_bad(color='blue')
-    if savefig:
-        image_name=f"{savefig_suffix}_class{class_index:02}_{class_id}.png"
+    if not savefig is None:
+        image_name=f"{savefig_name}.png"
         path=os.path.join(savefig,image_name)
         plt.savefig(path)
     #plt.show()
@@ -81,9 +83,9 @@ def plot(all_stds,model,dataset_name,savefig=False,savefig_suffix="",class_names
             name=class_names[c]
         else:
             name=str(c)
-        plot_class_outputs(i,name, stds,vmin,vmax, model.intermediates_names(),model.name,
-                           dataset_name,savefig,
-                           savefig_suffix)
+        plot_heatmap(i, name, stds, vmin, vmax, model.activation_names(), model.name,
+                     dataset_name, savefig,
+                     savefig_suffix)
 
 def plot_collapsing_layers(rotated_measures,measures,labels,savefig=None, savefig_suffix=""):
     rotated_measures_collapsed=collapse_measure_layers(rotated_measures)
@@ -138,14 +140,14 @@ def plots_base_folder():
     return os.path.expanduser("~/variance_results/plots/")
     #return os.path.join(results_folder,"plots/var")
 
-def plots_folder(model,dataset,conv_aggregation):
-    folderpath = os.path.join(plots_base_folder(), f"{model}_{dataset}_{conv_aggregation}")
+def plots_folder(model,dataset,description ):
+    folderpath = os.path.join(plots_base_folder(), f"{model}_{dataset}_{description}")
     if not os.path.exists(folderpath):
         os.makedirs(folderpath,exist_ok=True)
     return folderpath
 
 
-def plot_heatmaps(model,rotated_model,dataset,conv_aggregation,results,folderpath):
+def plot_heatmaps(model,rotated_model,dataset,results,folderpath):
     var, stratified_layer_vars, var_all_dataset, rotated_var, rotated_stratified_layer_vars, rotated_var_all_dataset = results
     vmin, vmax = outlier_range_all(results, iqr_away=3)
     vmin = vmin_all = vmin_class = 0
@@ -172,11 +174,13 @@ def plot_heatmaps(model,rotated_model,dataset,conv_aggregation,results,folderpat
          savefig=folderpath, savefig_suffix="unrotated", class_names=["all"], vmax=vmax_all)
 
 
-def plot_all(model,rotated_model,dataset,conv_aggregation,results):
+def plot_all(model,rotated_model,dataset,results):
 
-    folderpath=plots_folder(model.name,dataset.name,conv_aggregation)
+    folderpath=plots_folder(model.name,dataset.name)
+
     var, stratified_layer_vars, var_all_dataset, rotated_var, rotated_stratified_layer_vars, rotated_var_all_dataset=results
-    #plot_heatmaps(model, rotated_model, dataset, conv_aggregation, results,folderpath)
+
+    plot_heatmaps(model, rotated_model, dataset, results,folderpath)
 
     # print("plotting layers invariance (by classes)")
     # plot_collapsing_layers(rotated_var, var, dataset.labels
@@ -186,31 +190,29 @@ def plot_all(model,rotated_model,dataset,conv_aggregation,results):
     # max_unrotated = max([m.max() for m in measures_collapsed])
     # max_measure = max([max_rotated, max_unrotated])
     #print("plotting layers invariance (global)")
+    r=results
+
     plot_collapsing_layers(rotated_stratified_layer_vars+rotated_var_all_dataset, stratified_layer_vars+var_all_dataset
                             , ["stratified","all"], savefig=folderpath, savefig_suffix="global")
 
-def run_and_plot_all(model,rotated_model,dataset, config, n_rotations = 16):
-    results= variance.run_models(model, rotated_model, dataset, config, n_rotations)
-    plot_all(model,rotated_model,dataset,results)
-
-
 
 results_folder=os.path.expanduser("~/variance_results/values")
-def get_path(model_name,dataset_name,conv_aggregation_function):
-    return os.path.join(results_folder, f"{model_name}_{dataset_name}_{conv_aggregation_function}.pickle")
+
+def get_path(model_name,dataset_name,description):
+    return os.path.join(results_folder, f"{model_name}_{dataset_name}_{description}.pickle")
 
 def get_model_and_dataset_from_path(path):
     filename_ext=os.path.basename(path)
     filename=os.path.splitext(filename_ext)[0]
-    model,dataset,conv_aggregation_function=filename.split("_")
-    return model, dataset,conv_aggregation_function
+    model,dataset,description=filename.split("_")
+    return model, dataset,description
 
-def save_results(model_name,dataset_name,results,conv_aggregation_function):
-    path=get_path(model_name,dataset_name,conv_aggregation_function)
+def save_results(model_name,dataset_name,results,description):
+    path=get_path(model_name,dataset_name,description)
     basename=os.path.dirname(path)
     os.makedirs(basename,exist_ok=True)
     pickle.dump(results,open(path,"wb"))
 
-def load_results(model_name,dataset_name,conv_aggregation_function):
-    path = get_path(model_name, dataset_name,conv_aggregation_function)
+def load_results(model_name,dataset_name,description):
+    path = get_path(model_name, dataset_name,description)
     return pickle.load(open(path, "rb"))

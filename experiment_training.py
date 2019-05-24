@@ -9,7 +9,8 @@ import torch
 use_cuda=torch.cuda.is_available()
 
 # DATASET
-from pytorch import classification_dataset as datasets, models
+import datasets
+from pytorch import models
 
 from pytorch.experiment import model_loading,rotation
 
@@ -27,7 +28,7 @@ else:
 
 verbose=False
 
-dataset = datasets.get_dataset(dataset_name)
+dataset = datasets.get(dataset_name)
 if verbose:
     print(f"Experimenting with dataset {dataset_name}.")
     print(dataset.summary())
@@ -40,8 +41,8 @@ transformations=transformations.get(transformation_names)
 
 if verbose:
     print(f"Training with model {model_name}.")
-    print(model)
     print(rotated_model)
+    print(model)
 
 # TRAINING
 pre_rotated_epochs=0
@@ -52,6 +53,7 @@ config=rotation.TrainRotatedConfig(batch_size=batch_size,
                        pre_rotated_epochs=pre_rotated_epochs,
                         optimizer=optimizer,rotated_optimizer=rotated_optimizer,
                       use_cuda=use_cuda)
+
 
 scores=rotation.run(config,model,rotated_model,dataset,plot_accuracy=True,save_plots=True)
 rotation.print_scores(scores)

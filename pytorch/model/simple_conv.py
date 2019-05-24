@@ -65,9 +65,9 @@ class SimpleConv(nn.Module):
         return x4,convs+fcs+[x4]
 
     def n_intermediates(self):
-        return len(self.intermediates_names())
+        return len(self.activation_names())
 
-    def intermediates_names(self):
+    def activation_names(self):
         conv_layer_names = ["c1","c1act","c2", "c2act", "mp1",
                             "c3", "c3act", "c4", "c4act","mp2",
                             "c5", "c5act"]

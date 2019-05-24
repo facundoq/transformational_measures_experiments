@@ -6,7 +6,7 @@ from .pytorch_image_dataset import ImageDataset
 
 class PytorchActivationsIterator(ActivationsIterator):
 
-    def __init__(self, model, dataset, transformations, config,batch_size=32):
+    def __init__(self, model, dataset, transformations, batch_size=32):
         '''
         model: a pytorch model that implements the forward_intermediate() method
         dataset: a dataset that yields x,y tuples
@@ -14,12 +14,11 @@ class PytorchActivationsIterator(ActivationsIterator):
                         sample and return a transformed one
         '''
         super().__init__(model, dataset, transformations)
-        self.model_config=config
         self.image_dataset=ImageDataset(self.dataset)
         self.batch_size=batch_size
 
-    def layer_names(self):
-        return self.model.intermediates_names()
+    def activation_names(self):
+        return self.model.activation_names()
 
     def transformations_first(self):
         for transformation in self.transformations:

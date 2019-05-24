@@ -187,13 +187,13 @@ class ResNet(nn.Module):
         return x,outputs
 
     def n_intermediates(self):
-        return len(self.intermediates_names())
+        return len(self.activation_names())
 
-    def intermediates_names(self):
+    def activation_names(self):
         names=["c0","c0act"]
         for i,l in enumerate([self.layer1,self.layer2,self.layer3,self.layer4]):
             for j,block in enumerate(l):
-                l_names=[f"l{i}_b{j}_{n}" for n in block.intermediates_names()]
+                l_names=[f"l{i}_b{j}_{n}" for n in block.activation_names()]
                 names.extend(l_names)
         names+=["avgp","fc0","fc0act"]
         return names

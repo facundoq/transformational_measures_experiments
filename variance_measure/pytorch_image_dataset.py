@@ -48,11 +48,11 @@ class ImageDataset(Dataset):
             return functional.affine(image,shear=0,angle=rotation,translate=translation,
                               scale=scale,resample=Image.BILINEAR)
         affine=transforms.Lambda(affine_transform)
-        #transformations.append(affine)
+        transformations.append(affine)
 
         if not translation is None or not scale is None:
             scale_transformation = transforms.Resize((h,w))
-            #transformations.append(scale_transformation)
+            transformations.append(scale_transformation)
 
         transformations.append(transforms.ToTensor())
         transformations.append(transforms.Normalize(mu, std))
@@ -82,6 +82,7 @@ class ImageDataset(Dataset):
     def __getitem__(self, idx):
         assert(isinstance(idx,int))
         x,y=self.get_batch(idx)
+        # print(y.shape)
         return x[0,],y
 
     def get_batch(self,idx):
@@ -97,13 +98,13 @@ class ImageDataset(Dataset):
             x=x.permute([0, 3, 1, 2])
         else:
             raise ValueError()
-
-
         for i in range(x.shape[0]):
             d=self.transform(x[i,:,:,:])
             images.append(d)
 
         x=torch.stack(images,dim=0)
+        y=y.type(dtype=torch.LongTensor)
+        # print(x.shape,y.shape)
         return x,y
 
 
