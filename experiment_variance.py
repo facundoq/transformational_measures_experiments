@@ -49,8 +49,8 @@ from pytorch.numpy_dataset import NumpyDataset
 
 sample_skip=2
 if sample_skip>1:
-    dataset.x_test= dataset.x_test[:sample_skip:, ]
-    dataset.y_test= dataset.y_test[:sample_skip:]
+    dataset.x_test= dataset.x_test[::sample_skip, ]
+    dataset.y_test= dataset.y_test[::sample_skip]
 
 
 n_rotations=16
@@ -64,7 +64,7 @@ transformations=tf.generate_transformations(transformations_parameters_combinati
 
 def experiment(model,dataset,transformations,base_measure,options):
     numpy_dataset = NumpyDataset(dataset.x_test, dataset.y_test)
-    iterator = PytorchActivationsIterator(model,numpy_dataset,transformations,batch_size=256 )
+    iterator = PytorchActivationsIterator(model,numpy_dataset,transformations,batch_size=256)
     measure,measure_t,measure_s=base_measure(iterator,options).eval()
 
     stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test,dataset.x_test)
@@ -83,9 +83,12 @@ def experiment(model,dataset,transformations,base_measure,options):
 
 from pytorch.experiment.variance import VarianceExperimentResult
 
+
 base_measure=variance.MeanNormalizedMeasure
-options={"conv_aggregation_function":"mean","var_or_std":"std"}
-description = base_measure.__name__+"-"+ ("-".join(options.values()))+f"-sampleskip{sample_skip}"
+options={"conv_aggregation_function":variance.ConvAggregation.sum,"var_or_std":"std"}
+
+options_str="-".join([str(v) for v in options.values()])
+description = base_measure.__name__+"-"+options_str+f"-sampleskip{sample_skip}"
 print(f"Experimenting with {description}")
 
 unrotated_measures=experiment(model,dataset,transformations,base_measure,options)

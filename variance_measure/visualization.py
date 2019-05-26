@@ -4,11 +4,15 @@ import pickle
 import matplotlib.pyplot as plt
 import os
 
-def plot_heatmap(title, activations, activation_names,vmin=0,vmax=None,savefig=None, savefig_name=None):
-    n = len(activation_names)
+def plot_heatmap(title, layers_activations , layer_names, vmin=0, vmax=None, savefig=None, savefig_name=None):
+
+
+    n = len(layer_names)
     f, axes = plt.subplots(1, n, dpi=150)
 
-    for i, (activation, name) in enumerate(zip(activations, activation_names)):
+    for i, (activation, name) in enumerate(zip(layers_activations, layer_names)):
+
+
         ax = axes[i]
         ax.axis("off")
         activation = activation[:, np.newaxis]

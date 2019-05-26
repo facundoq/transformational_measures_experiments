@@ -153,18 +153,19 @@ def plot_heatmaps(variance_experiment_result):
         rotated_results=[m.layers for m in experiment_result.rotated_measures.values()]
         unrotated_results = [m.layers for m in experiment_result.unrotated_measures.values()]
         values = rotated_results+unrotated_results
+        if options
         vmin, vmax = visualization.outlier_range_all(values, iqr_away=3)
         vmin=0
 
         for measure_name,measure in experiment_result.rotated_measures.items():
             name =f"{dataset_name}_{model_name}_rotated_{measure_name}"
             title=f"{name}\n{experiment_result.options}"
-            visualization.plot_heatmap(title,measure.layers,experiment_result.activation_names,vmin=vmin,savefig=folderpath,savefig_name=name)
+            visualization.plot_heatmap(title,measure,experiment_result.activation_names,vmin=vmin,savefig=folderpath,savefig_name=name)
 
         for measure_name, measure in experiment_result.unrotated_measures.items():
             name = f"{dataset_name}_{model_name}_unrotated_{measure_name}"
             title = f"{name}\n{experiment_result.options}"
-            visualization.plot_heatmap(title, measure.layers,experiment_result.activation_names,vmin=vmin, savefig=folderpath,
+            visualization.plot_heatmap(title, measure,experiment_result.activation_names,vmin=vmin, savefig=folderpath,
                                        savefig_name=name)
 
 

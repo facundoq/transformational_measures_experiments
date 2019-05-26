@@ -40,6 +40,18 @@ class StratifiedMeasure:
         return MeasureResult(layer_vars,"v_stratified")
 
 
+from enum import Enum
+
+class ConvAggregation(Enum):
+    mean = "mean"
+    max = "max"
+    min = "min"
+    sum = "sum"
+    none = "none"
+
+
+
+
 class Measure:
     def __init__(self,activations_iterator):
         self.activations_iterator=activations_iterator
@@ -79,12 +91,14 @@ class MeanNormalizedMeasure(Measure):
             for j, layer_activations in enumerate(activations):
                 layer_activations = self.preprocess_activations(layer_activations)
                 # calculate the measure for all transformations of this sample
+
                 layer_measure = np.abs(layer_activations)
                 layer_measure = np.nanmean(layer_measure,axis=0)
                 # update the mean over all transformation
                 mean_variances_running[j].update(layer_measure)
         # calculate the final mean over all samples (and layers)
         mean_variances = [b.mean() for b in mean_variances_running]
+
         return MeasureResult(mean_variances, f"u_trasformation")
 
     def eval_v_normalized(self,v_transformations,v_samples):
@@ -239,6 +253,9 @@ class MeasureResult:
     def __repr__(self):
         return f"MeasureResult {self.source}"
 
+    def all_1d(self):
+        return np.any([ len(l.shape)==1 for l in self.layers])
+
     def average_per_layer(self):
 
         result = []
@@ -272,18 +289,26 @@ class MeasureResult:
 
         return MeasureResult(results,f"{self.source}_conv_agg_{conv_aggregation_function}")
 
+functions={ConvAggregation.mean : np.nanmean
+               ,ConvAggregation.sum : np.nansum
+               ,ConvAggregation.min : np.nanmin
+               ,ConvAggregation.max : np.nanmax
+               }
+
 def apply_aggregation_function(layer,conv_aggregation_function):
+
+    if conv_aggregation_function == ConvAggregation.none:
+        return layer
+    if not conv_aggregation_function in functions.keys():
+        raise ValueError(
+            f"Invalid aggregation function: {conv_aggregation_function}. Options: {list(ConvAggregation)}")
+
     n, c, w, h = layer.shape
     flat_activations = np.zeros((n, c))
+    function=functions[conv_aggregation_function]
+
     for i in range(n):
-        if conv_aggregation_function == "mean":
-            flat_activations[i, :] = np.nanmean(layer[i, :, :, :], axis=(1, 2))
-        elif conv_aggregation_function == "max":
-            flat_activations[i, :] = np.nanmax(layer[i, :, :, :], axis=(1, 2))
-        elif conv_aggregation_function == "sum":
-            flat_activations[i, :] = np.nansum(layer[i, :, :, :], axis=(1, 2))
-        else:
-            raise ValueError(
-                f"Invalid aggregation function: {conv_aggregation_function}. Options: mean, max, sum")
-        return flat_activations
+        flat_activations[i, :] = function(layer[i, :, :, :], axis=(1, 2))
+
+    return flat_activations
 
