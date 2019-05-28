@@ -19,10 +19,10 @@ class StratifiedMeasure:
         Calculate the `variance_measure` for each class separately
         Also calculate the average stratified `variance_measure` over all classes
         '''
-        variance_per_class = [self.variance_measure(iterator)[0] for iterator in self.classes_iterators]
+        variance_per_class = [self.variance_measure(iterator) for iterator in self.classes_iterators]
         source=str(variance_per_class[0])
         for i,v in enumerate(variance_per_class):
-            v.source+=f"_class{i}"
+            v.source+=f"_class{i:02}"
         variance_stratified = self.mean_variance_over_classes(variance_per_class,source)
         return variance_stratified,variance_per_class
 

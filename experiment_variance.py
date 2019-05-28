@@ -76,7 +76,7 @@ def experiment(model,dataset,transformations,base_measure,options):
 
     measures=dict([(m.source,m) for m in [measure_result,stratified_measure_result]])
     for i,m in enumerate(measure_per_class):
-        measures[f"{m.source}_class{i:02}"]=m
+        measures[f"{m.source}"] = m
     return measures
 
 from experiment import variance_result
