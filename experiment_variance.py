@@ -39,7 +39,6 @@ if verbose:
     print("### Scores obtained:")
     rotation.print_scores(scores)
 
-from variance_measure import visualization
 from variance_measure.measures import variance
 from variance_measure import transformations as tf
 from variance_measure import PytorchActivationsIterator
@@ -68,7 +67,7 @@ def experiment(model,dataset,transformations,base_measure,options):
     measure_result=base_measure(iterator,options).eval()
 
     stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test,dataset.x_test)
-    stratified_iterators = [PytorchActivationsIterator(model,numpy_dataset,transformations,batch_size=32) for numpy_dataset in stratified_numpy_datasets]
+    stratified_iterators = [PytorchActivationsIterator(model,numpy_dataset,transformations,batch_size=256) for numpy_dataset in stratified_numpy_datasets]
 
     variance_measure = lambda iterator: base_measure(iterator,options).eval()
     stratified_measure = variance.StratifiedMeasure(stratified_iterators, variance_measure)
