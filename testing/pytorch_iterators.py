@@ -2,7 +2,7 @@ import datasets
 from testing.utils import plot_image_grid
 
 from pytorch.numpy_dataset import NumpyDataset
-from variance_measure.pytorch_activations_iterator import ImageDataset
+from variance_measure.iterators.pytorch_activations_iterator import ImageDataset
 
 dataformat="NCHW"
 dataset = datasets.get("mnist",dataformat=dataformat)

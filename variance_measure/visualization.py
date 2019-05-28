@@ -1,16 +1,17 @@
-from variance_measure import variance
 import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import os
 
-def plot_heatmap(title, layers_activations , layer_names, vmin=0, vmax=None, savefig=None, savefig_name=None):
+from variance_measure.measures.result import MeasureResult
+
+def plot_heatmap(title, m:MeasureResult, layer_names, vmin=0, vmax=None, savefig=None, savefig_name=None):
 
 
     n = len(layer_names)
     f, axes = plt.subplots(1, n, dpi=150)
 
-    for i, (activation, name) in enumerate(zip(layers_activations, layer_names)):
+    for i, (activation, name) in enumerate(zip(m.layers, layer_names)):
 
 
         ax = axes[i]
@@ -27,7 +28,7 @@ def plot_heatmap(title, layers_activations , layer_names, vmin=0, vmax=None, sav
             ax.set_title(name, fontsize=4)
 
         # logging.debug(f"plotting stats of layer {name} of class {class_id}, shape {stat.mean().shape}")
-    f.suptitle(f"{title}", fontsize=12)
+    f.suptitle(f"{title}", fontsize=10)
     f.subplots_adjust(right=0.8)
     cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
     cbar=f.colorbar(mappable, cax=cbar_ax, extend='max')
@@ -137,19 +138,7 @@ def plot_collapsing_layers(rotated_measures,measures,labels,savefig=None, savefi
 
 
 def collapse_measure_layers(measures):
-
     return [np.array([np.mean(layer[np.isfinite(layer)]) for layer in measure]) for measure in measures]
-
-def plots_base_folder():
-    return os.path.expanduser("~/variance_results/plots/")
-    #return os.path.join(results_folder,"plots/var")
-
-def plots_folder(model,dataset,description ):
-    folderpath = os.path.join(plots_base_folder(), f"{model}_{dataset}_{description}")
-    if not os.path.exists(folderpath):
-        os.makedirs(folderpath,exist_ok=True)
-    return folderpath
-
 
 def plot_heatmaps(model,rotated_model,dataset,results,folderpath):
     var, stratified_layer_vars, var_all_dataset, rotated_var, rotated_stratified_layer_vars, rotated_var_all_dataset = results
@@ -198,25 +187,3 @@ def plot_all(model,rotated_model,dataset,results):
 
     plot_collapsing_layers(rotated_stratified_layer_vars+rotated_var_all_dataset, stratified_layer_vars+var_all_dataset
                             , ["stratified","all"], savefig=folderpath, savefig_suffix="global")
-
-
-results_folder=os.path.expanduser("~/variance_results/values")
-
-def get_path(model_name,dataset_name,description):
-    return os.path.join(results_folder, f"{model_name}_{dataset_name}_{description}.pickle")
-
-def get_model_and_dataset_from_path(path):
-    filename_ext=os.path.basename(path)
-    filename=os.path.splitext(filename_ext)[0]
-    model,dataset,description=filename.split("_")
-    return model, dataset,description
-
-def save_results(model_name,dataset_name,results,description):
-    path=get_path(model_name,dataset_name,description)
-    basename=os.path.dirname(path)
-    os.makedirs(basename,exist_ok=True)
-    pickle.dump(results,open(path,"wb"))
-
-def load_results(model_name,dataset_name,description):
-    path = get_path(model_name, dataset_name,description)
-    return pickle.load(open(path, "rb"))

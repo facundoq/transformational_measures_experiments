@@ -1,1 +1,1 @@
-from .pytorch_activations_iterator import PytorchActivationsIterator
+from variance_measure.iterators.pytorch_activations_iterator import PytorchActivationsIterator

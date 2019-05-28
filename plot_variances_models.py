@@ -1,32 +1,33 @@
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-
+from typing import List
 plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
-from variance_measure import visualization, variance
-import os
-import datasets
+from variance_measure import visualization
 
-def load_results(folderpath):
+from experiment import variance_result
+import os
+from experiment.variance_result import VarianceExperimentResult
+from time import gmtime, strftime
+
+
+def load_results(folderpath)-> List[VarianceExperimentResult]:
     results = []
     for filename in os.listdir(folderpath):
         path = os.path.join(folderpath, filename)
-        model, dataset, description = visualization.get_model_and_dataset_from_path(path)
-        result = visualization.load_results(model, dataset,description)
-        results.append((result, model, dataset,description))
+        result = variance_result.load_results(path)
+        results.append(result)
     return results
 
 
-def as_table(results):
+def as_table(results:List[VarianceExperimentResult]):
     table = {}
-    for experiment_result, model, dataset, description  in results:
-
-        for k, measure in experiment_result.rotated_measures.items():
-            table[f"{dataset}_{model}_rotated__{k}_{experiment_result.options}"] = measure
-
-        for k, measure in experiment_result.unrotated_measures.items():
-            table[f"{dataset}_{model}_unrotated__{k}_{experiment_result.options}"] = measure
+    for r  in results:
+        all={"rotated":r.rotated_measures,"unrotated":r.rotated_measures}
+        for training_mode,measures in all.items():
+            for k, measure in measures.items():
+                table[f"{r.dataset_name}_{r.model_name}_{training_mode}_{k}_{r.options}"] = measure
     return table
 
 # def global_results_latex(results,stratified):
@@ -59,7 +60,7 @@ def plot_last_layers_per_class(results,folderpath):
     for result, model, dataset, conv_aggregation in results:
         var,stratified_layer_vars,var_all_dataset,rotated_var,rotated_stratified_layer_vars,rotated_var_all_dataset=result
         combination_folderpath=os.path.join(folderpath,
-                                            visualization.plots_folder(model, dataset, conv_aggregation))
+                                            variance_result.plots_folder(model, dataset, conv_aggregation))
         os.makedirs(combination_folderpath,exist_ok=True)
         plot_last_layer(var,f"{conv_aggregation}_unrotated",model,dataset,combination_folderpath)
         plot_last_layer(rotated_var,f"{conv_aggregation}_rotated",model,dataset,combination_folderpath)
@@ -142,38 +143,33 @@ def print_global_results(table_results):
         measure_string=", ".join(values)
         print(key,measure_string)
 
+def plot_heatmaps(results:List[VarianceExperimentResult]):
+    timestamp=strftime("%Y-%m-%d_%H:%M:%S", gmtime())
 
+    for r in results:
+        folderpath = variance_result.plots_folder(r)
 
-
-def plot_heatmaps(variance_experiment_result):
-
-    for experiment_result, model_name, dataset_name, description  in results:
-        folderpath = visualization.plots_folder(model_name, dataset_name,description)
-
-        rotated_results=[m.layers for m in experiment_result.rotated_measures.values()]
-        unrotated_results = [m.layers for m in experiment_result.unrotated_measures.values()]
+        rotated_results=[m.layers for m in r.rotated_measures.values()]
+        unrotated_results = [m.layers for m in r.unrotated_measures.values()]
         values = rotated_results+unrotated_results
-        if options
+
         vmin, vmax = visualization.outlier_range_all(values, iqr_away=3)
         vmin=0
-
-        for measure_name,measure in experiment_result.rotated_measures.items():
-            name =f"{dataset_name}_{model_name}_rotated_{measure_name}"
-            title=f"{name}\n{experiment_result.options}"
-            visualization.plot_heatmap(title,measure,experiment_result.activation_names,vmin=vmin,savefig=folderpath,savefig_name=name)
-
-        for measure_name, measure in experiment_result.unrotated_measures.items():
-            name = f"{dataset_name}_{model_name}_unrotated_{measure_name}"
-            title = f"{name}\n{experiment_result.options}"
-            visualization.plot_heatmap(title, measure,experiment_result.activation_names,vmin=vmin, savefig=folderpath,
-                                       savefig_name=name)
+        all_results={"rotated":rotated_results,"unrotated":unrotated_results}
+        for model_training,result in all_results.items():
+            for measure_name,measure in r.rotated_measures.items():
+                detail=f"{r.dataset_name}_{r.model_name}_{model_training}_{measure_name}"
+                name =f"{model_training}_{measure_name}"
+                title=f"{detail}\n{r.description()}"
+                visualization.plot_heatmap(title,measure,r.activation_names,vmin=vmin,vmax=vmax,savefig=folderpath,savefig_name=name)
 
 
 
-from pytorch.experiment.variance import VarianceExperimentResult
+
 
 results_folderpath=os.path.expanduser("~/variance_results/")
-results=load_results(visualization.results_folder)
+results=load_results(variance_result.results_folder)
+print(f"Found {len(results)} results, plotting..")
 table_results=as_table(results)
 #print_global_results(table_results)
 plot_heatmaps(results)

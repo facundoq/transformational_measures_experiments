@@ -17,7 +17,7 @@ from pytorch.experiment import rotation
 model,rotated_model,scores,config=rotation.load_models(dataset,model_name,use_cuda)
 
 
-from variance_measure.pytorch_activations_iterator import PytorchActivationsIterator
+from variance_measure.iterators.pytorch_activations_iterator import PytorchActivationsIterator
 import numpy as np
 from testing.utils import plot_image_grid
 from variance_measure import transformations as tf

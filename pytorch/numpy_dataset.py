@@ -10,7 +10,14 @@ class NumpyDataset(Dataset):
 
     @classmethod
     def stratify_dataset(cls,y,*data_sources):
+        '''
 
+        :param y: class labels
+        :param data_sources: list of numpy arrays. The first dim of each array must match len(y)
+        :return: a list of NumpyDatasets, one for each class in np.unique(y), with the samples corresponding to each class
+        '''
+        for d in data_sources:
+            assert(d.shape[0]==y.shape[0])
         classes = np.unique(y)
         classes.sort()
 

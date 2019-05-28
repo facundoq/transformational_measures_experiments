@@ -1,4 +1,5 @@
 import abc
+from typing import List
 
 class ActivationsIterator:
 
@@ -17,4 +18,8 @@ class ActivationsIterator:
 
     @abc.abstractmethod
     def samples_first(self):
+        pass
+
+    @abc.abstractmethod
+    def activation_names(self)-> List[str]:
         pass

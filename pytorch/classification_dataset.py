@@ -1,6 +1,6 @@
 from torch.utils.data import DataLoader
 
-from variance_measure.pytorch_activations_iterator import ImageDataset
+from variance_measure.iterators.pytorch_activations_iterator import ImageDataset
 from pytorch.numpy_dataset import NumpyDataset
 def get_data_generator(x,y,batch_size):
 

@@ -18,9 +18,8 @@ model,rotated_model,scores,config=rotation.load_models(dataset,model_name,use_cu
 
 print(model.name, dataset.name)
 
-from variance_measure.pytorch_activations_iterator import PytorchActivationsIterator
+from variance_measure.iterators.pytorch_activations_iterator import PytorchActivationsIterator
 import numpy as np
-from testing.utils import plot_image_grid
 from variance_measure import transformations as tf
 import matplotlib
 matplotlib.use('Agg')
@@ -41,11 +40,11 @@ transformations=tf.generate_transformations(transformations_parameters_combinati
 
 iterator = PytorchActivationsIterator(model,numpy_dataset,transformations,batch_size=256 )
 
-from variance_measure import variance
+from variance_measure.measures import variance
 
 options={"conv_aggregation_function":"sum","var_or_std":"var"}
 
-measure=variance.NormalizedMeasure(iterator,options)
+measure= variance.NormalizedMeasure(iterator, options)
 
 import time
 
@@ -62,8 +61,8 @@ begin = time.time()
 stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test,dataset.x_test)
 stratified_iterators = [PytorchActivationsIterator(model,numpy_dataset,transformations,batch_size=16) for numpy_dataset in stratified_numpy_datasets]
 
-variance_measure = lambda iterator: variance.NormalizedMeasure(iterator,options).eval()
-stratified_measure = variance.StratifiedMeasure(stratified_iterators,variance_measure)
+variance_measure = lambda iterator: variance.NormalizedMeasure(iterator, options).eval()
+stratified_measure = variance.StratifiedMeasure(stratified_iterators, variance_measure)
 stratified_variance_result,class_variance_result = stratified_measure.eval()
 print(f"Time elapsed (stratified): {time.time()-begin}")
 
