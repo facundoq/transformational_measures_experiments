@@ -28,31 +28,33 @@ class ImageDataset(Dataset):
         elif dataformat=="NHWC":
             n, w, h, c = x.shape
         else:
-            raise ValueError
+            raise ValueError(f"Unsupported data format: {dataformat}.")
         self.h = h
         self.w = w
         mu, std = self.calculate_mu_std(x, dataformat)
 
         transformations = [transforms.ToPILImage(), ]
 
-        if rotation is None:
-            rotation = 0
-        if translation is None:
-            translation = (0,0)
-        if scale is None:
-            scale = 1
-
-
-
-        def affine_transform(image):
-            return functional.affine(image,shear=0,angle=rotation,translate=translation,
-                              scale=scale,resample=Image.BILINEAR)
-        affine=transforms.Lambda(affine_transform)
-        transformations.append(affine)
-
-        if not translation is None or not scale is None:
-            scale_transformation = transforms.Resize((h,w))
-            transformations.append(scale_transformation)
+        # if rotation is None:
+        #     rotation = 0
+        # if translation is None:
+        #     translation = (0,0)
+        # if scale is None:
+        #     scale = 1
+        #
+        #
+        #
+        # def affine_transform(image):
+        #     return functional.affine(image,shear=0,angle=rotation,translate=translation,
+        #                       scale=scale,resample=Image.BILINEAR)
+        # affine=transforms.Lambda(affine_transform)
+        # transformations.append(affine)
+        #
+        # if not translation is None or not scale is None:
+        #     scale_transformation = transforms.Resize((h,w))
+        #     transformations.append(scale_transformation)
+        if rotation is not None:
+            transformations.append(transforms.RandomRotation(degrees=rotation))
 
         transformations.append(transforms.ToTensor())
         transformations.append(transforms.Normalize(mu, std))
@@ -75,7 +77,8 @@ class ImageDataset(Dataset):
         std = xf.std(dim=dims) / 255
 
         std[std == 0] = 1
-        return mu,std
+        return mu.numpy(), std.numpy()
+
     def __len__(self):
         return len(self.dataset)
 

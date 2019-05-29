@@ -26,7 +26,7 @@ else:
 
 
 
-verbose=False
+verbose=True
 
 dataset = datasets.get(dataset_name)
 if verbose:
@@ -53,7 +53,6 @@ config=rotation.TrainRotatedConfig(batch_size=batch_size,
                        pre_rotated_epochs=pre_rotated_epochs,
                         optimizer=optimizer,rotated_optimizer=rotated_optimizer,
                       use_cuda=use_cuda)
-
 
 scores=rotation.run(config,model,rotated_model,dataset,plot_accuracy=True,save_plots=True)
 rotation.print_scores(scores)
