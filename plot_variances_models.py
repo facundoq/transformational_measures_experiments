@@ -6,9 +6,9 @@ plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
 from variance_measure import visualization
 
-from experiment import variance_result
+from experiment import variance
 import os
-from experiment.variance_result import VarianceExperimentResult
+from experiment.variance import VarianceExperimentResult
 from time import gmtime, strftime
 
 
@@ -16,7 +16,7 @@ def load_results(folderpath)-> List[VarianceExperimentResult]:
     results = []
     for filename in os.listdir(folderpath):
         path = os.path.join(folderpath, filename)
-        result = variance_result.load_results(path)
+        result = variance.load_results(path)
         results.append(result)
     return results
 
@@ -60,7 +60,7 @@ def plot_last_layers_per_class(results,folderpath):
     for result, model, dataset, conv_aggregation in results:
         var,stratified_layer_vars,var_all_dataset,rotated_var,rotated_stratified_layer_vars,rotated_var_all_dataset=result
         combination_folderpath=os.path.join(folderpath,
-                                            variance_result.plots_folder(model, dataset, conv_aggregation))
+                                            variance.plots_folder(model, dataset, conv_aggregation))
         os.makedirs(combination_folderpath,exist_ok=True)
         plot_last_layer(var,f"{conv_aggregation}_unrotated",model,dataset,combination_folderpath)
         plot_last_layer(rotated_var,f"{conv_aggregation}_rotated",model,dataset,combination_folderpath)
@@ -147,7 +147,7 @@ def plot_heatmaps(results:List[VarianceExperimentResult]):
     timestamp=strftime("%Y-%m-%d_%H:%M:%S", gmtime())
 
     for r in results:
-        folderpath = variance_result.plots_folder(r)
+        folderpath = variance.plots_folder(r)
 
         rotated_results=[m.layers for m in r.rotated_measures.values()]
         unrotated_results = [m.layers for m in r.unrotated_measures.values()]
@@ -168,7 +168,7 @@ def plot_heatmaps(results:List[VarianceExperimentResult]):
 
 
 results_folderpath=os.path.expanduser("~/variance_results/")
-results=load_results(variance_result.results_folder)
+results=load_results(variance.results_folder)
 print(f"Found {len(results)} results, plotting..")
 table_results=as_table(results)
 #print_global_results(table_results)

@@ -41,3 +41,6 @@ def plots_folder(r:VarianceExperimentResult):
     if not os.path.exists(folderpath):
         os.makedirs(folderpath,exist_ok=True)
     return folderpath
+
+def parse_parameters():
+    

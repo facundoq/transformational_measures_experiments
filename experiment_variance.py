@@ -26,6 +26,7 @@ verbose=True
 
 use_cuda=torch.cuda.is_available()
 
+
 dataset = datasets.get(dataset_name)
 if verbose:
     print(dataset.summary())
@@ -78,7 +79,7 @@ def experiment(model,dataset,transformations,base_measure,options):
         measures[f"{m.source}"] = m
     return measures
 
-from experiment import variance_result
+from experiment import variance
 
 
 measures={"MeanNormalizedMeasure":variance.MeanNormalizedMeasure,
@@ -96,7 +97,7 @@ measure_id=options["measure"]
 measure_class=measures[measure_id]
 unrotated_measures_results=experiment(unrotated_model, dataset, transformations, measure_class, options)
 rotated_measures_results=experiment(rotated_model, dataset, transformations, measure_class, options)
-result=variance_result.VarianceExperimentResult(unrotated_model.name, dataset.name, unrotated_model.activation_names(), dataset.labels, transformations, options, rotated_measures_results, unrotated_measures_results)
-variance_result.save_results(result)
+result=variance.VarianceExperimentResult(unrotated_model.name, dataset.name, unrotated_model.activation_names(), dataset.labels, transformations, options, rotated_measures_results, unrotated_measures_results)
+variance.save_results(result)
 
 
