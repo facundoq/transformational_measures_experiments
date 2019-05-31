@@ -3,7 +3,7 @@ import pickle
 import matplotlib.pyplot as plt
 import os
 
-from variance_measure.measures.result import MeasureResult
+from transformation_measure.measure.base import MeasureResult
 
 def plot_heatmap(title, m:MeasureResult, layer_names, vmin=0, vmax=None, savefig=None, savefig_name=None):
 

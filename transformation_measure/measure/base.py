@@ -1,12 +1,14 @@
+import abc
+from transformation_measure.iterators.activations_iterator import ActivationsIterator
+
+from .stratified import StratifiedMeasure
+
 import numpy as np
-from nptyping import Array
 from typing import Dict, List, Tuple
 from .utils import RunningMean
-
-
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 
-class MeasureResult:
+class   MeasureResult:
     def __init__(self,layers:List[np.ndarray],source:str):
         self.layers=layers
         self.source=source
@@ -49,3 +51,23 @@ class MeasureResult:
             results.append(flat_activations)
 
         return MeasureResult(results,f"{self.source}_conv_agg_{conv_aggregation_function}")
+
+
+from enum import Enum
+class MeasureFunction(Enum):
+    var = "var"
+    std = "std"
+    meanabs = "meanabs"
+    mean = "mean"
+
+
+class Measure:
+    def __repr__(self):
+        return f"{self.__class__.__name__}"
+
+    @abc.abstractmethod
+    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
+        '''
+
+        '''
+        pass

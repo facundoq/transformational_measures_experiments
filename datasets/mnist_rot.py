@@ -76,4 +76,4 @@ def load_data(folderpath):
 
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     input_shape = x_train.shape[1:]
-    return x_train, x_test, y_train, y_test, input_shape, labels
+    return (x_train, x_test), (y_train, y_test), input_shape, labels

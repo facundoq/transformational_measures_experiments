@@ -9,24 +9,28 @@ def generate_transformation_parameter_combinations(transformation_parameters):
     return itertools.product(rotation, translation, scale)
 
 class AffineTransformation:
-    def __init__(self,parameters,image_size):
+    def __init__(self,parameters):
         self.parameters=parameters
-        self.image_size=image_size
-        self.transform=self.generate_transformation(parameters,image_size)
+        self.transform=self.generate_transformation(parameters)
 
-    def generate_transformation(self,transformation_parameters, image_size):
+    def generate_transformation(self,transformation_parameters):
         rotation, translation, scale = transformation_parameters
         transformation = skimage_transform.AffineTransform(scale=scale, rotation=rotation, shear=None,
                                                            translation=translation)
-        shift_y, shift_x = (np.array(image_size) - 1) / 2.
+
+        return transformation
+
+    def center_transformation(self,transformation,image_size):
+        shift_y, shift_x = (image_size - 1) / 2.
         shift = skimage_transform.AffineTransform(translation=[-shift_x, -shift_y])
         shift_inv = skimage_transform.AffineTransform(translation=[shift_x, shift_y])
-
-        adjusted_transformation = shift + (transformation + shift_inv)
-        return adjusted_transformation
-
+        return shift + (transformation+ shift_inv)
     def __call__(self,image):
-        return skimage_transform.warp(image, self.transform.inverse,cval=0.0,preserve_range=True)
+        h,w,c=image.shape
+        image_size=np.array([h, w])
+        centered_transformation=self.center_transformation(self.transform,image_size)
+        return skimage_transform.warp(image, centered_transformation.inverse,cval=0.0,preserve_range=True)
+
     def __str__(self):
         return f"Transformation {self.parameters}"
 

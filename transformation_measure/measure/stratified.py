@@ -1,7 +1,7 @@
 import numpy as np
 from typing import Dict, List, Tuple
-from .result import MeasureResult
-from variance_measure.iterators.activations_iterator import ActivationsIterator
+from transformation_measure.measure.base import MeasureResult
+from transformation_measure.iterators.activations_iterator import ActivationsIterator
 
 class StratifiedMeasure:
     def __init__(self,classes_iterators:List[ActivationsIterator],variance_measure):
