@@ -1,8 +1,5 @@
 import abc
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-
-from .stratified import StratifiedMeasure
-
 import numpy as np
 from typing import Dict, List, Tuple
 from .utils import RunningMean

@@ -1,7 +1,12 @@
+#!/usr/bin/env python
+# PYTHON_ARGCOMPLETE_OK
+
 ## Calculate the variance of each activation in a model.
 ## NOTE:
 ## You should run "experiment_rotation.py" before this script to generate and train the models for
 ## a given dataset/model combination
+
+
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -15,7 +20,7 @@ import torch
 import pytorch.experiment.utils as utils
 from  experiment import variance
 if __name__ == "__main__":
-    p=variance.parse_parameters()
+    p=variance.parse_parameters(variance.possible_experiment_parameters())
 
 
     print(f"Experimenting with parameters: {p}")
