@@ -17,7 +17,7 @@ class NormalizedMeasure(Measure):
         v_transformations=self.numerator_measure.eval(activations_iterator)
 
         v=self.eval_v_normalized(v_transformations.layers,v_samples.layers)
-        return MeasureResult(v,f"V_{self}")
+        return MeasureResult(v,self)
 
     def eval_v_normalized(self,v_transformations,v_samples):
         eps = 0

@@ -53,7 +53,7 @@ variance_result,v_transformation,v_sample = measure.eval()
 print(variance_result)
 print(f"Time elapsed(normal): {time.time()-begin}")
 
-print("average_per_layer ", variance_result.average_per_layer())
+print("average_per_layer ", variance_result.per_layer_average())
 print("weighted_global_average ", variance_result.weighted_global_average())
 print("global_average ",variance_result.global_average())
 

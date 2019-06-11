@@ -35,5 +35,5 @@ class StratifiedMeasure:
         layer_class_vars=[list(i) for i in zip(*class_variance_layers)]
         # compute average variance of each layer over classses
         layer_vars=[ sum(layer_values)/len(layer_values) for layer_values in layer_class_vars]
-        return MeasureResult(layer_vars,f"{source}_stratified")
+        return MeasureResult(layer_vars,self)
 

@@ -43,43 +43,45 @@ models=[SimpleConv.__name__
 
 
 def possible_experiment_parameters():
-    import numpy as np
-    dataset_percentages=[.1,.5,1.0]
+
 
     transformations=[tm.SimpleAffineTransformationGenerator(n_rotations=16)]
-
-    measures=[tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)]
-
+    measures=[tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
+              ,tm.NormalizedMeasure(tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum),tm.SampleMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum))
+              ,
+              ]
+    dataset_percentages = [.1, .5, 1.0]
     dataset_subsets=[DatasetSubset.train,DatasetSubset.test]
+    dataset_parameters=[]
+    for dataset in datasets:
+        for dataset_subset in dataset_subsets:
+            for dataset_percentage in dataset_percentages:
+                dataset_parameters.append(DatasetParameters(dataset,dataset_subset,dataset_percentage))
+    parameters=[datasets, transformations, measures, models]
 
-    experiment_parameters=[]
-    for model in models:
-        for dataset in datasets:
-            for dataset_subset in dataset_subsets:
-                for dataset_percentage in dataset_percentages:
-                    dataset_parameters=DatasetParameters(dataset,dataset_subset,dataset_percentage)
-                    for transformation in transformations:
-                        for measure in measures:
-                            p=Parameters(model,dataset_parameters,transformation,measure)
-                            experiment_parameters.append(p)
-
-    experiment_parameters={p.id():p for p in experiment_parameters}
-    return experiment_parameters
+    def list2dict(list):
+        return {str(x): x for x in list}
+    parameters=[ list2dict(p) for p in parameters ]
+    return parameters
 
 import argcomplete, argparse
 
-def parse_parameters(possible_parameters)->Parameters:
-    print("init")
-    parser = argparse.ArgumentParser()
-    choices= [str(p) for p in possible_parameters.keys()]
-    print(choices)
-    parser.add_argument("--parameters", choices=choices)
-    argcomplete.autocomplete(parser)
-    print("parseargs")
-    args = parser.parse_args()
-    print("after")
+def parse_parameters()->Parameters:
+    datasets, transformations, measures, models=possible_experiment_parameters()
 
-    return possible_parameters[args.parameters]
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-model", choices=models.keys(),required=True)
+    parser.add_argument("-dataset", choices=datasets.keys(),required=True)
+    parser.add_argument("-measure", choices=measures.keys(),required=True)
+    parser.add_argument("-transformation", choices=transformations.keys(),required=True)
+    argcomplete.autocomplete(parser)
+    args = parser.parse_args()
+    print(args)
+
+    return Parameters(models[args.model],
+                      datasets[args.dataset],
+                      transformations[args.transformation],
+                      measures[args.measure])
 
 
 class VarianceExperimentResult:

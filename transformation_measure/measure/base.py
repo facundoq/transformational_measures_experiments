@@ -6,17 +6,17 @@ from .utils import RunningMean
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 
 class   MeasureResult:
-    def __init__(self,layers:List[np.ndarray],source:str):
+    def __init__(self,layers:List[np.ndarray],measure:'Measure'):
         self.layers=layers
-        self.source=source
+        self.measure=measure
 
     def __repr__(self):
-        return f"MeasureResult {self.source}"
+        return f"MeasureResult {self.measure}"
 
     def all_1d(self):
         return np.any([ len(l.shape)==1 for l in self.layers])
 
-    def average_per_layer(self) -> np.ndarray:
+    def per_layer_average(self) -> np.ndarray:
 
         result = []
         for layer in self.layers:
@@ -26,7 +26,7 @@ class   MeasureResult:
         return np.array(result)
 
     def weighted_global_average(self):
-        return self.average_per_layer().mean()
+        return self.per_layer_average().mean()
 
     def global_average(self)-> float:
         rm = RunningMean()
@@ -47,7 +47,7 @@ class   MeasureResult:
                 flat_activations = layer.copy()
             results.append(flat_activations)
 
-        return MeasureResult(results,f"{self.source}_conv_agg_{conv_aggregation_function}")
+        return MeasureResult(results,self.measure)
 
 
 from enum import Enum

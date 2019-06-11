@@ -1,6 +1,6 @@
 
 from . import cluttered_mnist,mnist_rot,mnist,fashion_mnist,cifar10
-
+from typing import List
 
 import numpy as np
 import os
@@ -38,7 +38,9 @@ def get(dataset,dataformat="NCHW",path=os.path.expanduser("~/.datasets/")):
 
 
 class ClassificationDataset:
-    def __init__(self,name,x_train,x_test,y_train,y_test,num_classes,input_shape,labels,dataformat):
+    def __init__(self,name:str,
+                 x_train:np.ndarray,x_test:np.ndarray,y_train:np.ndarray,y_test:np.ndarray,
+                 num_classes:int,input_shape:np.ndarray,labels:List[str],dataformat:str):
         self.name=name
         self.x_train=x_train
         self.x_test=x_test
@@ -48,6 +50,26 @@ class ClassificationDataset:
         self.input_shape=input_shape
         self.labels=labels
         self.dataformat=dataformat
+
+    def reduce_size_subset(self,percentage,x,y):
+        n=len(y)
+        
+        for i in range(self.num_classes):
+            class_indices= y==i
+
+            indices = np.random.permutation(n)
+        indices = indices[:int(n * percentage)]
+        x = self.x_train[indices, :]
+        y = self.y_train[indices, :]
+        return x,y
+
+    def reduce_size(self,percentage):
+        x_train,y_train=self.reduce_size_subset(percentage,self.x_train,self.y_train)
+        x_test, y_test = self.reduce_size_subset(percentage, self.x_test, self.y_test)
+
+
+        return ClassificationDataset(self.name,x_train,x_test, y_train,y_test
+                                     ,self.num_classes,self.input_shape,self.labels,self.dataformat)
 
     def summary(self):
         result=f"Image Classification Dataset {self.name}\n" \

@@ -96,7 +96,3 @@ class SimpleAffineTransformationGenerator:
             translations.append((d, d))
 
         return rotations,translations,scales
-
-
-
-

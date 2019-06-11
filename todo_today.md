@@ -1,4 +1,5 @@
-* show versions of measure
-* fig bugs
-* implement a simplified iterator
-* implement v_tr, v_s and v_norm as different measures
+* Finish implementing parser for options
+* Separate training data aug params and testing data aug
+* Use the same data aug pipeline for training
+* 
+* Run experiments on all params

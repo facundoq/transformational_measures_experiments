@@ -139,7 +139,7 @@ def print_global_results(table_results):
     print("Per layer, collapsed")
     for key in sorted(table_results.keys()):
         measure=table_results[key].collapse_convolutions("mean")
-        values=[f"{l:.2}" for l in measure.average_per_layer()]
+        values=[f"{l:.2}" for l in measure.per_layer_average()]
         measure_string=", ".join(values)
         print(key,measure_string)
 

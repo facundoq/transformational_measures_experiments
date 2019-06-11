@@ -13,7 +13,7 @@ class TransformationMeasure(Measure):
         self.conv_aggregation=conv_aggregation
 
     def __repr__(self):
-        return f"{self.__class__.__name__}" \
+        return f"TM" \
             f"_f:{self.measure_function.value}" \
             f"_convagg:{self.conv_aggregation.value}"
 
@@ -30,7 +30,7 @@ class TransformationMeasure(Measure):
                 mean_variances_running[j].update(layer_measure)
         # calculate the final mean over all samples (and layers)
         mean_variances = [b.mean() for b in mean_variances_running]
-        return MeasureResult(mean_variances,f"{self}")
+        return MeasureResult(mean_variances,self)
 
     def layer_measure(self,layer_activations:np.ndarray):
         functions={

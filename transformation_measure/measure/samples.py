@@ -32,7 +32,7 @@ class SampleMeasure(Measure):
                 layer_mean_variances_running.update(samples_variance)
         # calculate the final mean over all transformations (and layers)
         mean_variances = [b.mean() for b in mean_variances_running]
-        return MeasureResult(mean_variances,f"v_samples,{self.var_or_std}")
+        return MeasureResult(mean_variances,self)
 
 
 

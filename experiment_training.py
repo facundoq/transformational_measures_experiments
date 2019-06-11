@@ -16,8 +16,10 @@ from pytorch.experiment import model_loading,rotation
 
 import pytorch.experiment.utils as utils
 import transformations
+import argparse,argcomplete
 
 if __name__ == "__main__":
+
     model_name,dataset_name,transformation_names=utils.parse_model_and_dataset("Experiment: train vanilla and transformed models.")
 else:
     dataset_name="cifar10"
