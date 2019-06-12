@@ -11,26 +11,24 @@ import torch
 import logging
 
 from pytorch.utils import autolabel
-
+from torch import nn
+from torch.optim.optimizer import Optimizer
 
 TrainRotatedConfig = namedtuple('TrainRotatedConfig', 'batch_size epochs pre_rotated_epochs rotated_epochs optimizer rotated_optimizer use_cuda')
+from experiment_training import Parameters,Options
+from  datasets import ClassificationDataset
 
-def run(config,model, rotated_model, dataset,
-                  plot_accuracy=False,loss_function=torch.nn.NLLLoss(),save_plots=False):
+def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
+        dataset:ClassificationDataset,loss_function=torch.nn.NLLLoss()):
 
     os.makedirs(experiment_plot_path(model.name, dataset.name),exist_ok=True)
-    train_dataset,rotated_train_dataset=get_data_generator(dataset.x_train,dataset.y_train, config.batch_size)
-    test_dataset, rotated_test_dataset = get_data_generator(dataset.x_test, dataset.y_test, config.batch_size)
+    train_dataset =get_data_generator(dataset.x_train,dataset.y_train, o.batch_size)
+    test_dataset = get_data_generator(dataset.x_test, dataset.y_test, o.batch_size)
 
-    # UNROTATED DATASET
-    if config.epochs == 0:
-        print(f"### Skipping training model |{model.name}| with unrotated dataset |{dataset.name}|")
-        history={}
-    else:
-        print(f"### Training model |{model.name}| with unrotated dataset |{dataset.name}| for {config.epochs} epochs...",flush=True)
-        history = train(model,config.epochs,config.optimizer,config.use_cuda,train_dataset,test_dataset,loss_function)
-        if plot_accuracy:
-            accuracy_plot_path =plot_history(history,"unrotated",model.name,dataset.name,save_plots)
+    history = train(model,p.epochs,optimizer,o.use_cuda,train_dataset,test_dataset,loss_function)
+
+    if o.save_plots:
+        accuracy_plot_path =plot_history(history,"unrotated",model.name,dataset.name)
 
     # ROTATED MODEL, UNROTATED DATASET
     if config.pre_rotated_epochs == 0:
@@ -41,17 +39,6 @@ def run(config,model, rotated_model, dataset,
                                 train_dataset,test_dataset,loss_function)
         if plot_accuracy:
             plot_history(pre_rotated_history,"pre_rotated",model.name,dataset.name,save_plots)
-
-
-        # ROTATED DATASET
-    if config.rotated_epochs == 0:
-        print(f"### Skipping training of rotated model |{model.name}| with rotated dataset |{dataset.name}|")
-    else:
-        print(f"### Training rotated model |{model.name}| with rotated dataset |{dataset.name}| for {config.rotated_epochs} epochs...",flush=True)
-        rotated_history = train(rotated_model, config.rotated_epochs, config.rotated_optimizer, config.use_cuda,
-                                rotated_train_dataset,rotated_test_dataset,loss_function)
-        if plot_accuracy:
-            rotated_accuracy_plot_path=plot_history(rotated_history,"rotated",rotated_model.name,dataset.name,save_plots)
 
     print("### Testing both models on both datasets...",flush=True)
 
@@ -135,7 +122,7 @@ def train_test_accuracy_barchart(model_name, dataset_name, accuracies,savefig):
     return path
 
 
-def plot_history(history,name,model_name,dataset_name,savefig):
+def plot_history(history,name,model_name,dataset_name):
     from time import gmtime, strftime
     t=strftime("%Y_%m_%d_%H_%M_%S", gmtime())
     import os
@@ -159,9 +146,8 @@ def plot_history(history,name,model_name,dataset_name,savefig):
     a2.legend(['train', 'test'], loc='upper right')
     f.suptitle(f"{model_name} trained with {name} {dataset_name}")
     plt.subplots_adjust(wspace=0.3)
-    if savefig:
-        plt.savefig(path)
-    plt.show()
+    plt.savefig(path)
+    plt.close(f)
     return path
 
 
@@ -212,3 +198,21 @@ def load_models_state(dataset_name,model_name,use_cuda):
 def print_scores(scores):
     for k, v in scores.items():
         print('%s score: loss=%f, accuracy=%f' % (k, v[0], v[1]))
+
+from torch.utils.data import DataLoader
+
+from transformation_measure.iterators.pytorch_activations_iterator import ImageDataset
+from pytorch.numpy_dataset import NumpyDataset
+
+def get_data_generator(x,y,batch_size):
+
+    dataset=NumpyDataset(x,y)
+
+    image_dataset=ImageDataset(dataset)
+    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=1)
+
+    rotated_dataset = NumpyDataset(x, y)
+    image_rotated_dataset = ImageDataset(rotated_dataset, rotation=(-180,180))
+    rotated_dataloader= DataLoader(image_rotated_dataset , batch_size=batch_size, shuffle=True, num_workers=1)
+
+    return dataloader,rotated_dataloader

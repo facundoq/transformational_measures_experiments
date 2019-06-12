@@ -36,14 +36,14 @@ if __name__ == "__main__":
         if verbose:
             print(dataset.summary())
 
-        from pytorch.experiment import rotation
-        unrotated_model, rotated_model, scores, config = rotation.load_models(dataset, p.model, use_cuda)
+        from pytorch.experiment import train_transformation
+        unrotated_model, rotated_model, scores, config = train_transformation.load_models(dataset, p.model, use_cuda)
 
         if verbose:
             print("### ", unrotated_model)
             print("### ", rotated_model)
             print("### Scores obtained:")
-            rotation.print_scores(scores)
+            train_transformation.print_scores(scores)
 
         import transformation_measure as tm
 

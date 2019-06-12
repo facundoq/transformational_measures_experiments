@@ -1,6 +1,8 @@
 from pytorch import training, models
 
-from torch import optim
+from torch import optim,nn
+from torch.optim.optimizer import Optimizer
+from typing import Tuple
 
 class ExperimentModel:
     def __init__(self, model, parameters, optimizer):
@@ -14,64 +16,51 @@ def get_model_names():
         , models.VGGLike.__name__
         , models.ResNet.__name__]
 
-def get_model(name,dataset,use_cuda):
-    def setup_model(model,lr,wd):
+
+def get_model(name:str,dataset,use_cuda:bool)->Tuple[nn.Module,Optimizer]:
+
+    def setup_model(model,lr,wd)->Optimizer:
         if use_cuda:
             model = model.cuda()
         parameters = training.add_weight_decay(model.named_parameters(), wd)
         optimizer = optim.Adam(parameters, lr=lr)
         return optimizer
 
-    def simple_conv():
+    def simple_conv()->Tuple[nn.Module,Optimizer]:
         conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
         fc_filters = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
         model = models.SimpleConv(dataset.input_shape, dataset.num_classes,
                                   conv_filters=conv_filters[dataset.name], fc_filters=fc_filters[dataset.name])
         optimizer=setup_model(model,0.001,1e-9)
-        rotated_model = models.SimpleConv(dataset.input_shape, dataset.num_classes,
-                                          conv_filters=conv_filters[dataset.name],
-                                          fc_filters=fc_filters[dataset.name])
-        rotated_optimizer = setup_model(rotated_model, 0.001, 1e-9)
-        return model, optimizer, rotated_model, rotated_optimizer
 
-    def all_convolutional():
+        return model, optimizer
+
+    def all_convolutional()->Tuple[nn.Module,Optimizer]:
         filters = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32}
         model = models.AllConvolutional(dataset.input_shape, dataset.num_classes,
                                         filters=filters[dataset.name])
         optimizer=setup_model(model,1e-3,1e-13)
-        rotated_model = models.AllConvolutional(dataset.input_shape, dataset.num_classes,
-                                                filters=filters[dataset.name])
-        rotated_optimizer = setup_model(rotated_model, 1e-3, 1e-13)
+        return model, optimizer
 
-        return model, optimizer, rotated_model, rotated_optimizer
-
-    def vgglike():
+    def vgglike()->Tuple[nn.Module,Optimizer]:
         filters = {"mnist": 16, "cifar10": 64,}
         fc= {"mnist": 64,  "cifar10": 128, }
         model = models.VGGLike(dataset.input_shape, dataset.num_classes,
                                conv_filters=filters[dataset.name], fc=fc[dataset.name])
         optimizer=setup_model(model,0.00001,1e-13)
-        rotated_model = models.VGGLike(dataset.input_shape, dataset.num_classes,
-                                       conv_filters=filters[dataset.name], fc=fc[dataset.name])
-        rotated_optimizer = setup_model(rotated_model, 0.00001, 1e-13)
+        return model, optimizer
 
-        return model, optimizer, rotated_model, rotated_optimizer
-    def resnet():
+    def resnet()->Tuple[nn.Module,Optimizer]:
         resnet_version = {"mnist": models.ResNet18,
                           "cifar10": models.ResNet50,
                           "fashion_mnist": models.ResNet34,
                           }
-
         model = resnet_version[dataset.name](dataset.input_shape, dataset.num_classes)
         optimizer=setup_model(model,0.00001,1e-13)
-        rotated_model = resnet_version[dataset.name](dataset.input_shape, dataset.num_classes)
-        rotated_optimizer = setup_model(rotated_model, 0.00001, 1e-13)
-
-        return model, optimizer, rotated_model, rotated_optimizer
+        return model, optimizer
 
     all_models = {models.SimpleConv.__name__: simple_conv,
               models.AllConvolutional.__name__: all_convolutional,
-              # pytorch_models.AllConv.__name__: all_conv,
               models.VGGLike.__name__: vgglike,
               models.ResNet.__name__: resnet,
               }
@@ -79,19 +68,25 @@ def get_model(name,dataset,use_cuda):
         raise ValueError(f"Model \"{name}\" does not exist. Choices: {', '.join(all_models .keys())}")
     return all_models [name]()
 
-def get_epochs(dataset,model):
+import transformation_measure as tm
+import numpy as np
+def get_epochs(dataset:str,model:str,t:tm.SimpleAffineTransformationGenerator)-> int:
+
     if model== models.SimpleConv.__name__:
         epochs={'cifar10':70,'mnist':5,'fashion_mnist':12}
-        rotated_epochs={'cifar10':120,'mnist':15,'fashion_mnist':60,}
     elif model== models.AllConvolutional.__name__:
         epochs={'cifar10':32,'mnist':15,'fashion_mnist':12}
-        rotated_epochs={'cifar10':60,'mnist':50,'fashion_mnist':60,}
     elif model== models.VGGLike.__name__:
         epochs={'cifar10':70,'mnist':15,'fashion_mnist':12,}
-        rotated_epochs={'cifar10':150,'mnist':50,'fashion_mnist':60,}
     elif model== models.ResNet.__name__:
         epochs={'cifar10':70,'mnist':15,'fashion_mnist':12}
-        rotated_epochs={'cifar10':150,'mnist':50,'fashion_mnist':60}
     else:
-        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(get_model_names().keys())}")
-    return epochs[dataset],rotated_epochs[dataset]
+        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(get_model_names())}")
+
+    n=len(t)
+    if n>np.e:
+        factor=np.log(n)
+    else:
+        factor=1
+
+    return epochs[dataset]*factor
