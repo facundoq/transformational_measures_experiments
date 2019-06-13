@@ -33,6 +33,8 @@ class ClassificationDataset:
         return x, y
 
     def reduce_size(self, percentage):
+        if (percentage==1):
+            return self
         x_train, y_train = self.reduce_size_subset(percentage, self.x_train, self.y_train)
         x_test, y_test = self.reduce_size_subset(percentage, self.x_test, self.y_test)
 

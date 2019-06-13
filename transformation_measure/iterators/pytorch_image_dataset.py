@@ -3,62 +3,38 @@ from torchvision import transforms
 from torchvision.transforms import functional
 from torch.utils.data import Dataset
 from PIL import Image
-
-
+import numpy as np
+import transformation_measure as tm
 
 class ImageDataset(Dataset):
 
-    def __init__(self, image_dataset,rotation=None,translation=None,scale=None,dataformat="NCHW"):
+    def __init__(self, image_dataset, transformations:tm.TransformationSet=tm.SimpleAffineTransformationGenerator(), dataformat="NCHW"):
 
         self.dataset=image_dataset
         self.dataformat=dataformat
+        self.transformations=list(transformations)
 
-        self.rotation=rotation
-        self.translation=translation
-        self.scale=scale
+        self.setup_transformation_pipeline()
 
-        self.transform=self.setup_transformation_pipeline(image_dataset,dataformat,rotation,translation,scale)
+    def setup_transformation_pipeline(self,):
+        x, y = self.dataset.get_all()
 
-    def setup_transformation_pipeline(self,image_dataset,dataformat,rotation,translation,scale):
-        x, y = image_dataset.get_all()
-
-        if dataformat=="NCHW":
+        if self.dataformat=="NCHW":
             n, c, w, h = x.shape
 
-        elif dataformat=="NHWC":
+        elif self.dataformat=="NHWC":
             n, w, h, c = x.shape
         else:
-            raise ValueError(f"Unsupported data format: {dataformat}.")
+            raise ValueError(f"Unsupported data format: {self.dataformat}.")
         self.h = h
         self.w = w
-        mu, std = self.calculate_mu_std(x, dataformat)
+        self.mu, self.std = self.calculate_mu_std(x, self.dataformat)
 
-        transformations = [transforms.ToPILImage(), ]
-
-        # if rotation is None:
-        #     rotation = 0
-        # if translation is None:
-        #     translation = (0,0)
-        # if scale is None:
-        #     scale = 1
+        # transformations = [transforms.ToPILImage(), ]
         #
-        #
-        #
-        # def affine_transform(image):
-        #     return functional.affine(image,shear=0,angle=rotation,translate=translation,
-        #                       scale=scale,resample=Image.BILINEAR)
-        # affine=transforms.Lambda(affine_transform)
-        # transformations.append(affine)
-        #
-        # if not translation is None or not scale is None:
-        #     scale_transformation = transforms.Resize((h,w))
-        #     transformations.append(scale_transformation)
-        if rotation is not None:
-            transformations.append(transforms.RandomRotation(degrees=rotation))
-
-        transformations.append(transforms.ToTensor())
-        transformations.append(transforms.Normalize(mu, std))
-        return transforms.Compose(transformations)
+        # transformations.append(transforms.ToTensor())
+        # transformations.append(transforms.Normalize(mu, std))
+        # return transforms.Compose(transformations)
 
     def calculate_mu_std(self,x,dataformat):
 
@@ -88,26 +64,44 @@ class ImageDataset(Dataset):
         # print(y.shape)
         return x[0,],y
 
+    def transform_nchw(self,x):
+        if self.dataformat == "NCHW":
+            pass
+        elif self.dataformat == "NHWC":
+            x = x.permute([0, 3, 1, 2])
+        else:
+            raise ValueError()
+        return x
+
+    def transform_nhwc(self,x):
+        if self.dataformat == "NCHW":
+            pass
+        elif self.dataformat == "NHWC":
+            x = x.permute(0,2,3,1)
+        else:
+            raise ValueError()
+        return x
+
+    def transform_batch(self,x):
+        nt = len(self.transformations)
+        # to NHWC order
+        x = self.transform_nhwc(x).float()
+        for i in range(x.shape[0]):
+            sample_np=x[i,:].numpy()
+            sample_np = (sample_np - self.mu) / self.std
+            t = self.transformations[np.random.randint(0, nt)]
+            transformed_np = t(sample_np)
+            x[i,:] = torch.from_numpy(transformed_np)
+        # To NCHW order
+        x = self.transform_nchw(x)
+        return x
+
     def get_batch(self,idx):
         if isinstance(idx,int):
             idx = [idx]
         x,y=self.dataset.get_batch(idx)
-        images=[]
-
-        # put image in NCHW format for PIL
-        if self.dataformat=="NCHW":
-            pass
-        elif self.dataformat=="NHWC":
-            x=x.permute([0, 3, 1, 2])
-        else:
-            raise ValueError()
-        for i in range(x.shape[0]):
-            d=self.transform(x[i,:,:,:])
-            images.append(d)
-
-        x=torch.stack(images,dim=0)
+        x=self.transform_batch(x)
         y=y.type(dtype=torch.LongTensor)
-        # print(x.shape,y.shape)
         return x,y
 
 

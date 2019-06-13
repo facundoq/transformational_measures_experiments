@@ -3,7 +3,7 @@ from transformation_measure.iterators.activations_iterator import ActivationsIte
 import numpy as np
 from transformation_measure.measure.utils import RunningMeanAndVariance,RunningMean
 from .layer_transformation import ConvAggregation,apply_aggregation_function
-
+from typing import List
 
 
 class TransformationMeasure(Measure):
@@ -17,7 +17,7 @@ class TransformationMeasure(Measure):
             f"_f:{self.measure_function.value}" \
             f"_convagg:{self.conv_aggregation.value}"
 
-    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
+    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         n_intermediates = len(activations_iterator.activation_names())
         mean_variances_running= [RunningMean() for i in range(n_intermediates)]
         for activations, x_transformed in activations_iterator.samples_first():
@@ -30,7 +30,7 @@ class TransformationMeasure(Measure):
                 mean_variances_running[j].update(layer_measure)
         # calculate the final mean over all samples (and layers)
         mean_variances = [b.mean() for b in mean_variances_running]
-        return MeasureResult(mean_variances,self)
+        return MeasureResult(mean_variances,layer_names,self)
 
     def layer_measure(self,layer_activations:np.ndarray):
         functions={

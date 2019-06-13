@@ -1,6 +1,7 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
+from typing import List
 
 class NormalizedMeasure(Measure):
     def __init__(self, numerator_measure:Measure,denominator_measure:Measure):
@@ -11,13 +12,13 @@ class NormalizedMeasure(Measure):
     def __repr__(self):
         return f"{self.numerator_measure}_div_{self.denominator_measure}"
 
-    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
+    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         v_samples=self.denominator_measure.eval(activations_iterator)
 
         v_transformations=self.numerator_measure.eval(activations_iterator)
 
         v=self.eval_v_normalized(v_transformations.layers,v_samples.layers)
-        return MeasureResult(v,self)
+        return MeasureResult(v,layer_names,self)
 
     def eval_v_normalized(self,v_transformations,v_samples):
         eps = 0

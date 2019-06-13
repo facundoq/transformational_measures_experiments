@@ -3,7 +3,7 @@ from transformation_measure.iterators.activations_iterator import ActivationsIte
 import numpy as np
 from transformation_measure.measure.utils import RunningMeanAndVariance,RunningMean
 from .layer_transformation import ConvAggregation,apply_aggregation_function
-
+from typing import List
 
 class SampleMeasure(Measure):
     def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
@@ -14,7 +14,7 @@ class SampleMeasure(Measure):
     def __repr__(self):
         return f"{self.__class__.__name__}"
 
-    def eval_v_samples(self,activations_iterator:ActivationsIterator)->MeasureResult:
+    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         n_layers = len(activations_iterator.activation_names())
         mean_variances_running = [RunningMean() for i in range(n_layers)]
 
@@ -32,7 +32,7 @@ class SampleMeasure(Measure):
                 layer_mean_variances_running.update(samples_variance)
         # calculate the final mean over all transformations (and layers)
         mean_variances = [b.mean() for b in mean_variances_running]
-        return MeasureResult(mean_variances,self)
+        return MeasureResult(mean_variances,layer_names,self)
 
 
 

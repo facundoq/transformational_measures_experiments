@@ -160,7 +160,7 @@ def plot_heatmaps(results:List[VarianceExperimentResult]):
             for measure_name,measure in r.rotated_measures.items():
                 detail=f"{r.dataset_name}_{r.model_name}_{model_training}_{measure_name}"
                 name =f"{model_training}_{measure_name}"
-                title=f"{detail}\n{r.description()}"
+                title=f"{detail}\n{r.id()}"
                 visualization.plot_heatmap(title,measure,r.activation_names,vmin=vmin,vmax=vmax,savefig=folderpath,savefig_name=name)
 
 

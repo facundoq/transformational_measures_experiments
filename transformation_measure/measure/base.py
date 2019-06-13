@@ -6,8 +6,9 @@ from .utils import RunningMean
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 
 class   MeasureResult:
-    def __init__(self,layers:List[np.ndarray],measure:'Measure'):
+    def __init__(self,layers:List[np.ndarray],layer_names:List[str],measure:'Measure'):
         self.layers=layers
+        self.layer_names=layer_names
         self.measure=measure
 
     def __repr__(self):
@@ -47,8 +48,17 @@ class   MeasureResult:
                 flat_activations = layer.copy()
             results.append(flat_activations)
 
-        return MeasureResult(results,self.measure)
+        return MeasureResult(results,self.layer_names,self.measure)
 
+class StratifiedMeasureResult(MeasureResult):
+    def __init__(self,layers:List[np.ndarray],layer_names:List[str],measure:'Measure'
+                 ,class_measures:List[MeasureResult],class_labels:List[str]):
+        super().__init__(layers,layer_names,measure)
+        self.class_measures=class_measures
+        self.class_labels=class_labels
+
+    def __repr__(self):
+        return f"StratifiedMeasureResult {self.measure}"
 
 from enum import Enum
 class MeasureFunction(Enum):
@@ -63,8 +73,31 @@ class Measure:
         return f"{self.__class__.__name__}"
 
     @abc.abstractmethod
-    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
+    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         '''
 
         '''
         pass
+
+
+    def eval_stratified(self,classes_iterators:List[ActivationsIterator],layer_names:List[str],class_labels:List[str])-> StratifiedMeasureResult:
+        '''
+        Calculate the `variance_measure` for each class separately
+        Also calculate the average stratified `variance_measure` over all classes
+        '''
+        variance_per_class = [self.eval(iterator,layer_names) for iterator in classes_iterators]
+        stratified_measure_layers = self.mean_variance_over_classes(variance_per_class)
+        return StratifiedMeasureResult(stratified_measure_layers,layer_names,self,variance_per_class,class_labels)
+
+
+    def mean_variance_over_classes(self,class_variance_result:List[MeasureResult]) -> List[np.ndarray]:
+        # calculate the mean activation of each unit in each layer over the set of classes
+        class_variance_layers=[r.layers for r in class_variance_result]
+        # class_variance_layers is a list (classes) of list layers)
+        # turn it into a list (layers) of lists (classes)
+        layer_class_vars=[list(i) for i in zip(*class_variance_layers)]
+        # compute average variance of each layer over classses
+        layer_vars=[ sum(layer_values)/len(layer_values) for layer_values in layer_class_vars]
+        return layer_vars
+
+

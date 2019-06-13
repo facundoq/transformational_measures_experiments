@@ -3,6 +3,7 @@ from pytorch import training, models
 from torch import optim,nn
 from torch.optim.optimizer import Optimizer
 from typing import Tuple
+import datasets
 
 class ExperimentModel:
     def __init__(self, model, parameters, optimizer):
@@ -17,7 +18,7 @@ def get_model_names():
         , models.ResNet.__name__]
 
 
-def get_model(name:str,dataset,use_cuda:bool)->Tuple[nn.Module,Optimizer]:
+def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tuple[nn.Module,Optimizer]:
 
     def setup_model(model,lr,wd)->Optimizer:
         if use_cuda:
@@ -70,7 +71,7 @@ def get_model(name:str,dataset,use_cuda:bool)->Tuple[nn.Module,Optimizer]:
 
 import transformation_measure as tm
 import numpy as np
-def get_epochs(dataset:str,model:str,t:tm.SimpleAffineTransformationGenerator)-> int:
+def get_epochs(model:str,dataset:str, t:tm.TransformationSet)-> int:
 
     if model== models.SimpleConv.__name__:
         epochs={'cifar10':70,'mnist':5,'fashion_mnist':12}

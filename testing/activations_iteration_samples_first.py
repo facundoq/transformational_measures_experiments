@@ -13,8 +13,8 @@ use_cuda=torch.cuda.is_available()
 dataset = datasets.get(dataset_name)
 
 
-from pytorch.experiment import train_transformation
-model,rotated_model,scores,config=train_transformation.load_models(dataset, model_name, use_cuda)
+from pytorch.experiment import training
+model,rotated_model,scores,config=training.load_models(dataset, model_name, use_cuda)
 
 
 from variance_measure.iterators.pytorch_activations_iterator import PytorchActivationsIterator

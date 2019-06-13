@@ -33,15 +33,15 @@ class Parameters:
     def __repr__(self):
         return self.id()
 
+class Options:
+    def __init__(self,verbose:bool):
+        self.verbose=verbose
 
 from pytorch.models import SimpleConv,AllConvolutional,ResNet
 
-datasets=["mnist","cifar10"]
-models=[SimpleConv.__name__
-        ,AllConvolutional.__name__
-        ,ResNet.__name__]
+dataset_names=["mnist","cifar10"]
 
-
+from pytorch.experiment import training
 def possible_experiment_parameters():
 
 
@@ -52,60 +52,67 @@ def possible_experiment_parameters():
               ]
     dataset_percentages = [.1, .5, 1.0]
     dataset_subsets=[DatasetSubset.train,DatasetSubset.test]
-    dataset_parameters=[]
-    for dataset in datasets:
+    datasets=[]
+    for dataset in dataset_names:
         for dataset_subset in dataset_subsets:
             for dataset_percentage in dataset_percentages:
-                dataset_parameters.append(DatasetParameters(dataset,dataset_subset,dataset_percentage))
-    parameters=[datasets, transformations, measures, models]
+                datasets.append(DatasetParameters(dataset,dataset_subset,dataset_percentage))
+    parameters=[datasets, measures, training.get_models()]
 
     def list2dict(list):
         return {str(x): x for x in list}
     parameters=[ list2dict(p) for p in parameters ]
-    return parameters
+    return parameters+[{t.id():t for t in transformations}]
 
 import argcomplete, argparse
 
-def parse_parameters()->Parameters:
-    datasets, transformations, measures, models=possible_experiment_parameters()
+
+def parse_parameters()->typing.Tuple[Parameters,Options]:
+    bool_parser = lambda x: (str(x).lower() in ['true', '1', 'yes'])
+
+    datasets, measures, models,transformations=possible_experiment_parameters()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-model", choices=models.keys(),required=True)
     parser.add_argument("-dataset", choices=datasets.keys(),required=True)
     parser.add_argument("-measure", choices=measures.keys(),required=True)
     parser.add_argument("-transformation", choices=transformations.keys(),required=True)
+    parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,
+                        help=f'Print info about dataset/model/transformations')
+    parser.add_argument('-batchsize', metavar='b'
+                        , help=f'batchsize to use during training'
+                        , type=int
+                        , default=256)
+
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
-    print(args)
-
-    return Parameters(models[args.model],
+    p= Parameters(models[args.model],
                       datasets[args.dataset],
                       transformations[args.transformation],
                       measures[args.measure])
-
+    o=Options(args.verbose)
+    return p,o
 
 class VarianceExperimentResult:
-    def __init__(self, parameters:Parameters, activation_names, class_names, transformations, options, rotated_measures, unrotated_measures):
-
+    def __init__(self, parameters:Parameters, measure_result,stratified_measure_result):
         self.parameters=parameters
 
-        self.activation_names = activation_names
-        self.class_names = class_names
-        self.rotated_measures=rotated_measures
-        self.unrotated_measures=unrotated_measures
-    def description(self):
-        description = "-".join([str(v) for v in self.parameters.values()])
+        self.measure_result=measure_result
+        self.stratified_measure_result=stratified_measure_result
+
+
+    def id(self):
+        description = f"Result of {self.parameters}"
         return description
 
-
-results_folder=os.path.expanduser("~/variance_results/values")
-
-def get_path(model_name,dataset_name,description):
-    return os.path.join(results_folder, f"{model_name}_{dataset_name}_{description}.pickle")
+def base_folder()->str: return os.path.expanduser("~/variance/")
 
 
-def save_results(r:VarianceExperimentResult):
-    path=get_path(r.parameters.model,r.parameters.dataset,r.description())
+def default_results_folder()->str:
+    return os.path.join(base_folder(),"results")
+
+def save_results(r:VarianceExperimentResult,results_folder=default_results_folder()):
+    path = os.path.join(results_folder, f"{r.id()}.pickle")
     basename=os.path.dirname(path)
     os.makedirs(basename,exist_ok=True)
     pickle.dump(r,open(path,"wb"))
@@ -114,11 +121,10 @@ def load_results(path)->VarianceExperimentResult:
     return pickle.load(open(path, "rb"))
 
 def plots_base_folder():
-    return os.path.expanduser("~/variance_results/plots/")
+    return os.path.join(base_folder(),"plots")
 
 def plots_folder(r:VarianceExperimentResult):
-    folderpath = os.path.join(plots_base_folder(), f"{r.parameters.model}_{r.parameters.dataset}_{r.description()}")
-
+    folderpath = os.path.join(plots_base_folder(), f"{r.id()}")
     if not os.path.exists(folderpath):
         os.makedirs(folderpath,exist_ok=True)
     return folderpath

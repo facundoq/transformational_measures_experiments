@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import DataLoader
 from .pytorch_image_dataset import ImageDataset
 
+
 class PytorchActivationsIterator(ActivationsIterator):
 
     def __init__(self, model, dataset, transformations, batch_size=32):

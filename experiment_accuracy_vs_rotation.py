@@ -30,13 +30,13 @@ if verbose:
     print(dataset.summary())
 
 
-from pytorch.experiment import train_transformation
-model,rotated_model,scores,config=train_transformation.load_models(dataset, model_name, use_cuda)
+from pytorch.experiment import training
+model,rotated_model,scores,config=training.load_models(dataset, model_name, use_cuda)
 if verbose:
     print("### ", model)
     print("### ", rotated_model)
     print("### Scores obtained:")
-    train_transformation.print_scores(scores)
+    training.print_scores(scores)
 
 from pytorch.experiment import invariance_evaluation
 
