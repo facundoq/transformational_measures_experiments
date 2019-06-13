@@ -6,9 +6,9 @@ plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
 from variance_measure import visualization
 
-from experiment import variance
+from pytorch import variance
 import os
-from experiment.variance import VarianceExperimentResult
+from pytorch.variance import VarianceExperimentResult
 from time import gmtime, strftime
 
 

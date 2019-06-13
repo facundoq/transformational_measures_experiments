@@ -9,8 +9,8 @@
 
 import datasets
 import torch
-from experiment import variance
-import logging
+from pytorch import variance
+
 
 def experiment(p: variance.Parameters):
     verbose = True
@@ -31,10 +31,9 @@ def experiment(p: variance.Parameters):
 
     import transformation_measure as tm
 
-    import numpy as np
     from pytorch.numpy_dataset import NumpyDataset
 
-    dataset = dataset.reduce_size(p.dataset.percentage)
+    dataset = dataset.reduce_size_stratified(p.dataset.percentage)
 
     if p.dataset.subset == variance.DatasetSubset.test:
         numpy_dataset = NumpyDataset(dataset.x_test, dataset.y_test)
@@ -45,17 +44,15 @@ def experiment(p: variance.Parameters):
 
     iterator = tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=256)
     print(f"Calculating measure {p.measure}...")
+
     measure_result = p.measure.eval(iterator,model.activation_names())
 
     print(f"Calculating stratified version of measure {p.measure}...")
     stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test, dataset.x_test)
-    stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=256) for
-                            numpy_dataset in stratified_numpy_datasets]
+    stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=256) for numpy_dataset in stratified_numpy_datasets]
     stratified_measure_result = p.measure.eval_stratified(stratified_iterators,model.activation_names(),dataset.labels)
 
-    return variance.VarianceExperimentResult(p,measure_result, stratified_measure_result)
-
-
+    return variance.VarianceExperimentResult(p, measure_result, stratified_measure_result)
 
 if __name__ == "__main__":
     p, o = variance.parse_parameters()

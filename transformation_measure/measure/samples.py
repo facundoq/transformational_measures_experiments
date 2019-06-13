@@ -1,7 +1,7 @@
 from .base import Measure,MeasureFunction,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
-from transformation_measure.measure.utils import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.running_stats import RunningMeanAndVariance,RunningMean
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 from typing import List
 
@@ -12,7 +12,7 @@ class SampleMeasure(Measure):
         self.conv_aggregation = conv_aggregation
 
     def __repr__(self):
-        return f"{self.__class__.__name__}"
+        return f"SM(f={self.measure_function},ca={self.conv_aggregation.value}"
 
     def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         n_layers = len(activations_iterator.activation_names())

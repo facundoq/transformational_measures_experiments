@@ -18,25 +18,39 @@ class ClassificationDataset:
         self.labels = labels
         self.dataformat = dataformat
 
-    def reduce_size_subset(self, percentage, x, y):
-        n = len(y)
-
+    def reduce_size_subset_stratified(self, percentage, x, y):
+        x1=[]
+        y1=[]
+        x2=[]
+        y2=[]
         for i in range(self.num_classes):
             class_indices = y == i
-            # TODO
-            raise NotImplementedError
+            class_x=x[class_indices,:]
+            class_y=y[class_indices]
+            class_n=len(class_y)
 
-            indices = np.random.permutation(n)
-        indices = indices[:int(n * percentage)]
-        x = self.x_train[indices, :]
-        y = self.y_train[indices, :]
-        return x, y
+            indices = np.random.permutation(class_n)
+            limit=int(class_n * percentage)
 
-    def reduce_size(self, percentage):
-        if (percentage==1):
+            indices1 = indices[:limit]
+            x1.append(class_x[indices1,:])
+            y1.append(class_y[indices1])
+
+            indices2 = indices[limit:]
+            x2.append(class_x[indices2, :])
+            y2.append(class_y[indices2])
+
+        x1 = np.vstack(x1)
+        y1 = np.hstack(y1)
+        x2 = np.vstack(x2)
+        y2 = np.hstack(y2)
+        return x1, y1, x2, y2
+
+    def reduce_size_stratified(self, percentage):
+        if percentage==1:
             return self
-        x_train, y_train = self.reduce_size_subset(percentage, self.x_train, self.y_train)
-        x_test, y_test = self.reduce_size_subset(percentage, self.x_test, self.y_test)
+        x_train, y_train, _, _ = self.reduce_size_subset_stratified(percentage, self.x_train, self.y_train)
+        x_test, y_test, _, _ = self.reduce_size_subset_stratified(percentage, self.x_test, self.y_test)
 
         return ClassificationDataset(self.name, x_train, x_test, y_train, y_test
                                      , self.num_classes, self.input_shape, self.labels, self.dataformat)

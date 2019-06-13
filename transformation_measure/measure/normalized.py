@@ -10,7 +10,7 @@ class NormalizedMeasure(Measure):
         self.denominator_measure=denominator_measure
 
     def __repr__(self):
-        return f"{self.numerator_measure}_div_{self.denominator_measure}"
+        return f"NM({self.numerator_measure}_DIV_{self.denominator_measure})"
 
     def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         v_samples=self.denominator_measure.eval(activations_iterator)

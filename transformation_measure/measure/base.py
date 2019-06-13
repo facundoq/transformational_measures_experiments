@@ -2,7 +2,7 @@ import abc
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
 from typing import Dict, List, Tuple
-from .utils import RunningMean
+from .running_stats import RunningMean
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 
 class   MeasureResult:
