@@ -1,5 +1,5 @@
 from .transformation import TransformationSet,Transformation
-from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation
+from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationCV
 
 from .iterators.pytorch_activations_iterator import PytorchActivationsIterator
 
@@ -11,9 +11,9 @@ from .measure.transformations import TransformationMeasure
 
 from typing import List
 def common_measures()-> List[Measure]:
-    return [TransformationMeasure(MeasureFunction.std, ConvAggregation.sum)
-    , SampleMeasure(MeasureFunction.std, ConvAggregation.sum)
-    , NormalizedMeasure(TransformationMeasure(MeasureFunction.std, ConvAggregation.sum), SampleMeasure(MeasureFunction.std, ConvAggregation.sum))
+    return [ SampleMeasure(MeasureFunction.std, ConvAggregation.sum),
+             TransformationMeasure(MeasureFunction.std, ConvAggregation.sum),
+     NormalizedMeasure(TransformationMeasure(MeasureFunction.std, ConvAggregation.sum), SampleMeasure(MeasureFunction.std, ConvAggregation.sum))
     ]
 
 

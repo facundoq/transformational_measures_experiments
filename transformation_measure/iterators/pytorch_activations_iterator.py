@@ -23,7 +23,7 @@ class PytorchActivationsIterator(ActivationsIterator):
 
     def transformations_first(self):
         for transformation in self.transformations:
-            dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True)
+            dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=32, drop_last=True)
             yield transformation, self.samples_activation(transformation,dataloader)
 
 

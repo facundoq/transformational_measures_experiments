@@ -107,7 +107,7 @@ def get_data_generator(x:np.ndarray, y:np.ndarray,
 
     dataset=NumpyDataset(x,y)
     image_dataset=ImageDataset(dataset,transformation)
-    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=8,drop_last=True,pin_memory=True)
+    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=4,drop_last=True,pin_memory=False)
 
     return dataloader
 

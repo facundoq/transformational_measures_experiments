@@ -1,5 +1,6 @@
 from  skimage import transform as skimage_transform
 import numpy as np
+import cv2
 import itertools
 from typing import List,Tuple,Iterator
 from .transformation import Transformation,TransformationSet
@@ -22,12 +23,42 @@ class AffineTransformation(Transformation):
         return shift + (transformation+ shift_inv)
 
     def __call__(self,image:np.ndarray)->np.ndarray:
-        return image.copy()
         h,w,c=image.shape
         image_size=np.array([h, w])
         centered_transformation=self.center_transformation(self.transform,image_size)
         return skimage_transform.warp(image, centered_transformation.inverse,cval=0.0,preserve_range=True,order=1)
 
+
+    def __str__(self):
+        return f"Transformation {self.parameters}"
+class AffineTransformationCV(Transformation):
+    def __init__(self,parameters):
+        self.parameters=parameters
+        self.transform=self.generate_transformation(parameters)
+
+    def generate_transformation(self,transformation_parameters):
+        rotation, translation, scale = transformation_parameters
+        transformation = skimage_transform.AffineTransform(scale=scale, rotation=rotation, shear=None,
+                                                           translation=translation)
+        return transformation
+
+    def center_transformation(self,transformation,image_size):
+        shift_y, shift_x = (image_size - 1) / 2.
+        shift = skimage_transform.AffineTransform(translation=[-shift_x, -shift_y])
+        shift_inv = skimage_transform.AffineTransform(translation=[shift_x, shift_y])
+        return shift + (transformation+ shift_inv)
+
+    def __call__(self,image:np.ndarray)->np.ndarray:
+
+        image=image.transpose(1 , 2, 0)
+        h, w, c= image.shape
+        transformation= self.center_transformation(self.transform, np.array((h, w)))
+        m= transformation.params
+        image= cv2.warpPerspective(image, m, (w, h))
+        if c==1:
+            image= image[:, :, np.newaxis]
+        image= image.transpose(2, 0, 1)
+        return image
 
     def __str__(self):
         return f"Transformation {self.parameters}"
@@ -56,7 +87,7 @@ class AffineTransformationGenerator(TransformationSet):
 
     def __iter__(self)->Iterator[Transformation]:
         transformation_parameters = itertools.product(self.rotations, self.translations, self.scales)
-        return [AffineTransformation(parameter) for parameter in transformation_parameters].__iter__()
+        return [AffineTransformationCV(parameter) for parameter in transformation_parameters].__iter__()
 
 
 class SimpleAffineTransformationGenerator(TransformationSet):
