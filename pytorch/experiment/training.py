@@ -39,7 +39,7 @@ class Parameters:
         else:
             notransform_message=""
 
-        return f"{self.model}_{self.dataset}_{self.transformations}_epochs={self.epochs}{notransform_message}"
+        return f"{self.model}_{self.dataset}_{self.transformations.id()}_epochs={self.epochs}{notransform_message}"
 
 
 class Options:
@@ -107,7 +107,7 @@ def get_data_generator(x:np.ndarray, y:np.ndarray,
 
     dataset=NumpyDataset(x,y)
     image_dataset=ImageDataset(dataset,transformation)
-    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=8,drop_last=True)
+    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=8,drop_last=True,pin_memory=True)
 
     return dataloader
 

@@ -22,10 +22,12 @@ class AffineTransformation(Transformation):
         return shift + (transformation+ shift_inv)
 
     def __call__(self,image:np.ndarray)->np.ndarray:
+        return image.copy()
         h,w,c=image.shape
         image_size=np.array([h, w])
         centered_transformation=self.center_transformation(self.transform,image_size)
         return skimage_transform.warp(image, centered_transformation.inverse,cval=0.0,preserve_range=True,order=1)
+
 
     def __str__(self):
         return f"Transformation {self.parameters}"
@@ -58,13 +60,6 @@ class AffineTransformationGenerator(TransformationSet):
 
 
 class SimpleAffineTransformationGenerator(TransformationSet):
-
-    @classmethod
-    def common_transformations(cls):
-        transformations = [SimpleAffineTransformationGenerator(),
-                           SimpleAffineTransformationGenerator(n_rotations=16)]
-        transformations = {t.id(): t for t in transformations}
-        return transformations
 
     def __init__(self,n_rotations:int=None,n_scales:int=None,n_translations:int=None):
         if n_rotations is None:

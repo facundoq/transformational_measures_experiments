@@ -86,7 +86,7 @@ def get_epochs(model:str,dataset:str, t:tm.TransformationSet)-> int:
 
     n=len(t)
     if n>np.e:
-        factor=np.log(n)
+        factor=1.5*np.log(n)
     else:
         factor=1
 

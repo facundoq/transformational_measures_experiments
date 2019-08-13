@@ -12,19 +12,18 @@ import torch
 from pytorch import variance
 
 
-def experiment(p: variance.Parameters):
-    verbose = True
+def experiment(p: variance.Parameters,o:variance.Options):
     assert(len(p.transformations)>1)
     use_cuda = torch.cuda.is_available()
 
     dataset = datasets.get(p.dataset.name)
-    if verbose:
+    if o.verbose:
         print(dataset.summary())
 
     from pytorch.experiment import training
     model, training_parameters, training_options, scores = training.load_model(p.model, use_cuda)
 
-    if verbose:
+    if o.verbose:
         print("### ", model)
         print("### Scores obtained:")
         training.print_scores(scores)
@@ -57,7 +56,7 @@ def experiment(p: variance.Parameters):
 if __name__ == "__main__":
     p, o = variance.parse_parameters()
     print(f"Experimenting with parameters: {p}")
-    measures_results=experiment(p)
+    measures_results=experiment(p,o)
     variance.save_results(measures_results)
 
 

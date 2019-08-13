@@ -73,6 +73,7 @@ class Measure:
         return f"{self.__class__.__name__}"
     def id(self):
         return str(self)
+
     @abc.abstractmethod
     def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         '''

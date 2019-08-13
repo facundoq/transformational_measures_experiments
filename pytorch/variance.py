@@ -9,6 +9,7 @@ from enum import Enum
 class DatasetSubset(Enum):
     train="train"
     test="test"
+    values=[train,test]
 
 class DatasetParameters:
     def __init__(self,name:str,subset: DatasetSubset,percentage:float):
@@ -19,6 +20,8 @@ class DatasetParameters:
         self.percentage=percentage
     def __repr__(self):
         return f"{self.name}({self.subset.value},p={self.percentage:.2})"
+    def id(self):
+        return str(self)
 
 class Parameters:
     def __init__(self,model:str,dataset:DatasetParameters,transformations:typing.Iterable[typing.Callable],measure:tm.Measure):
@@ -31,7 +34,7 @@ class Parameters:
         return f"{self.model}_{self.dataset}_{self.transformations}{self.measure}"
 
     def __repr__(self):
-        return self.id()
+        return f"VarianceExperiment parameters: model={self.model}, dataset={self.dataset} transformations={self.transformations}, measure={self.measure}"
 
 class Options:
     def __init__(self,verbose:bool,batch_size:int):
@@ -43,12 +46,9 @@ dataset_names=["mnist","cifar10"]
 
 from pytorch.experiment import training
 def possible_experiment_parameters():
-    transformations = tm.SimpleAffineTransformationGenerator.common_transformations()
-    measures= [tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
-              ,tm.NormalizedMeasure(tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
-              ,tm.SampleMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum))
-              ,tm.SampleMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
-              ]
+    transformations = tm.common_transformations()
+    measures= tm.common_measures()
+
     dataset_percentages = [.1, .5, 1.0]
     dataset_subsets=[DatasetSubset.train,DatasetSubset.test]
     datasets=[]
@@ -56,11 +56,12 @@ def possible_experiment_parameters():
         for dataset_subset in dataset_subsets:
             for dataset_percentage in dataset_percentages:
                 datasets.append(DatasetParameters(dataset,dataset_subset,dataset_percentage))
-    parameters=[datasets, measures, training.get_models()]
+
+    parameters=[datasets, measures, transformations]
     def list2dict(list):
-        return {str(x): x for x in list}
+        return {x.id(): x for x in list}
     parameters=[ list2dict(p) for p in parameters ]
-    return parameters+[transformations]
+    return parameters+[training.get_models()]
 
 import argcomplete, argparse
 
@@ -68,10 +69,10 @@ import argcomplete, argparse
 def parse_parameters()->typing.Tuple[Parameters,Options]:
     bool_parser = lambda x: (str(x).lower() in ['true', '1', 'yes'])
 
-    datasets, measures, models,transformations=possible_experiment_parameters()
+    datasets, measures, transformations, models,=possible_experiment_parameters()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-model", metavar="mo", choices=models.keys(),required=True)
+    parser.add_argument("-model", metavar="mo", choices=models,required=True)
     parser.add_argument("-dataset", metavar="d", choices=datasets.keys(),required=True)
     parser.add_argument("-measure", metavar="me", choices=measures.keys(),required=True)
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
@@ -85,7 +86,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
 
-    p = Parameters(models[args.model],
+    p = Parameters(args.model,
                    datasets[args.dataset],
                    transformations[args.transformation],
                    measures[args.measure])
@@ -95,14 +96,15 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
 class VarianceExperimentResult:
     def __init__(self, parameters:Parameters, measure_result,stratified_measure_result):
         self.parameters=parameters
-
         self.measure_result=measure_result
         self.stratified_measure_result=stratified_measure_result
 
+    def __repr__(self):
+        description = f"VarianceExperimentResult for {self.parameters}"
+        return description
 
     def id(self):
-        description = f"Result of {self.parameters}"
-        return description
+        return f"{self.parameters.id()}"
 
 def base_folder()->str: return os.path.expanduser("~/variance/")
 

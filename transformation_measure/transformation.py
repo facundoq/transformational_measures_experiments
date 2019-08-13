@@ -16,3 +16,8 @@ class TransformationSet(Sized, Iterable[Transformation]):
 
     def __len__(self):
         return len(list(self.__iter__()))
+
+    @abc.abstractmethod
+    def id(self):
+        pass
+
