@@ -161,7 +161,7 @@ def experiment_model_path():
 
 def save_model(p:Parameters,o:Options,model:nn.Module,scores):
     model_folderpath = experiment_model_path()
-    filename=f"{p}.pt"
+    filename=f"{p.id()}.pt"
     filepath=os.path.join(model_folderpath,filename)
     torch.save({"parameters":p,
                 "model":model,

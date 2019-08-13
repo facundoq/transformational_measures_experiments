@@ -13,7 +13,7 @@ class TransformationMeasure(Measure):
         self.conv_aggregation=conv_aggregation
 
     def __repr__(self):
-        return f"TM(f={self.measure_function},ca={self.conv_aggregation.value}"
+        return f"TM(f={self.measure_function},ca={self.conv_aggregation.value})"
 
 
     def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:

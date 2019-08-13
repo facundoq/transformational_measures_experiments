@@ -12,7 +12,7 @@ class SampleMeasure(Measure):
         self.conv_aggregation = conv_aggregation
 
     def __repr__(self):
-        return f"SM(f={self.measure_function},ca={self.conv_aggregation.value}"
+        return f"SM(f={self.measure_function},ca={self.conv_aggregation.value})"
 
     def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
         n_layers = len(activations_iterator.activation_names())

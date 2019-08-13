@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
 import torch
@@ -12,7 +12,7 @@ from typing import Tuple
 def parse_args()->Tuple[training.Parameters,training.Options]:
 
     bool_parser=lambda x: (str(x).lower() in ['true','1', 'yes'])
-    transformations = [tm.SimpleAffineTransformationGenerator(),tm.SimpleAffineTransformationGenerator(n_rotations=16)]
+    transformations=tm.SimpleAffineTransformationGenerator.common_transformations()
 
     parser = argparse.ArgumentParser(description="Script to train a model with a dataset and transformations")
 
@@ -54,22 +54,22 @@ def parse_args()->Tuple[training.Parameters,training.Options]:
                         ,choices=datasets.names
                         ,required=True)
 
-    transformation_names=[t.id() for t in transformations]
     parser.add_argument('-transformation', metavar='t',
-                        help=f'Transformations to apply to the dataset to train a model. Allowed values: {", ".join(transformation_names)}'
-                        , choices=transformation_names
+                        help=f'Transformations to apply to the dataset to train a model. Allowed values: {", ".join(transformations.keys())}'
+                        , choices=transformations.keys()
                         ,default=tm.SimpleAffineTransformationGenerator())
 
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
-    epochs = model_loading.get_epochs(args.model,args.dataset,args.transformation)
+    transformation=transformations[args.transformation]
+    epochs = model_loading.get_epochs(args.model,args.dataset,transformation)
 
-    p=training.Parameters(args.model,args.dataset,args.transformation,epochs,args.notransform_epochs)
+    p=training.Parameters(args.model,args.dataset,transformation,epochs,args.notransform_epochs)
     o=training.Options(args.verbose,args.savemodel,args.batchsize,args.usecuda,args.plots)
     return p,o
 
-if __name__ == "main":
+if __name__ == "__main__":
     p,o = parse_args()
 
     dataset = datasets.get(p.dataset)

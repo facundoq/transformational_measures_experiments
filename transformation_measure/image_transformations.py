@@ -58,6 +58,14 @@ class AffineTransformationGenerator(TransformationSet):
 
 
 class SimpleAffineTransformationGenerator(TransformationSet):
+
+    @classmethod
+    def common_transformations(cls):
+        transformations = [SimpleAffineTransformationGenerator(),
+                           SimpleAffineTransformationGenerator(n_rotations=16)]
+        transformations = {t.id(): t for t in transformations}
+        return transformations
+
     def __init__(self,n_rotations:int=None,n_scales:int=None,n_translations:int=None):
         if n_rotations is None:
             n_rotations = 0

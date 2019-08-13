@@ -38,12 +38,11 @@ def load_data(path):
 
     fpath = os.path.join(batches_path, 'test_batch')
     x_test, y_test = load_batch(fpath)
-
+    y_test=np.array(y_test)
     x_train, x_test = x_train.transpose([0, 2, 3, 1]), x_test.transpose([0, 2, 3, 1])
 
-    y_train = np.reshape(y_train, (len(y_train), 1))
-    y_test = np.reshape(y_test, (len(y_test), 1))
-
+    # y_train = np.reshape(y_train, (len(y_train), 1))
+    # y_test = np.reshape(y_test, (len(y_test), 1))
     input_shape = (32, 32, 3)
     labels = ['dog', 'horse', 'frog', 'airplane', 'cat', 'ship', 'deer', 'bird', 'truck', 'automobile']
     return (x_train, y_train), (x_test, y_test), input_shape,labels

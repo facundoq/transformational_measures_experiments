@@ -29,7 +29,8 @@ class ImageDataset(Dataset):
         self.h = h
         self.w = w
         self.mu, self.std = self.calculate_mu_std(x, self.dataformat)
-
+        self.mu=self.mu[:,np.newaxis,np.newaxis]
+        self.std=self.std[:,np.newaxis,np.newaxis]
         # transformations = [transforms.ToPILImage(), ]
         #
         # transformations.append(transforms.ToTensor())

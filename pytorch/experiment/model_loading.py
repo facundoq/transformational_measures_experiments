@@ -90,4 +90,4 @@ def get_epochs(model:str,dataset:str, t:tm.TransformationSet)-> int:
     else:
         factor=1
 
-    return epochs[dataset]*factor
+    return int(epochs[dataset]*factor)

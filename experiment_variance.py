@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
 ## Calculate the variance of each activation in a model.
@@ -14,7 +14,7 @@ from pytorch import variance
 
 def experiment(p: variance.Parameters):
     verbose = True
-
+    assert(len(p.transformations)>1)
     use_cuda = torch.cuda.is_available()
 
     dataset = datasets.get(p.dataset.name)
@@ -42,7 +42,7 @@ def experiment(p: variance.Parameters):
     else:
         raise ValueError(p.dataset.subset)
 
-    iterator = tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=256)
+    iterator = tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size)
     print(f"Calculating measure {p.measure}...")
 
     measure_result = p.measure.eval(iterator,model.activation_names())
