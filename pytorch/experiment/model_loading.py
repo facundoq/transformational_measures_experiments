@@ -71,6 +71,7 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
 
 import transformation_measure as tm
 import numpy as np
+
 def get_epochs(model:str,dataset:str, t:tm.TransformationSet)-> int:
 
     if model== models.SimpleConv.__name__:

@@ -8,13 +8,17 @@ import transformation_measure as tm
 
 class ImageDataset(Dataset):
 
-    def __init__(self, image_dataset, transformations:tm.TransformationSet=tm.SimpleAffineTransformationGenerator(), dataformat="NCHW"):
+    def __init__(self, image_dataset, transformations:tm.TransformationSet=None, dataformat="NCHW"):
 
         self.dataset=image_dataset
         self.dataformat=dataformat
-        self.transformations=list(transformations)
+        if transformations is None:
+            self.transformations=[tm.IdentityTransformation()]
+        else:
+            self.transformations=list(transformations)
 
         self.setup_transformation_pipeline()
+
 
     def setup_transformation_pipeline(self,):
         x, y = self.dataset.get_all()
@@ -28,9 +32,11 @@ class ImageDataset(Dataset):
             raise ValueError(f"Unsupported data format: {self.dataformat}.")
         self.h = h
         self.w = w
+        self.c=c
         self.mu, self.std = self.calculate_mu_std(x, self.dataformat)
         self.mu=self.mu[:,np.newaxis,np.newaxis]
         self.std=self.std[:,np.newaxis,np.newaxis]
+
         # transformations = [transforms.ToPILImage(), ]
         #
         # transformations.append(transforms.ToTensor())
@@ -50,8 +56,8 @@ class ImageDataset(Dataset):
         else:
             raise ValueError()
 
-        mu = xf.mean(dim=dims) / 255
-        std = xf.std(dim=dims) / 255
+        mu = xf.mean(dim=dims)
+        std = xf.std(dim=dims)
 
         std[std == 0] = 1
         return mu.numpy(), std.numpy()

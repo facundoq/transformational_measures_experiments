@@ -1,4 +1,4 @@
-from .transformation import TransformationSet,Transformation
+from .transformation import TransformationSet,Transformation,IdentityTransformation
 from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationCV
 
 from .iterators.pytorch_activations_iterator import PytorchActivationsIterator

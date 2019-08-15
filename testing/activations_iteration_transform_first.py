@@ -1,40 +1,43 @@
 from pytorch import models
 import datasets
 import torch
+import util
 
 from pytorch.numpy_dataset import NumpyDataset
+from pytorch.experiment import model_loading
 
-dataset_name="mnist"
+from testing.utils import plot_image_grid
+import transformation_measure as tm
+import matplotlib
+from transformation_measure.iterators.pytorch_activations_iterator import ImageDataset
+matplotlib.use('Agg')
+
+
+dataset_name="cifar10"
 model_name=models.SimpleConv.__name__
 
 print(f"### Loading dataset {dataset_name} and model {model_name}....")
 
 use_cuda=torch.cuda.is_available()
 dataset = datasets.get(dataset_name)
-
-
-from pytorch.experiment import model_loading
-model, optimizer = model_loading.get_model(model_name, dataset, use_cuda)
-from testing.utils import plot_image_grid
-import transformation_measure as tm
-import matplotlib
-matplotlib.use('Agg')
-
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
+image_dataset=ImageDataset(numpy_dataset)
+model, optimizer = model_loading.get_model(model_name, dataset, use_cuda)
+p=util.Profiler()
+p.event("start")
 
-transformations=tm.SimpleAffineTransformationGenerator(n_translations=2)
+transformations=tm.SimpleAffineTransformationGenerator(n_rotations=8,n_scales=2,n_translations=2)
 
-iterator = tm.PytorchActivationsIterator(model,numpy_dataset,transformations)
+iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=32,num_workers=0)
 
-batch_size=64
+
 i=0
 for transformation,batch_activations in iterator.transformations_first():
     print(transformation)
     for x,batch_activation in batch_activations:
         x=x.transpose(0,2,3,1)
-        plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=f"t{i}.png")
+        plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=f"testing/transform_first/t{i}.png")
         i=i+1
         break
 
-
-
+#print(p.summary())

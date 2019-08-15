@@ -49,15 +49,17 @@ class AffineTransformationCV(Transformation):
         return shift + (transformation+ shift_inv)
 
     def __call__(self,image:np.ndarray)->np.ndarray:
-
-        image=image.transpose(1 , 2, 0)
+        # print(image.min(), image.max(), image.dtype, image.shape)
+        image=image.transpose(1,2,0)
         h, w, c= image.shape
+        # print(image.min(),image.max(),image.dtype,image.shape)
         transformation= self.center_transformation(self.transform, np.array((h, w)))
         m= transformation.params
+
         image= cv2.warpPerspective(image, m, (w, h))
         if c==1:
-            image= image[:, :, np.newaxis]
-        image= image.transpose(2, 0, 1)
+           image= image[:, :, np.newaxis]
+        image = image.transpose(2,0,1)
         return image
 
     def __str__(self):
@@ -68,7 +70,7 @@ ScaleParameter=Tuple[float,float]
 
 
 class AffineTransformationGenerator(TransformationSet):
-    def __init__(self, rotations:List[float]=None, scales:List[ScaleParameter]=None, translations:List[TranslationParameter]=None):
+    def __init__(self,rotations:List[float]=None, scales:List[ScaleParameter]=None, translations:List[TranslationParameter]=None):
         if rotations is None or not rotations:
             rotations=[0]
         if scales is None or not scales:
@@ -103,7 +105,6 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         self.n_translations=n_translations
         self.n_scales=n_scales
         rotations, translations, scales = self.generate_transformation_values()
-
         self.affine_transformation_generator=AffineTransformationGenerator(rotations=rotations, scales=scales, translations=translations)
 
     def __repr__(self):

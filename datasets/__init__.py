@@ -96,4 +96,4 @@ def get(dataset,dataformat="NCHW",path=os.path.expanduser("~/.datasets/")) -> Cl
     #y_train = to_categorical(y_train, num_classes)
     #y_test  = to_categorical(y_test, num_classes)
 
-    return ClassificationDataset(dataset, x_train, x_test, y_train, y_test, num_classes, input_shape, labels,dataformat)
+    return ClassificationDataset(dataset, x_train, x_test, y_train, y_test, num_classes, np.array(input_shape), labels,dataformat)

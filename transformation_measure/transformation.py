@@ -21,3 +21,8 @@ class TransformationSet(Sized, Iterable[Transformation]):
     def id(self):
         pass
 
+
+class IdentityTransformation(Transformation):
+
+    def __call__(self, x:np.ndarray)->np.ndarray:
+        return x

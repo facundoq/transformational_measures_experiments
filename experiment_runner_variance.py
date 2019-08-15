@@ -2,21 +2,21 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import os
-import utils
+import runner_utils
 from pytorch import variance
 import transformation_measure as tm
 
 def run_experiment(model_path:str, measure:tm.Measure,d:variance.DatasetParameters, transformation:tm.TransformationSet, venv_path:str):
     python_command=f"experiment_variance.py -mo \"{model_path}\"" \
         f" -me \"{measure.id()}\" -d \"{d.id()}\" -t \"{transformation.id()}\" -verbose False"
-    utils.run_python(venv_path,python_command)
+    runner_utils.run_python(venv_path, python_command)
 
 
 # DATASET
 import datasets
 from pytorch.experiment import training
 if __name__ == '__main__':
-    venv_path=utils.get_venv_path()
+    venv_path=runner_utils.get_venv_path()
     model_names=training.get_models()
     measures = tm.common_measures()
     dataset_subsets=  [variance.DatasetSubset.train,variance.DatasetSubset.test]
