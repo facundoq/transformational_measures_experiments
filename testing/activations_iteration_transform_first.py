@@ -28,16 +28,16 @@ p.event("start")
 
 transformations=tm.SimpleAffineTransformationGenerator(n_rotations=8,n_scales=2,n_translations=2)
 
-iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=32,num_workers=0)
+iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=64,num_workers=8)
 
-
+p.event("start")
 i=0
 for transformation,batch_activations in iterator.transformations_first():
     print(transformation)
     for x,batch_activation in batch_activations:
         x=x.transpose(0,2,3,1)
-        plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=f"testing/transform_first/t{i}.png")
+        #plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=f"testing/transform_first/t{i}.png")
         i=i+1
-        break
-
+        #break
+p.event("end")
 #print(p.summary())

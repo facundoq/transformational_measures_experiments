@@ -24,14 +24,14 @@ class DatasetParameters:
         return str(self)
 
 class Parameters:
-    def __init__(self,model:str,dataset:DatasetParameters,transformations:typing.Iterable[typing.Callable],measure:tm.Measure):
+    def __init__(self,model:str,dataset:DatasetParameters,transformations:tm.TransformationSet,measure:tm.Measure):
         self.model=model
         self.dataset=dataset
         self.measure=measure
         self.transformations=transformations
 
     def id(self):
-        return f"{self.model}_{self.dataset}_{self.transformations}{self.measure}"
+        return f"{self.model}_{self.dataset}_{self.transformations.id()}{self.measure.id()}"
 
     def __repr__(self):
         return f"VarianceExperiment parameters: model={self.model}, dataset={self.dataset} transformations={self.transformations}, measure={self.measure}"

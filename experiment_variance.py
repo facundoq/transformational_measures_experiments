@@ -48,7 +48,7 @@ def experiment(p: variance.Parameters,o:variance.Options):
 
     print(f"Calculating stratified version of measure {p.measure}...")
     stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test, dataset.x_test)
-    stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=512) for numpy_dataset in stratified_numpy_datasets]
+    stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size) for numpy_dataset in stratified_numpy_datasets]
     stratified_measure_result = p.measure.eval_stratified(stratified_iterators,model.activation_names(),dataset.labels)
 
     return variance.VarianceExperimentResult(p, measure_result, stratified_measure_result)

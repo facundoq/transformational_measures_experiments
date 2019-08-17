@@ -6,6 +6,8 @@ import numpy as np
 import os
 import torch
 
+import typing
+
 import logging
 from pytorch.utils import autolabel
 from torch import nn
@@ -178,7 +180,7 @@ def get_models():
     model_files=[f for f in files if f.endswith(".pt")]
     return model_files
 
-def load_model(filename:str,use_cuda:bool):
+def load_model(filename:str,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
     model_folderpath = experiment_model_path()
     model_filepath=os.path.join(model_folderpath,filename)
     logging.info(f"Loading model from {model_filepath}...")
@@ -190,12 +192,13 @@ def load_model(filename:str,use_cuda:bool):
     model=data["model"]
     p:Parameters=data["parameters"]
     o:Options = data["options"]
+    scores=data["scores"]
     # dataset=datasets.get(p.dataset)
     #model, optimizer = model_loading.get_model(p.model,dataset,use_cuda)
-
-    model.load_state_dict(model_state)
-    model.eval()
-    return model,p,o,data["scores"]
+    if load_state:
+        model.load_state_dict(model_state)
+        model.eval()
+    return model,p,o,scores
 
 def print_scores(scores):
     for k, v in scores.items():
