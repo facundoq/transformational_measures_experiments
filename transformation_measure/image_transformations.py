@@ -98,7 +98,7 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         if n_rotations is None:
             n_rotations = 0
         if n_scales is None:
-            n_scales = 1
+            n_scales = 0
         if n_translations is None:
             n_translations = 0
         self.n_rotations=n_rotations
@@ -108,10 +108,10 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         self.affine_transformation_generator=AffineTransformationGenerator(rotations=rotations, scales=scales, translations=translations)
 
     def __repr__(self):
-        return f"rot={self.n_rotations}, scales={self.n_scales}, translations={self.n_translations}"
+        return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations}"
 
     def id(self):
-        return f"r{self.n_rotations}_s{self.n_scales}_t{self.n_translations}"
+        return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations})"
 
     def __iter__(self)->Iterator[Transformation]:
         return self.affine_transformation_generator.__iter__()
@@ -120,8 +120,9 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         rotations = list(np.linspace(-np.pi, np.pi, self.n_rotations, endpoint=False))
 
         scales=[]
-        for s in range(self.n_scales):
-            r=float(s+1)/self.n_scales
+        effective_scales=self.n_scales+1
+        for s in range(effective_scales):
+            r=float(s+1)/effective_scales
             scales.append( (r,r) )
 
         translations=[(0,0)]

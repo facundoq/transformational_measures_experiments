@@ -21,12 +21,23 @@ def parse_args()->Tuple[training.Parameters,training.Options]:
                         ,help=f'Print info about dataset/model/transformations'
                         ,type=bool_parser
                         , default=True)
+
+    parser.add_argument('-train_verbose', metavar='tvb'
+                        , help=f'Print details about the training'
+                        , type=bool_parser
+                        , default=True)
+
     parser.add_argument('-batchsize', metavar='b'
                         , help=f'batchsize to use during training'
                         , type=int
                         , default=256)
 
-    parser.add_argument('-notransform_epochs', metavar='b'
+    parser.add_argument('-num_workers', metavar='nw'
+                        , help=f'num_workersto use during training'
+                        , type=int
+                        , default=2)
+
+    parser.add_argument('-notransform_epochs', metavar='n'
                         , help=f'Train with no transformations for notransform_epochs epochs'
                         , type=int
                         , default=0)
@@ -35,12 +46,12 @@ def parse_args()->Tuple[training.Parameters,training.Options]:
                         , help=f'Save model after training'
                         , type=bool_parser
                         , default=True)
-    parser.add_argument('-plots', metavar='b'
+    parser.add_argument('-plots', metavar='p'
                         , help=f'Generate plots for training epochs'
                         , type=bool_parser
                         , default=True)
 
-    parser.add_argument('-usecuda', metavar='b'
+    parser.add_argument('-usecuda', metavar='c'
                         , help=f'Use cuda'
                         , type=bool_parser
                         , default=torch.cuda.is_available())
@@ -67,7 +78,7 @@ def parse_args()->Tuple[training.Parameters,training.Options]:
     epochs = model_loading.get_epochs(args.model,args.dataset,transformation)
 
     p=training.Parameters(args.model,args.dataset,transformation,epochs,args.notransform_epochs)
-    o=training.Options(args.verbose,args.savemodel,args.batchsize,args.usecuda,args.plots)
+    o=training.Options(args.verbose,args.train_verbose,args.savemodel,args.batchsize,args.num_workers,args.usecuda,args.plots)
     return p,o
 
 if __name__ == "__main__":

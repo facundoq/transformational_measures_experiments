@@ -1,7 +1,7 @@
 import os
 import pickle
 import typing
-
+from typing import List
 
 
 import transformation_measure as tm
@@ -31,7 +31,7 @@ class Parameters:
         self.transformations=transformations
 
     def id(self):
-        return f"{self.model}_{self.dataset}_{self.transformations.id()}{self.measure.id()}"
+        return f"{self.model}_{self.dataset}_{self.transformations.id()}_{self.measure.id()}"
 
     def __repr__(self):
         return f"VarianceExperiment parameters: model={self.model}, dataset={self.dataset} transformations={self.transformations}, measure={self.measure}"
@@ -94,13 +94,13 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     return p,o
 
 class VarianceExperimentResult:
-    def __init__(self, parameters:Parameters, measure_result,stratified_measure_result):
+    def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult,stratified_measure_result:tm.StratifiedMeasureResult):
         self.parameters=parameters
         self.measure_result=measure_result
         self.stratified_measure_result=stratified_measure_result
 
     def __repr__(self):
-        description = f"VarianceExperimentResult for {self.parameters}"
+        description = f"VarianceExperimentResult, params: {self.parameters}"
         return description
 
     def id(self):
@@ -112,20 +112,34 @@ def base_folder()->str: return os.path.expanduser("~/variance/")
 def default_results_folder()->str:
     return os.path.join(base_folder(),"results")
 
+def results_path(r:VarianceExperimentResult,results_folder=default_results_folder()):
+    return  os.path.join(results_folder, f"{r.parameters.id()}.pickle")
+
 def save_results(r:VarianceExperimentResult,results_folder=default_results_folder()):
-    path = os.path.join(results_folder, f"{r.id()}.pickle")
+    path = results_path(r,results_folder)
     basename=os.path.dirname(path)
     os.makedirs(basename,exist_ok=True)
     pickle.dump(r,open(path,"wb"))
 
-def load_results(path)->VarianceExperimentResult:
+def load_result(path)->VarianceExperimentResult:
     return pickle.load(open(path, "rb"))
 
 def plots_base_folder():
     return os.path.join(base_folder(),"plots")
 
-def plots_folder(r:VarianceExperimentResult):
-    folderpath = os.path.join(plots_base_folder(), f"{r.id()}")
-    if not os.path.exists(folderpath):
-        os.makedirs(folderpath,exist_ok=True)
-    return folderpath
+# def plots_folder(r:VarianceExperimentResult):
+#     folderpath = os.path.join(plots_base_folder(), f"{r.id()}")
+#     if not os.path.exists(folderpath):
+#         os.makedirs(folderpath,exist_ok=True)
+#     return folderpath
+
+def load_results(filepaths:List[str])-> List[VarianceExperimentResult]:
+    results = []
+    for filepath in filepaths:
+        result = load_result(filepath)
+        results.append(result)
+    return results
+
+def load_all_results(folderpath:str)-> List[VarianceExperimentResult]:
+    filepaths=[os.path.join(folderpath, filename) for filename in os.listdir(folderpath)]
+    return load_results(filepaths)

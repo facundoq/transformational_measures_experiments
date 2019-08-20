@@ -7,18 +7,19 @@ def print_results(dataset,loss,accuracy,correct,n):
     print('{} => Loss: {:.4f}, Accuracy: {:.2f}% ({}/{})'.format(dataset,
         loss, 100. * accuracy, correct, n),flush=True)
 
-def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function):
+def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True):
     history={"acc":[],"acc_val":[],"loss":[],"loss_val":[]}
     model.train()
     for epoch in range(1, epochs + 1):
-        loss,accuracy,correct,n=train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function)
+        loss,accuracy,correct,n=train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose)
 
         #train_results = test(model, train_dataset, use_cuda)
         #print_results("Train",*train_results)
 
         #loss, accuracy, correct,n= test(model,train_dataset, use_cuda, loss_function)
         test_results = test(model,test_dataset,use_cuda,loss_function)
-        print_results("Test", *test_results)
+        if verbose:
+            print_results("Test", *test_results)
         history["loss"].append(loss)
         history["loss_val"].append(test_results[0])
         history["acc"].append(accuracy)
@@ -50,14 +51,15 @@ def test(model, dataset, use_cuda,loss_function):
     accuracy = float(correct) / float(n)
     return loss,accuracy,correct,n
 
-def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function):
-    widgets = ["Epoch {}: ".format(epoch), progressbar.Percentage()
-               ,progressbar.FormatLabel(' (batch %(value)d/%(max_value)d) ')
-               ,' ==stats==> ', progressbar.DynamicMessage("loss")
-               ,', ',progressbar.DynamicMessage("accuracy")
-               ,', ',progressbar.ETA()
-               ]
-    progress_bar = progressbar.ProgressBar(widgets=widgets, max_value=len(train_dataset)).start()
+def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose):
+    if verbose:
+        widgets = ["Epoch {}: ".format(epoch), progressbar.Percentage()
+                   ,progressbar.FormatLabel(' (batch %(value)d/%(max_value)d) ')
+                   ,' ==stats==> ', progressbar.DynamicMessage("loss")
+                   ,', ',progressbar.DynamicMessage("accuracy")
+                   ,', ',progressbar.ETA()
+                   ]
+        progress_bar = progressbar.ProgressBar(widgets=widgets, max_value=len(train_dataset)).start()
     batches=len(train_dataset)
     losses=np.zeros(batches)
     accuracies=np.zeros(batches)
@@ -87,10 +89,10 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function):
         losses[batch_idx] = loss.cpu().item()
 
         # UPDATE UI
-        if batch_idx % 20 == 0:
+        if batch_idx % 20 == 0 and verbose:
             progress_bar.update(batch_idx+1,loss=losses[:batch_idx+1].mean(),accuracy=accuracies[:batch_idx+1].mean())
-
-    progress_bar.finish()
+    if verbose:
+        progress_bar.finish()
     return losses.mean(),accuracies.mean(),correct,len(train_dataset.dataset)
 
 

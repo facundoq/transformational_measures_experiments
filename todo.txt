@@ -1,0 +1,3 @@
+* Invariance vs epochs trained, ¿for all datasets/models?
+* eval sm vs tm => for mnist/cifar10, simpleconv, dataset 10%,50%,100%
+*

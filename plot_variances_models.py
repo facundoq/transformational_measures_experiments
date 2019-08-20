@@ -1,24 +1,19 @@
+#!/usr/bin/env python3
+# PYTHON_ARGCOMPLETE_OK
+
+
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
 from typing import List
 plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
-from variance_measure import visualization
+from transformation_measure import visualization
 
 from pytorch import variance
 import os
 from pytorch.variance import VarianceExperimentResult
 from time import gmtime, strftime
-
-
-def load_results(folderpath)-> List[VarianceExperimentResult]:
-    results = []
-    for filename in os.listdir(folderpath):
-        path = os.path.join(folderpath, filename)
-        result = variance.load_results(path)
-        results.append(result)
-    return results
 
 
 def as_table(results:List[VarianceExperimentResult]):
@@ -167,8 +162,9 @@ def plot_heatmaps(results:List[VarianceExperimentResult]):
 
 
 
-results_folderpath=os.path.expanduser("~/variance_results/")
-results=load_results(variance.results_folder)
+
+results_folderpath=variance.default_results_folder()
+results=variance.load_results   (results_folderpath)
 print(f"Found {len(results)} results, plotting..")
 table_results=as_table(results)
 #print_global_results(table_results)

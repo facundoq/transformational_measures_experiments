@@ -2,6 +2,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 import os
+from typing import List
 
 from transformation_measure.measure.base import MeasureResult
 
@@ -50,10 +51,16 @@ def pearson_outlier_range(values,iqr_away):
     range = (p50 - iqr_away * iqr, p50 + iqr_away * iqr)
     return range
 
-def outlier_range_all(std_list,iqr_away=5):
-    var_values=[np.hstack([np.hstack(class_stds) for class_stds in stds]) for stds in std_list]
-    var_values=np.hstack(var_values)
-    return outlier_range_values(var_values,iqr_away)
+def outlier_range_all(results:List[MeasureResult],iqr_away=5):
+    all_values = []
+    for r in results:
+        for layer in r.layers():
+            all_values.append(layer[:])
+    all_values = np.hstack(all_values)
+
+    #var_values=[np.hstack([np.hstack(values) for values in stds]) for stds in std_list]
+
+    return outlier_range_values(all_values,iqr_away)
 
     # minmaxs=[outlier_range(stds,iqr_away) for stds in std_list]
     # mins,maxs=zip(*minmaxs)

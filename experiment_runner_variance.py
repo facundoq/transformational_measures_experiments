@@ -5,7 +5,8 @@ import os
 import runner_utils
 from pytorch import variance
 import transformation_measure as tm
-
+import datasets
+from pytorch.experiment import training
 import util
 
 def run_experiment(model_path:str, measure:tm.Measure,d:variance.DatasetParameters, transformation:tm.TransformationSet, venv_path:str):
@@ -15,8 +16,7 @@ def run_experiment(model_path:str, measure:tm.Measure,d:variance.DatasetParamete
 
 
 # DATASET
-import datasets
-from pytorch.experiment import training
+
 if __name__ == '__main__':
     venv_path=runner_utils.get_venv_path()
     model_names=training.get_models()

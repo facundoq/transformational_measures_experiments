@@ -36,3 +36,4 @@ class Profiler:
     def reset(self):
         self.measures=[]
         self.names=[]
+

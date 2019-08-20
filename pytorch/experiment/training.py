@@ -41,18 +41,21 @@ class Parameters:
         else:
             notransform_message=""
 
-        return f"{self.model}_{self.dataset}_{self.transformations.id()}_epochs={self.epochs}{notransform_message}"
+        return f"{self.model}_{self.dataset}_{self.transformations.id()}{notransform_message}"
 
 
 class Options:
-    def __init__(self, verbose:bool, save_model:bool, batch_size:int, use_cuda:bool, plots:bool):
+    def __init__(self, verbose:bool,train_verbose:bool, save_model:bool, batch_size:int, num_workers:int, use_cuda:bool, plots:bool):
         self.batch_size=batch_size
+        self.num_workers=num_workers
         self.verbose=verbose
+        self.train_verbose = train_verbose
         self.save_model=save_model
         self.plots=plots
         self.use_cuda=use_cuda
+
     def __repr__(self):
-        return f"batch_size={self.batch_size}, verbose={self.verbose}," \
+        return f"batch_size={self.batch_size}, num_workers={self.num_workers}, verbose={self.verbose}, train_verbose={self.train_verbose}," \
             f" save_model={self.save_model}, plots={self.plots}, use_cuda={self.use_cuda}"
 
 
@@ -63,22 +66,24 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
 
 
     if p.notransform_epochs == 0:
-        print(f"### Skipping pretraining rotated model |{model.name}| with dataset |{dataset.name}|")
+        if o.train_verbose:
+            print(f"### Skipping pretraining rotated model |{model.name}| with dataset |{dataset.name}|")
     else:
-        print(f"### Pretraining rotated model |{model.name}| with unrotated dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
+        if o.train_verbose:
+            print(f"### Pretraining rotated model |{model.name}| with unrotated dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=tm.SimpleAffineTransformationGenerator()
-        pre_train_dataset = get_data_generator(dataset.x_train, dataset.y_train,t, o.batch_size)
-        pre_test_dataset = get_data_generator(dataset.x_test, dataset.y_test,t, o.batch_size)
+        pre_train_dataset = get_data_generator(dataset.x_train, dataset.y_train,t, o.batch_size,o.num_workers)
+        pre_test_dataset = get_data_generator(dataset.x_test, dataset.y_test,t, o.batch_size,o.num_workers)
 
-        pre_history = train(model,p.epochs,optimizer,o.use_cuda,pre_train_dataset,pre_test_dataset,loss_function)
+        pre_history = train(model,p.epochs,optimizer,o.use_cuda,pre_train_dataset,pre_test_dataset,loss_function,verbose=o.train_verbose)
 
 
 
-    train_dataset = get_data_generator(dataset.x_train, dataset.y_train,p.transformations, o.batch_size)
-    test_dataset = get_data_generator(dataset.x_test, dataset.y_test,p.transformations, o.batch_size)
-    history = train(model,p.epochs,optimizer,o.use_cuda,train_dataset,test_dataset,loss_function)
-
-    print("### Testing models on dataset...",flush=True)
+    train_dataset = get_data_generator(dataset.x_train, dataset.y_train,p.transformations, o.batch_size,o.num_workers)
+    test_dataset = get_data_generator(dataset.x_test, dataset.y_test,p.transformations, o.batch_size,o.num_workers)
+    history = train(model,p.epochs,optimizer,o.use_cuda,train_dataset,test_dataset,loss_function,verbose=o.train_verbose,)
+    if o.train_verbose:
+        print("### Testing models on dataset...",flush=True)
 
     datasets={"train":train_dataset,"test":test_dataset}
     scores={}
@@ -105,11 +110,11 @@ from transformation_measure.iterators.pytorch_activations_iterator import ImageD
 from pytorch.numpy_dataset import NumpyDataset
 
 def get_data_generator(x:np.ndarray, y:np.ndarray,
-                       transformation:tm.TransformationSet, batch_size:int)->DataLoader:
+                       transformation:tm.TransformationSet, batch_size:int,num_workers:int)->DataLoader:
 
     dataset=NumpyDataset(x,y)
     image_dataset=ImageDataset(dataset,transformation)
-    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=4,drop_last=True,pin_memory=False)
+    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=False)
 
     return dataloader
 

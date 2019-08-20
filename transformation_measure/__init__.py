@@ -3,7 +3,7 @@ from .image_transformations import AffineTransformationGenerator,SimpleAffineTra
 
 from .iterators.pytorch_activations_iterator import PytorchActivationsIterator
 
-from .measure.base import MeasureResult,Measure,MeasureFunction
+from .measure.base import MeasureResult,Measure,MeasureFunction,StratifiedMeasureResult
 from .measure.layer_transformation import ConvAggregation
 from .measure.normalized import NormalizedMeasure
 from .measure.samples import SampleMeasure
