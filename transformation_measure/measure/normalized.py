@@ -13,9 +13,9 @@ class NormalizedMeasure(Measure):
         return f"NM({self.numerator_measure}_DIV_{self.denominator_measure})"
 
     def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
-        v_samples=self.denominator_measure.eval(activations_iterator)
+        v_samples=self.denominator_measure.eval(activations_iterator, layer_names)
 
-        v_transformations=self.numerator_measure.eval(activations_iterator)
+        v_transformations=self.numerator_measure.eval(activations_iterator, layer_names)
 
         v=self.eval_v_normalized(v_transformations.layers,v_samples.layers)
         return MeasureResult(v,layer_names,self)

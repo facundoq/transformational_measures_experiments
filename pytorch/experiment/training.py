@@ -114,7 +114,7 @@ def get_data_generator(x:np.ndarray, y:np.ndarray,
 
     dataset=NumpyDataset(x,y)
     image_dataset=ImageDataset(dataset,transformation)
-    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=False)
+    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=False,)
 
     return dataloader
 
@@ -158,18 +158,22 @@ def experiment_plot_path():
     os.makedirs(plots_folderpath, exist_ok=True)
     return plots_folderpath
 
-def experiment_model_path():
+def experiment_model_path(p: Parameters):
+    model_folderpath= experiment_model_folder()
+    filename=f"{p.id()}.pt"
+    filepath=os.path.join(model_folderpath,filename)
+    return filepath
+
+def experiment_model_folder():
     base = base_path()
-    model_folderpath="models"
+    model_folderpath = "models"
     model_folderpath = os.path.join(base, model_folderpath)
     os.makedirs(model_folderpath, exist_ok=True)
     return model_folderpath
 
-
 def save_model(p:Parameters,o:Options,model:nn.Module,scores):
-    model_folderpath = experiment_model_path()
-    filename=f"{p.id()}.pt"
-    filepath=os.path.join(model_folderpath,filename)
+    filepath = experiment_model_path(p)
+
     torch.save({"parameters":p,
                 "model":model,
                 "model_state": model.state_dict(),
@@ -180,13 +184,13 @@ def save_model(p:Parameters,o:Options,model:nn.Module,scores):
 from pytorch.experiment import model_loading
 
 def get_models():
-    model_folderpath = experiment_model_path()
+    model_folderpath = experiment_model_folder()
     files=os.listdir(model_folderpath)
     model_files=[f for f in files if f.endswith(".pt")]
     return model_files
 
 def load_model(filename:str,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
-    model_folderpath = experiment_model_path()
+    model_folderpath = experiment_model_folder()
     model_filepath=os.path.join(model_folderpath,filename)
     logging.info(f"Loading model from {model_filepath}...")
     if use_cuda:

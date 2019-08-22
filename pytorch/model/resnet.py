@@ -113,7 +113,8 @@ class Bottleneck(nn.Module):
         names=["c0","c0act","c1","c1act","c2","short","c2+short","act"]
         return names
 
-class ResNet(nn.Module):
+from transformation_measure import ObservableLayersModel
+class ResNet(nn.Module,ObservableLayersModel):
     def __init__(self, block, num_blocks,input_shape,num_classes):
         super(ResNet, self).__init__()
         self.name = self.__class__.__name__
@@ -186,9 +187,6 @@ class ResNet(nn.Module):
         # print(outputs)
         return x,outputs
 
-    def n_intermediates(self):
-        return len(self.activation_names())
-
     def activation_names(self):
         names=["c0","c0act"]
         for i,l in enumerate([self.layer1,self.layer2,self.layer3,self.layer4]):
@@ -215,6 +213,6 @@ def ResNet152(input_shape,num_classes):
 
 
 def test():
-    net = ResNet18()
-    y = net(torch.randn(1,3,32,32),(40,40,3),10)
+    net = ResNet18((32,32,3),10)
+    y = net(torch.randn(1,3,32,32))
     print(y.size())

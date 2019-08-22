@@ -109,7 +109,8 @@ class ImageDataset(Dataset):
         x,y=self.dataset.get_batch(idx)
         x=self.transform_batch(x)
         y=y.type(dtype=torch.LongTensor)
-        return x,y
+        # return x.cuda(),y.cuda()
+        return x, y
 
 
     def get_all(self):

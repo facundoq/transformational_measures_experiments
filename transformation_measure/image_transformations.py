@@ -108,7 +108,7 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         self.affine_transformation_generator=AffineTransformationGenerator(rotations=rotations, scales=scales, translations=translations)
 
     def __repr__(self):
-        return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations}"
+        return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations})"
 
     def id(self):
         return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations})"

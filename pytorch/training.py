@@ -1,5 +1,5 @@
 import progressbar
-import torch
+import torch,torch.multiprocessing
 import numpy as np
 import transformation_measure as tm
 
@@ -8,6 +8,7 @@ def print_results(dataset,loss,accuracy,correct,n):
         loss, 100. * accuracy, correct, n),flush=True)
 
 def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True):
+    # torch.multiprocessing.set_start_method("spawn")
     history={"acc":[],"acc_val":[],"loss":[],"loss_val":[]}
     model.train()
     for epoch in range(1, epochs + 1):
@@ -36,13 +37,9 @@ def test(model, dataset, use_cuda,loss_function):
         for data, target in dataset:
             if use_cuda:
                 data, target = data.cuda(), target.cuda()
-            #data = data.float()
-            # data, target = Variable(data,), Variable(target)
-
             output = model(data)
 
             loss += loss_function(output,target[:,0]).item()*data.shape[0]
-            #loss += F.nll_loss(output, target, size_average=False).item() # sum up batch loss
             pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
             correct += pred.eq(target.data.view_as(pred)).cpu().sum().item()
 
@@ -73,8 +70,6 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbo
         #MODEL OUTPUT
         output = model(data)
         loss = loss_function(output, target[:,0])
-        # loss = F.nll_loss(output, target)
-
         # UPDATE PARAMETERS
         loss.backward()
         optimizer.step()
@@ -82,7 +77,6 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbo
 
         # ESTIMATE BATCH LOSS AND ACCURACY
         pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
-
         matches = pred.eq(target.data.view_as(pred)).cpu()
         correct += matches.sum()
         accuracies[batch_idx] = matches.float().mean().item()

@@ -86,3 +86,19 @@ class PytorchActivationsIterator(ActivationsIterator):
             for i in range(x.shape[0]):
                 activations,x_transformed=self.transformations_activations(x[i, :])
                 yield activations,x_transformed.numpy()
+
+
+from abc import abstractmethod
+
+class ObservableLayersModel:
+
+    @abstractmethod
+    def activation_names(self)->[str]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def forward_intermediates(self)->(object,[]):
+        raise NotImplementedError()
+
+    def n_intermediates(self):
+        return len(self.activation_names())

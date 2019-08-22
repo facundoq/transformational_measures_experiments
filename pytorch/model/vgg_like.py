@@ -13,7 +13,7 @@ class ConvBNRelu(nn.Module):
 
     def __init__(self,input,output):
         super(ConvBNRelu, self).__init__()
-        self.name = "ConvBNRelu"
+        self.name = "ConvBNElu"
         self.layers=SequentialWithIntermediates(
             nn.Conv2d(input, output, kernel_size=3, padding=1),
             nn.ELU(),
@@ -27,8 +27,9 @@ class ConvBNRelu(nn.Module):
         return self.layers.forward_intermediates(x)
 
 
+from transformation_measure import ObservableLayersModel
 
-class VGGLike(nn.Module):
+class VGGLike(nn.Module,ObservableLayersModel):
     def __init__(self, input_shape, num_classes,conv_filters,fc):
         super(VGGLike, self).__init__()
         self.name = self.__class__.__name__
@@ -70,7 +71,7 @@ class VGGLike(nn.Module):
         x=self.dense_layers.forward(x)
         x=F.log_softmax(x, dim=1)
         return x
-    def forward_intermediates(self,x):
+    def forward_intermediates(self,x)->(object,[]):
         outputs = []
         for i in range(4):
             x,intermediates = self.conv_layers[i*3].forward_intermediates(x)
@@ -90,10 +91,7 @@ class VGGLike(nn.Module):
         outputs.append(x)
         return x, outputs
 
-
-    def n_intermediates(self):
-        return len(self.intermediates_names())
-    def intermediates_names(self):
+    def activation_names(self):
         names=[]
         for i in range(4):
             names.append(f"c{i}_0")

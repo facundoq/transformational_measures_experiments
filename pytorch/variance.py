@@ -112,11 +112,11 @@ def base_folder()->str: return os.path.expanduser("~/variance/")
 def default_results_folder()->str:
     return os.path.join(base_folder(),"results")
 
-def results_path(r:VarianceExperimentResult,results_folder=default_results_folder()):
-    return  os.path.join(results_folder, f"{r.parameters.id()}.pickle")
+def results_path(p:Parameters,results_folder=default_results_folder()):
+    return  os.path.join(results_folder, f"{p.id()}.pickle")
 
 def save_results(r:VarianceExperimentResult,results_folder=default_results_folder()):
-    path = results_path(r,results_folder)
+    path = results_path(r.parameters, results_folder)
     basename=os.path.dirname(path)
     os.makedirs(basename,exist_ok=True)
     pickle.dump(r,open(path,"wb"))

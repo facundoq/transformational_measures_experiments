@@ -1,7 +1,8 @@
 import torch.nn as nn
+import torch
 
 class Flatten(nn.Module):
-    def forward(self, input):
+    def forward(self, input:torch.Tensor):
         return input.view(input.size(0), -1)
 
 class SequentialWithIntermediates(nn.Sequential):

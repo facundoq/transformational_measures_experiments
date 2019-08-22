@@ -18,8 +18,9 @@ class ConvBN(nn.Module):
     def forward(self,x):
         return self.model.forward(x)
 
+from transformation_measure import ObservableLayersModel
 
-class AllConvolutional(nn.Module):
+class AllConvolutional(nn.Module, ObservableLayersModel):
     def __init__(self, input_shape, num_classes=10,filters=96,dropout=False):
         super(AllConvolutional, self).__init__()
         self.name = self.__class__.__name__
@@ -64,14 +65,6 @@ class AllConvolutional(nn.Module):
     def layer_names(self):
         return [f"c{i}" for i in range(8)]+["cc"]
 
-    def get_layer(self,layer_name):
-
-        layer_names=self.layer_names()
-        index=layer_names.index(layer_name)
-        return self.layers[index]
-
-    def n_intermediates(self):
-        return len(self.activation_names())
 
     def activation_names(self):
         names=[ [x,x+"act"] for x in self.layer_names()]

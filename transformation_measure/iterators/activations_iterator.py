@@ -23,3 +23,4 @@ class ActivationsIterator:
     @abc.abstractmethod
     def activation_names(self)-> List[str]:
         pass
+

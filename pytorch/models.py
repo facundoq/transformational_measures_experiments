@@ -4,6 +4,7 @@ from pytorch.model.all_conv import *
 from pytorch.model.vgg_like import *
 from pytorch.model.resnet import *
 
+names= [SimpleConv.__name__, VGGLike.__name__, ResNet.__name__, AllConvolutional.__name__]
 
 class FFNet(nn.Module):
     def __init__(self,input_shape,num_classes,h1=120,h2=84):

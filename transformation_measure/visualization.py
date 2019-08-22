@@ -99,12 +99,10 @@ def plot(all_stds,model,dataset_name,savefig=False,savefig_suffix="",class_names
                      dataset_name, savefig,
                      savefig_suffix)
 
-def plot_collapsing_layers(rotated_measures,measures,labels,savefig=None, savefig_suffix=""):
-    rotated_measures_collapsed=collapse_measure_layers(rotated_measures)
-    measures_collapsed=collapse_measure_layers(measures)
-    n=len(rotated_measures)
-    assert( n == len(measures))
-    assert (n == len(labels))
+from pytorch import variance
+
+def plot_collapsing_layers(results:List[variance.VarianceExperimentResult],savefig=None, savefig_suffix=""):
+    n=len(results)
     if n==2:
         color = np.array([[1,0,0],[0,0,1]])
     else:
@@ -112,15 +110,14 @@ def plot_collapsing_layers(rotated_measures,measures,labels,savefig=None, savefi
 
 
     f,ax=plt.subplots(dpi=min(350,max(150,n*15)))
-    for rotated_measure,measure,label,i in zip(rotated_measures_collapsed,measures_collapsed,labels,range(n)):
-        x_rotated=np.arange(rotated_measure.shape[0])
-        x=np.arange(measure.shape[0])
-        ax.plot(x_rotated,rotated_measure,label="rotated_"+label,linestyle="-",color=color[i,:])
-        ax.plot(x,measure,label="unrotated_"+label,linestyle="--",color=color[i,:]*0.7)
+    for i, result in enumerate(results):
+        n_layers= len(result.measure_result.layers)
+        x= np.arange(n_layers)
+        y= result.measure_result.per_layer_average()
+        ax.plot(x,y,label= result.parameters.id(),linestyle="--",color=color[i,:]*0.7)
         ax.set_ylabel("Variance")
         ax.set_xlabel("Layer")
         # ax.set_ylim(max_measure)
-        n_layers=len(x)
         if n_layers<25:
             ax.set_xticks(range(n_layers))
 
