@@ -9,6 +9,7 @@ from .measure.normalized import NormalizedMeasure
 from .measure.samples import SampleMeasure
 from .measure.transformations import TransformationMeasure
 
+
 from typing import List
 def common_measures()-> List[Measure]:
     measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum),
@@ -16,7 +17,6 @@ def common_measures()-> List[Measure]:
      NormalizedMeasure(TransformationMeasure(MeasureFunction.std, ConvAggregation.sum), SampleMeasure(MeasureFunction.std, ConvAggregation.sum))
     ]
     return measures
-
 
 def common_transformations() -> List[TransformationSet]:
     transformations = [SimpleAffineTransformationGenerator()]
@@ -27,3 +27,15 @@ def common_transformations_without_identity()-> List[TransformationSet]:
         , SimpleAffineTransformationGenerator(n_translations=2)
         , SimpleAffineTransformationGenerator(n_scales=2)]
     return transformations
+
+def rotation_transformations():
+    return [SimpleAffineTransformationGenerator(n_rotations=r) for r in [1,2,4,8,16,32]]
+
+def scale_transformations():
+    return [SimpleAffineTransformationGenerator(n_scales=r) for r in [1,2,4,8,16,32]]
+
+def translation_transformations():
+    return [SimpleAffineTransformationGenerator(n_translations=r) for r in [1,2,3,4,5,6]]
+
+def all_transformations():
+    return common_transformations()+rotation_transformations()+scale_transformations()+translation_transformations()

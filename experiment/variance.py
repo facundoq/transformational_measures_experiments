@@ -22,21 +22,27 @@ class DatasetParameters:
         return str(self)
 
 class Parameters:
-    def __init__(self, model_path:str, dataset:DatasetParameters, transformations:tm.TransformationSet, measure:tm.Measure):
+    def __init__(self, model_path:str, dataset:DatasetParameters, transformations:tm.TransformationSet, measure:tm.Measure,stratified:bool=False):
         self.model_path=model_path
         self.dataset=dataset
         self.measure=measure
         self.transformations=transformations
+        self.stratified=stratified
     def model_name(self):
         base,filename_ext=os.path.split(self.model_path)
         filename,ext=os.path.splitext(filename_ext)
         return filename
     def id(self):
-
-        return f"{self.model_name()}_{self.dataset}_{self.transformations.id()}_{self.measure.id()}"
+        measure=self.measure.id()
+        if self.stratified:
+            measure=f"Stratified({measure})"
+        return f"{self.model_name()}_{self.dataset}_{self.transformations.id()}_{measure}"
 
     def __repr__(self):
-        return f"VarianceExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, measure={self.measure}"
+        measure = self.measure.id()
+        if self.stratified:
+            measure = f"Stratified({measure})"
+        return f"VarianceExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, measure={measure}"
 
 class Options:
     def __init__(self,verbose:bool,batch_size:int):
@@ -50,7 +56,7 @@ from experiment import training
 
 
 def possible_experiment_parameters()->[]:
-    transformations = tm.common_transformations()
+    transformations = tm.all_transformations()
     measures= tm.common_measures()
 
     dataset_percentages = [.1, .5, 1.0]
@@ -86,6 +92,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     parser.add_argument("-model", metavar="mo",type=is_valid_file,required=True)
     parser.add_argument("-dataset", metavar="d", choices=datasets.keys(),required=True)
     parser.add_argument("-measure", metavar="me", choices=measures.keys(),required=True)
+    parser.add_argument("-stratified", metavar="stra",type=bool_parser,default=False)
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
     parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,
                         help=f'Print info about dataset/models/transformations')
@@ -101,15 +108,14 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     p = Parameters(args.model,
                    datasets[args.dataset],
                    transformations[args.transformation],
-                   measures[args.measure])
+                   measures[args.measure],stratified=args.stratified)
     o = Options(args.verbose,args.batchsize)
     return p,o
 
 class VarianceExperimentResult:
-    def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult,stratified_measure_result:tm.StratifiedMeasureResult):
+    def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult):
         self.parameters=parameters
         self.measure_result=measure_result
-        self.stratified_measure_result=stratified_measure_result
 
     def __repr__(self):
         description = f"VarianceExperimentResult, params: {self.parameters}"

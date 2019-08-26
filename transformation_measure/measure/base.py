@@ -103,3 +103,13 @@ class Measure:
         return layer_vars
 
 
+class StratifiedMeasure(Measure):
+    def __init__(self,base_measure:Measure):
+        self.base_measure=base_measure
+    def __repr__(self):
+        return f"Stratified({self.base_measure})"
+    def id(self):
+        return str(self)
+
+    def eval(self,classes_iterators:List[ActivationsIterator],layer_names:List[str],class_labels:List[str]):
+        return self.base_measure.eval_stratified(classes_iterators,layer_names,class_labels)

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
+from transformation_measure import ObservableLayersModel
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -47,13 +47,13 @@ class BasicBlock(nn.Module):
         out = F.relu(out)
         outputs.append(out)
         return out,outputs
-    def n_intermediates(self):
-        return len(self.intermediates_names())
-    def intermediates_names(self):
+
+    def activation_names(self):
         names=["c0","c0act","c1","short","c1+short","act"]
         return names
 
-class Bottleneck(nn.Module):
+
+class Bottleneck(nn.Module,ObservableLayersModel):
     expansion = 4
 
     def __init__(self, in_planes, planes, stride=1):
@@ -107,13 +107,11 @@ class Bottleneck(nn.Module):
         outputs.append(out)
         return out,outputs
 
-    def n_intermediates(self):
-        return len(self.intermediates_names())
-    def intermediates_names(self):
+    def activation_names(self):
         names=["c0","c0act","c1","c1act","c2","short","c2+short","act"]
         return names
 
-from transformation_measure import ObservableLayersModel
+
 class ResNet(nn.Module,ObservableLayersModel):
     def __init__(self, block, num_blocks,input_shape,num_classes):
         super(ResNet, self).__init__()

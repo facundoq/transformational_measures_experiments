@@ -1,10 +1,12 @@
-
+* Call plot directly in experiment_definitions.py so as to make it easy to set x_axis and stuff
+* Make exp in experiment_definitions into classes
 * Define more experiment configurations
     * Invariance vs epochs trained, ¿for all datasets/models? (how to implement?)
-    * eval sm vs tm vs normalized => for mnist/cifar10, simpleconv, dataset 10%,50%,100%
+    * eval sm vs tm vs normalized => for mnist/cifar10, simpleconv, dataset 10%,50%,100% DONE
     * Stratified vs none -> mnist/cifar, simple_conv/resnet
-    * Invariance to rotation: train with n rotations, test with more. Same for
+    * Invariance to rotation: train with n rotations, test with more.
     * Invariance to X vs epochs needed to train
+    * Transformation strength vs invariance obtained
     * Train invariance to X in cifar with 5 classes, then test with other 5 classes. Is the invariance still there?
     * Train without invariance, then train with invariance to X, then test invariance to Y in both models.
     Does invariance to one thing helps in invariance to another?
@@ -15,13 +17,11 @@
         * Rotation => More rotation angles
         * Rotation => Less rotation angles
 
-* Reimplement more
 * Implement model saving at x% (include as parameters). add to Parameter "id_at_training_percent()" to get the id for that training percent
 * Implement anova based measure
-* Convert cmd arguments from fixed set of choices to separate options.
+* Convert cmd arguments from fixed set of choices to separate options. IMPORTANT!!!!
     * Make each parameters object implement a get_parser() to get the ArgParser for the parameter, so that they can be reused in different scripts.
     * They should also implement a to_cmd() method, that generates the command line string representation, so that the runners can create Parameter objects and then just use to_cmd() to call the other scripts
     * Also centralize somewhere the map from a parameter object to a filename which contains the result.
-* Make `stratified` an option in experiment_variance, so that each MeasureResult object contains a single measure result.
 * Retraining experiments; which layers get the invariance now?
 

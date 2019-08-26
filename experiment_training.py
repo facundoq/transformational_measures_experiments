@@ -13,7 +13,7 @@ from typing import Tuple
 def parse_args()->Tuple[training.Parameters, training.Options]:
 
     bool_parser=lambda x: (str(x).lower() in ['true','1', 'yes'])
-    transformations=tm.common_transformations()
+    transformations=tm.all_transformations()
     transformations={t.id():t for t in transformations}
 
     parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
