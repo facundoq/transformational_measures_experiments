@@ -3,16 +3,16 @@
 
 ## Calculate the variance of each activation in a model.
 ## NOTE:
-## You should run "experiment_training.py" before this script to generate and train the models for
+## You should run "experiment_training.py" before this script to generate and train the model for
 ## a given dataset/model/transformation combination
 
 
 import datasets
-import torch
-from pytorch import variance
+import torch,config
+from experiment import variance, training
 
 
-def experiment(p: variance.Parameters,o:variance.Options):
+def experiment(p: variance.Parameters, o: variance.Options):
     assert(len(p.transformations)>1)
     use_cuda = torch.cuda.is_available()
 
@@ -20,8 +20,7 @@ def experiment(p: variance.Parameters,o:variance.Options):
     if o.verbose:
         print(dataset.summary())
 
-    from pytorch.experiment import training
-    model, training_parameters, training_options, scores = training.load_model(p.model, use_cuda)
+    model, training_parameters, training_options, scores = training.load_model(p.model_path, use_cuda)
 
     if o.verbose:
         print("### ", model)
@@ -57,6 +56,6 @@ if __name__ == "__main__":
     p, o = variance.parse_parameters()
     print(f"Experimenting with parameters: {p}")
     measures_results=experiment(p,o)
-    variance.save_results(measures_results)
+    config.save_results(measures_results)
 
 

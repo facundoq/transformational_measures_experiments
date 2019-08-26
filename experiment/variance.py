@@ -1,11 +1,9 @@
 import os
-import pickle
 import typing
-from typing import List
-
 
 import transformation_measure as tm
 from enum import Enum
+
 class DatasetSubset(Enum):
     train="train"
     test="test"
@@ -24,17 +22,21 @@ class DatasetParameters:
         return str(self)
 
 class Parameters:
-    def __init__(self,model:str,dataset:DatasetParameters,transformations:tm.TransformationSet,measure:tm.Measure):
-        self.model=model
+    def __init__(self, model_path:str, dataset:DatasetParameters, transformations:tm.TransformationSet, measure:tm.Measure):
+        self.model_path=model_path
         self.dataset=dataset
         self.measure=measure
         self.transformations=transformations
-
+    def model_name(self):
+        base,filename_ext=os.path.split(self.model_path)
+        filename,ext=os.path.splitext(filename_ext)
+        return filename
     def id(self):
-        return f"{self.model}_{self.dataset}_{self.transformations.id()}_{self.measure.id()}"
+
+        return f"{self.model_name()}_{self.dataset}_{self.transformations.id()}_{self.measure.id()}"
 
     def __repr__(self):
-        return f"VarianceExperiment parameters: model={self.model}, dataset={self.dataset} transformations={self.transformations}, measure={self.measure}"
+        return f"VarianceExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, measure={self.measure}"
 
 class Options:
     def __init__(self,verbose:bool,batch_size:int):
@@ -44,8 +46,10 @@ class Options:
 
 dataset_names=["mnist","cifar10"]
 
-from pytorch.experiment import training
-def possible_experiment_parameters():
+from experiment import training
+
+
+def possible_experiment_parameters()->[]:
     transformations = tm.common_transformations()
     measures= tm.common_measures()
 
@@ -61,7 +65,8 @@ def possible_experiment_parameters():
     def list2dict(list):
         return {x.id(): x for x in list}
     parameters=[ list2dict(p) for p in parameters ]
-    return parameters+[training.get_models()]
+
+    return parameters
 
 import argcomplete, argparse
 
@@ -69,15 +74,21 @@ import argcomplete, argparse
 def parse_parameters()->typing.Tuple[Parameters,Options]:
     bool_parser = lambda x: (str(x).lower() in ['true', '1', 'yes'])
 
-    datasets, measures, transformations, models,=possible_experiment_parameters()
+    def is_valid_file(filepath):
+        if not os.path.exists(filepath):
+            raise argparse.ArgumentTypeError("The model file %s does not exist!" % filepath)
+        else:
+            return filepath
+
+    datasets, measures, transformations=possible_experiment_parameters()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-model", metavar="mo", choices=models,required=True)
+    parser.add_argument("-model", metavar="mo",type=is_valid_file,required=True)
     parser.add_argument("-dataset", metavar="d", choices=datasets.keys(),required=True)
     parser.add_argument("-measure", metavar="me", choices=measures.keys(),required=True)
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
     parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,
-                        help=f'Print info about dataset/model/transformations')
+                        help=f'Print info about dataset/models/transformations')
     parser.add_argument('-batchsize', metavar='b'
                         , help=f'batchsize to use during training'
                         , type=int
@@ -85,6 +96,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
 
     argcomplete.autocomplete(parser)
     args = parser.parse_args()
+
 
     p = Parameters(args.model,
                    datasets[args.dataset],
@@ -106,40 +118,3 @@ class VarianceExperimentResult:
     def id(self):
         return f"{self.parameters.id()}"
 
-def base_folder()->str: return os.path.expanduser("~/variance/")
-
-
-def default_results_folder()->str:
-    return os.path.join(base_folder(),"results")
-
-def results_path(p:Parameters,results_folder=default_results_folder()):
-    return  os.path.join(results_folder, f"{p.id()}.pickle")
-
-def save_results(r:VarianceExperimentResult,results_folder=default_results_folder()):
-    path = results_path(r.parameters, results_folder)
-    basename=os.path.dirname(path)
-    os.makedirs(basename,exist_ok=True)
-    pickle.dump(r,open(path,"wb"))
-
-def load_result(path)->VarianceExperimentResult:
-    return pickle.load(open(path, "rb"))
-
-def plots_base_folder():
-    return os.path.join(base_folder(),"plots")
-
-# def plots_folder(r:VarianceExperimentResult):
-#     folderpath = os.path.join(plots_base_folder(), f"{r.id()}")
-#     if not os.path.exists(folderpath):
-#         os.makedirs(folderpath,exist_ok=True)
-#     return folderpath
-
-def load_results(filepaths:List[str])-> List[VarianceExperimentResult]:
-    results = []
-    for filepath in filepaths:
-        result = load_result(filepath)
-        results.append(result)
-    return results
-
-def load_all_results(folderpath:str)-> List[VarianceExperimentResult]:
-    filepaths=[os.path.join(folderpath, filename) for filename in os.listdir(folderpath)]
-    return load_results(filepaths)

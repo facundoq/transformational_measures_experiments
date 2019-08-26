@@ -23,11 +23,12 @@ class Profiler:
     def event(self, name):
         self.measures.append(get_epochtime_ms())
         self.names.append(name)
-    def summary(self):
+    def summary(self,seconds=False):
         if len(self.measures)>1:
             # deltas=[j-i for i, j in zip()]
             vals=zip(self.names[:-1], self.names[1:],self.measures[:-1],self.measures[1:])
-            tags = [f"{n1} to {n2}: {t2-t1}ms" for n1,n2,t1,t2 in vals]
+            time_format=lambda t: f"{t/1000}s" if seconds else f"{t}ms"
+            tags = [f"{n1} to {n2}: {time_format(t2-t1)}" for n1,n2,t1,t2 in vals]
             return "\n".join(tags)
         elif len(self.measures)==1:
             return f"One measure ({self.name[0]})."

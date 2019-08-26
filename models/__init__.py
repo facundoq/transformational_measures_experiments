@@ -1,8 +1,8 @@
-from pytorch.model.simple_conv import *
-from pytorch.model.stn import *
-from pytorch.model.all_conv import *
-from pytorch.model.vgg_like import *
-from pytorch.model.resnet import *
+from models.util import *
+from models.simple_conv import *
+from models.vgg_like import *
+from models.all_conv import *
+from models.resnet import *
 
 names= [SimpleConv.__name__, VGGLike.__name__, ResNet.__name__, AllConvolutional.__name__]
 

@@ -1,20 +1,20 @@
-from pytorch import models
+import models
 import datasets
 import torch
 
 from pytorch.numpy_dataset import NumpyDataset
 
 dataset_name="mnist"
-model_name=models.SimpleConv.__name__
+model_name= models.SimpleConv.__name__
 
 print(f"### Loading dataset {dataset_name} and model {model_name}....")
 
 use_cuda=torch.cuda.is_available()
 dataset = datasets.get(dataset_name)
 
+from experiment import training
 
-from pytorch.experiment import training
-model,rotated_model,scores,config=training.load_models(dataset, model_name, use_cuda)
+model,rotated_model,scores,config= training.load_models(dataset, model_name, use_cuda)
 
 
 from variance_measure.iterators.pytorch_activations_iterator import PytorchActivationsIterator

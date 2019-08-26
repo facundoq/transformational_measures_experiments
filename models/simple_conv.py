@@ -1,9 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
 from transformation_measure import ObservableLayersModel
 
-from pytorch.model.util import SequentialWithIntermediates
+from models import SequentialWithIntermediates
 
 
 class SimpleConv(nn.Module, ObservableLayersModel):

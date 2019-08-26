@@ -1,6 +1,5 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch.model.util import SequentialWithIntermediates
 
 
 class ConvBN(nn.Module):
@@ -81,14 +80,14 @@ class AllConvolutional(nn.Module, ObservableLayersModel):
 #             padding=0
 #         else:
 #             padding=1
-#         self.model=nn.Sequential(
+#         self.models=nn.Sequential(
 #             nn.Conv2d(in_filters, out_filters, kernel_size=kernel_size, padding=padding,stride=stride),
 #             nn.BatchNorm2d(out_filters),
 #             nn.ReLU()
 #         )
 #
 #     def forward(self,x):
-#         return self.model.forward(x)
+#         return self.models.forward(x)
 #
 # # class AllConv(nn.Module):
 # #     def __init__(self, input_shape, num_classes, filters=96):
@@ -143,7 +142,7 @@ class AllConvolutional(nn.Module, ObservableLayersModel):
 # #
 # #     def layers(self):
 # #         convs=list(self.conv.children())
-# #         return [convs[0]]+[list(convs[i].model.children())[0] for i in range(3,10)]
+# #         return [convs[0]]+[list(convs[i].models.children())[0] for i in range(3,10)]
 # #
 # #
 # #         # return x

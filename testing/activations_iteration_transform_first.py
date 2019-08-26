@@ -1,12 +1,11 @@
-from pytorch import models
+import models
 import datasets
 import torch
 import util
 
 from pytorch.numpy_dataset import NumpyDataset
-from pytorch.experiment import model_loading
+from experiment import model_loading
 
-from testing.utils import plot_image_grid
 import transformation_measure as tm
 import matplotlib
 from transformation_measure.iterators.pytorch_activations_iterator import ImageDataset
@@ -14,7 +13,7 @@ matplotlib.use('Agg')
 
 
 dataset_name="cifar10"
-model_name=models.SimpleConv.__name__
+model_name= models.SimpleConv.__name__
 
 print(f"### Loading dataset {dataset_name} and model {model_name}....")
 

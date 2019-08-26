@@ -1,4 +1,5 @@
-from pytorch import training, models
+from pytorch import training
+import models
 
 from torch import optim,nn
 from torch.optim.optimizer import Optimizer
@@ -61,10 +62,10 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         return model, optimizer
 
     all_models = {models.SimpleConv.__name__: simple_conv,
-              models.AllConvolutional.__name__: all_convolutional,
-              models.VGGLike.__name__: vgglike,
-              models.ResNet.__name__: resnet,
-              }
+                  models.AllConvolutional.__name__: all_convolutional,
+                  models.VGGLike.__name__: vgglike,
+                  models.ResNet.__name__: resnet,
+                  }
     if name not in all_models :
         raise ValueError(f"Model \"{name}\" does not exist. Choices: {', '.join(all_models .keys())}")
     return all_models [name]()

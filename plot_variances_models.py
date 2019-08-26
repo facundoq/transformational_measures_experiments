@@ -10,9 +10,9 @@ plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
 from transformation_measure import visualization
 
-from pytorch import variance
+from experiment import variance
 import os
-from pytorch.variance import VarianceExperimentResult
+from experiment.variance import VarianceExperimentResult
 from time import gmtime, strftime
 
 
@@ -28,7 +28,7 @@ def as_table(results:List[VarianceExperimentResult]):
 # def global_results_latex(results,stratified):
 #     table={}
 #
-#     for experiment_result, model, dataset, in results:
+#     for experiment_result, models, dataset, in results:
 #         var,stratified_layer_vars,var_all_dataset,rotated_var,rotated_stratified_layer_vars,rotated_var_all_dataset=result
 #         conv_table=table.get(conv_aggregation,{})
 #         dataset_table=conv_table.get(dataset,{})
@@ -36,11 +36,11 @@ def as_table(results:List[VarianceExperimentResult]):
 #         rotated_table=dataset_table.get("rotated",{})
 #         unrotated_table = dataset_table.get("unrotated", {})
 #         if stratified:
-#             rotated_table[model] = variance.global_average_variance(rotated_stratified_layer_vars)
-#             unrotated_table[model] = variance.global_average_variance(stratified_layer_vars)
+#             rotated_table[models] = variance.global_average_variance(rotated_stratified_layer_vars)
+#             unrotated_table[models] = variance.global_average_variance(stratified_layer_vars)
 #         else:
-#             rotated_table[model]= variance.global_average_variance(rotated_var_all_dataset)
-#             unrotated_table[model] = variance.global_average_variance(var_all_dataset)
+#             rotated_table[models]= variance.global_average_variance(rotated_var_all_dataset)
+#             unrotated_table[models] = variance.global_average_variance(var_all_dataset)
 #
 #         dataset_table["rotated"]=rotated_table
 #         dataset_table["unrotated"] = unrotated_table
@@ -163,8 +163,8 @@ def plot_heatmaps(results:List[VarianceExperimentResult]):
 
 
 
-results_folderpath=variance.default_results_folder()
-results=variance.load_results   (results_folderpath)
+results_folderpath= variance.default_results_folder()
+results= variance.load_results   (results_folderpath)
 print(f"Found {len(results)} results, plotting..")
 table_results=as_table(results)
 #print_global_results(table_results)

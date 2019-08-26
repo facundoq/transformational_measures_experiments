@@ -11,10 +11,11 @@ from .measure.transformations import TransformationMeasure
 
 from typing import List
 def common_measures()-> List[Measure]:
-    return [ SampleMeasure(MeasureFunction.std, ConvAggregation.sum),
+    measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum),
              TransformationMeasure(MeasureFunction.std, ConvAggregation.sum),
      NormalizedMeasure(TransformationMeasure(MeasureFunction.std, ConvAggregation.sum), SampleMeasure(MeasureFunction.std, ConvAggregation.sum))
     ]
+    return measures
 
 
 def common_transformations() -> List[TransformationSet]:

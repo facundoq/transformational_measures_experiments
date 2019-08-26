@@ -1,5 +1,4 @@
 import numpy as np
-import pickle
 import matplotlib.pyplot as plt
 import os
 from typing import List
@@ -99,9 +98,11 @@ def plot(all_stds,model,dataset_name,savefig=False,savefig_suffix="",class_names
                      dataset_name, savefig,
                      savefig_suffix)
 
-from pytorch import variance
 
-def plot_collapsing_layers(results:List[variance.VarianceExperimentResult],savefig=None, savefig_suffix=""):
+from experiment import variance
+
+
+def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, experiment_name=""):
     n=len(results)
     if n==2:
         color = np.array([[1,0,0],[0,0,1]])
@@ -110,9 +111,10 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult],savef
 
 
     f,ax=plt.subplots(dpi=min(350,max(150,n*15)))
+    f.suptitle(experiment_name)
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
-        x= np.arange(n_layers)
+        x= np.arange(n_layers)+1
         y= result.measure_result.per_layer_average()
         ax.plot(x,y,label= result.parameters.id(),linestyle="--",color=color[i,:]*0.7)
         ax.set_ylabel("Variance")
@@ -121,21 +123,15 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult],savef
         if n_layers<25:
             ax.set_xticks(range(n_layers))
 
-    #handles, labels = ax.get_legend_handles_labels()
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                     box.width, box.height * 0.9])
 
-    # reverse the order
-    # lgd=ax.legend(handles[::-1], labels[::-1],bbox_to_anchor=(1, 1))
-    #           # mode="expand", borderaxespad=0.3)
-    # # ax.autoscale_view()
-    # f.artists.append(lgd) # Here's the change
-    #plt.tight_layout()
+    # Put legend below current axis
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+              fancybox=True, shadow=True)
 
-    if savefig:
-        image_name=f"collapsed_{savefig_suffix}.png"
-        path=os.path.join(savefig,image_name)
-        plt.savefig(path,bbox_inches="tight")
-
-    #plt.show()
+    plt.savefig(filepath, bbox_inches="tight")
     plt.close()
 
 
@@ -189,5 +185,5 @@ def plot_all(model,rotated_model,dataset,results):
     #print("plotting layers invariance (global)")
     r=results
 
-    plot_collapsing_layers(rotated_stratified_layer_vars+rotated_var_all_dataset, stratified_layer_vars+var_all_dataset
-                            , ["stratified","all"], savefig=folderpath, savefig_suffix="global")
+    plot_collapsing_layers(rotated_stratified_layer_vars + rotated_var_all_dataset, stratified_layer_vars + var_all_dataset
+                           , ["stratified","all"], filepath=folderpath, experiment_name="global")

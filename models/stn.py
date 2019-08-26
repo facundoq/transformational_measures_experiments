@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 from torch.autograd import Variable
-from pytorch.model.simple_conv import SimpleConv
+from models.simple_conv import SimpleConv
 from .util import Flatten
 from .all_conv import AllConvolutional
 

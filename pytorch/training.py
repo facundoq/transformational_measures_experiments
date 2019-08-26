@@ -14,10 +14,10 @@ def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_functi
     for epoch in range(1, epochs + 1):
         loss,accuracy,correct,n=train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose)
 
-        #train_results = test(model, train_dataset, use_cuda)
+        #train_results = test(models, train_dataset, use_cuda)
         #print_results("Train",*train_results)
 
-        #loss, accuracy, correct,n= test(model,train_dataset, use_cuda, loss_function)
+        #loss, accuracy, correct,n= test(models,train_dataset, use_cuda, loss_function)
         test_results = test(model,test_dataset,use_cuda,loss_function)
         if verbose:
             print_results("Test", *test_results)

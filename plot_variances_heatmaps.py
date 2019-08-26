@@ -10,12 +10,9 @@ plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
 from transformation_measure import visualization
 import typing
-from pytorch import variance
+from experiment import variance
 import os,sys
 import argparse,argcomplete
-
-
-from time import gmtime, strftime
 
 
 def plot_last_layers_per_class(results,folderpath):
@@ -59,7 +56,7 @@ def plot_heatmaps(results:List[variance.VarianceExperimentResult]):
     measure_results=[r.measure_result for r in results]
     vmin, vmax = visualization.outlier_range_all(measure_results, iqr_away=3)
     vmin=0
-    folderpath=variance.plots_base_folder()
+    folderpath= variance.plots_base_folder()
     for r in results:
         detail=f"{r.id()}"
         name=f"{detail}.png"
@@ -91,7 +88,7 @@ for result_path in results_paths:
     if not os.path.exists(result_path):
         print(f"Path to non-existent result file {result_path}")
         sys.exit()
-results=variance.load_results(results_paths)
+results= variance.load_results(results_paths)
 
 #print(experiment_name, results_paths, verbose)
 plot_heatmaps(results)

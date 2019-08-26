@@ -6,8 +6,8 @@
 
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch.model.util import Flatten
-from pytorch.model.util import SequentialWithIntermediates
+from models import Flatten
+from models import SequentialWithIntermediates
 
 class ConvBNRelu(nn.Module):
 

@@ -10,7 +10,7 @@ class PytorchActivationsIterator(ActivationsIterator):
 
     def __init__(self, model, dataset, transformations, batch_size=32,num_workers=8):
         '''
-        model: a pytorch model that implements the forward_intermediate() method
+        models: a pytorch models that implements the forward_intermediate() method
         dataset: a dataset that yields x,y tuples
         transformations: a list of functions that take a numpy
                         sample and return a transformed one
@@ -24,7 +24,7 @@ class PytorchActivationsIterator(ActivationsIterator):
         return self.model.activation_names()
 
     '''
-    Returns the activations of the model by iterating first over transformations and 
+    Returns the activations of the models by iterating first over transformations and 
     then, for each transformation, over samples
     '''
     def transformations_first(self):
@@ -76,7 +76,7 @@ class PytorchActivationsIterator(ActivationsIterator):
             return batch_activations,x_transformed
 
     '''
-        Returns the activations of the model by iterating first over transformations and 
+        Returns the activations of the models by iterating first over transformations and 
         then, for each transformation, over samples
     '''
     def samples_first(self):

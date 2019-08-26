@@ -1,24 +1,25 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
+import config
 import torch
 import datasets
-from pytorch.experiment import training,model_loading
+from experiment import model_loading, training
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple
 
 
-def parse_args()->Tuple[training.Parameters,training.Options]:
+def parse_args()->Tuple[training.Parameters, training.Options]:
 
     bool_parser=lambda x: (str(x).lower() in ['true','1', 'yes'])
     transformations=tm.common_transformations()
     transformations={t.id():t for t in transformations}
 
-    parser = argparse.ArgumentParser(description="Script to train a model with a dataset and transformations")
+    parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
 
     parser.add_argument('-verbose', metavar='v'
-                        ,help=f'Print info about dataset/model/transformations'
+                        ,help=f'Print info about dataset/models/transformations'
                         ,type=bool_parser
                         , default=True)
 
@@ -43,7 +44,7 @@ def parse_args()->Tuple[training.Parameters,training.Options]:
                         , default=0)
 
     parser.add_argument('-savemodel', metavar='b'
-                        , help=f'Save model after training'
+                        , help=f'Save models after training'
                         , type=bool_parser
                         , default=True)
     parser.add_argument('-plots', metavar='p'
@@ -62,12 +63,12 @@ def parse_args()->Tuple[training.Parameters,training.Options]:
                         ,required=True)
 
     parser.add_argument('-dataset', metavar='d',
-                        help=f'Dataset to train/eval model. Allowed values: {", ".join(datasets.names)}'
+                        help=f'Dataset to train/eval models. Allowed values: {", ".join(datasets.names)}'
                         ,choices=datasets.names
                         ,required=True)
 
     parser.add_argument('-transformation', metavar='t',
-                        help=f'Transformations to apply to the dataset to train a model. Allowed values: {", ".join(transformations.keys())}'
+                        help=f'Transformations to apply to the dataset to train a models. Allowed values: {", ".join(transformations.keys())}'
                         , choices=transformations.keys()
                         ,default=tm.SimpleAffineTransformationGenerator())
 
@@ -75,10 +76,10 @@ def parse_args()->Tuple[training.Parameters,training.Options]:
 
     args = parser.parse_args()
     transformation=transformations[args.transformation]
-    epochs = model_loading.get_epochs(args.model,args.dataset,transformation)
+    epochs = model_loading.get_epochs(args.model, args.dataset, transformation)
 
-    p=training.Parameters(args.model,args.dataset,transformation,epochs,args.notransform_epochs)
-    o=training.Options(args.verbose,args.train_verbose,args.savemodel,args.batchsize,args.num_workers,args.usecuda,args.plots)
+    p= training.Parameters(args.model, args.dataset, transformation, epochs, args.notransform_epochs)
+    o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots)
     return p,o
 
 if __name__ == "__main__":
@@ -92,7 +93,7 @@ if __name__ == "__main__":
     if o.verbose:
         print(f"Experimenting with dataset {p.dataset}.")
         print(dataset.summary())
-        print(f"Training with model {p.model}.")
+        print(f"Training with models {p.model}.")
         print(model)
 
 
@@ -100,13 +101,14 @@ if __name__ == "__main__":
     import time
 
     t=time.perf_counter()
-    scores,history=training.run(p,o,model,optimizer, dataset)
+    scores,history= training.run(p, o, model, optimizer, dataset)
     print(f"Elapsed {time.perf_counter()-t} seconds.")
 
     training.print_scores(scores)
-    training.plot_history(history,p)
+
+    training.plot_history(history, p, config.training_plots_path())
 
     # SAVING
     if o.save_model:
-        training.save_model(p, o, model, scores)
+        training.save_model(p, o, model, scores, config.model_path(p))
 

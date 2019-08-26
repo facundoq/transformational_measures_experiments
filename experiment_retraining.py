@@ -1,6 +1,6 @@
 ## NOTE:
 ## You should run "experiment_rotation.py" before this script to generate the models for
-## a given dataset/model combination
+## a given dataset/models combination
 
 import matplotlib as mpl
 mpl.use('Agg')
@@ -30,18 +30,14 @@ dataset = datasets.get_dataset(dataset_name)
 if verbose:
     print(dataset.summary())
 
-
-from pytorch.experiment import training
-model,rotated_model,scores,config=training.load_models(dataset, model_name, use_cuda)
+model,rotated_model,scores,config= training.load_models(dataset, model_name, use_cuda)
 if verbose:
     print("### ", model)
     print("### ", rotated_model)
     print("### Scores obtained:")
     training.print_scores(scores)
 
-
-from pytorch.experiment import retraining
-
+from experiment import retraining
 
 initial_epochs=4
 retrain_epochs=7
@@ -103,7 +99,7 @@ model, optimizer = model_optimizer_generator()
 
 base_folder="plots/retraining"
 
-rotated_fig=retraining.retraining_accuracy_barchart(model.name,dataset.name,unrotated_accuracies,rotated_accuracies,labels,savefig=True)
+rotated_fig= retraining.retraining_accuracy_barchart(model.name, dataset.name, unrotated_accuracies, rotated_accuracies, labels, savefig=True)
 
 name=f"{base_folder}/{dataset.name}_{model.name}_retraining.png"
 rotated_fig.savefig(name)

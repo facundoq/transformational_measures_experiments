@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from pytorch.model.util import SequentialWithIntermediates
+
 
 class BasicBlock(nn.Module):
     expansion = 1

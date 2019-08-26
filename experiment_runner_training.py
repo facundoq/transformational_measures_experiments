@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # PYTHON_ARGCOMPLETE_OK
-import os
 import runner_utils
 def run_experiment(experiment:str, model_name:str, dataset_name:str,transformation_name:str, venv_path:str):
     python_command=f"{experiment}.py -model {model_name} -dataset {dataset_name} -transformation \"{transformation_name}\" -verbose False -train_verbose False -num_workers 4"
@@ -8,12 +7,12 @@ def run_experiment(experiment:str, model_name:str, dataset_name:str,transformati
 
 
 # DATASET
-import datasets
 import transformation_measure as tm
-from pytorch.experiment import model_loading
+from experiment import model_loading
+
 if __name__ == '__main__':
     venv_path=runner_utils.get_venv_path()
-    model_names=model_loading.get_model_names()
+    model_names= model_loading.get_model_names()
     #model_names=["AllConvolutional","SimpleConv","ResNet","VGGLike"]
     #dataset_names=datasets.names
     dataset_names=["mnist","cifar10"]

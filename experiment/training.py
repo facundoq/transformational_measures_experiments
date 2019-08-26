@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from collections import namedtuple
 
 from pytorch.training import train,test
 import numpy as np
@@ -7,9 +6,7 @@ import os
 import torch
 
 import typing
-
 import logging
-from pytorch.utils import autolabel
 from torch import nn
 from torch.optim.optimizer import Optimizer
 
@@ -64,13 +61,12 @@ class Options:
 def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
         dataset:datasets.ClassificationDataset,loss_function=torch.nn.NLLLoss()):
 
-
     if p.notransform_epochs == 0:
         if o.train_verbose:
-            print(f"### Skipping pretraining rotated model |{model.name}| with dataset |{dataset.name}|")
+            print(f"### Skipping pretraining rotated models |{model.name}| with dataset |{dataset.name}|")
     else:
         if o.train_verbose:
-            print(f"### Pretraining rotated model |{model.name}| with unrotated dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
+            print(f"### Pretraining rotated models |{model.name}| with unrotated dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=tm.SimpleAffineTransformationGenerator()
         pre_train_dataset = get_data_generator(dataset.x_train, dataset.y_train,t, o.batch_size,o.num_workers)
         pre_test_dataset = get_data_generator(dataset.x_test, dataset.y_test,t, o.batch_size,o.num_workers)
@@ -90,16 +86,6 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
     for k,dataset in datasets.items():
         loss, accuracy, correct, n = test(model, dataset, o.use_cuda, loss_function)
         scores[k]=(loss,accuracy)
-
-    # models = {"rotated_model": rotated_model, "model": model}
-    # datasets = {"test_dataset": test_dataset, "rotated_test_dataset": rotated_test_dataset,
-    #              "train_dataset": train_dataset, "rotated_train_dataset": rotated_train_dataset}
-    # scores=eval_scores(models,datasets,config,loss_function)
-    # train_test_path=train_test_accuracy_barchart2(scores,model.name,dataset.name,save_plots)
-    # experiment_plot = os.path.join("plots",f"{model.name}_{dataset.name}_train_rotated.png")
-    #
-    # os.system(f"convert {accuracy_plot_path} {rotated_accuracy_plot_path} {train_test_path} +append {experiment_plot}")
-    # logging.info("training info saved to {experiment_plot}")
 
     return scores,history
 
@@ -121,13 +107,12 @@ def get_data_generator(x:np.ndarray, y:np.ndarray,
 
 
 
-def plot_history(history,p:Parameters):
+def plot_history(history, p:Parameters, folderpath:str):
     from time import gmtime, strftime
     t=strftime("%Y_%m_%d_%H_%M_%S", gmtime())
     import os
     f, (a1,a2) = plt.subplots(1,2)
-    path= experiment_plot_path()
-    path=os.path.join(path,f"{p.id()}.png")
+    folderpath=os.path.join(folderpath, f"{p.id()}.png")
     # accuracy
     a1.plot(history['acc'])
     a1.plot(history['acc_val'])
@@ -145,65 +130,34 @@ def plot_history(history,p:Parameters):
     a2.legend(['train', 'test'], loc='upper right')
     f.suptitle(f"{p.model} trained with {p.dataset} and {p.transformations} ({p.id()})")
     plt.subplots_adjust(wspace=0.3)
-    plt.savefig(path)
+    plt.savefig(folderpath)
     plt.close(f)
 
-def base_path():
-    return os.path.expanduser("~/variance/")
 
-def experiment_plot_path():
-    base=base_path()
-    plots_folderpath = "plots"
-    plots_folderpath = os.path.join(base, plots_folderpath)
-    os.makedirs(plots_folderpath, exist_ok=True)
-    return plots_folderpath
 
-def experiment_model_path(p: Parameters):
-    model_folderpath= experiment_model_folder()
-    filename=f"{p.id()}.pt"
-    filepath=os.path.join(model_folderpath,filename)
-    return filepath
-
-def experiment_model_folder():
-    base = base_path()
-    model_folderpath = "models"
-    model_folderpath = os.path.join(base, model_folderpath)
-    os.makedirs(model_folderpath, exist_ok=True)
-    return model_folderpath
-
-def save_model(p:Parameters,o:Options,model:nn.Module,scores):
-    filepath = experiment_model_path(p)
+def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:str):
 
     torch.save({"parameters":p,
-                "model":model,
+                "models":model,
                 "model_state": model.state_dict(),
                 "scores":scores,
                 "options":o,
     }, filepath)
 
-from pytorch.experiment import model_loading
 
-def get_models():
-    model_folderpath = experiment_model_folder()
-    files=os.listdir(model_folderpath)
-    model_files=[f for f in files if f.endswith(".pt")]
-    return model_files
-
-def load_model(filename:str,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
-    model_folderpath = experiment_model_folder()
-    model_filepath=os.path.join(model_folderpath,filename)
-    logging.info(f"Loading model from {model_filepath}...")
+def load_model(model_filepath:str,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
+    logging.info(f"Loading models from {model_filepath}...")
     if use_cuda:
         data = torch.load(model_filepath)
     else:
         data = torch.load(model_filepath,map_location='cpu')
     model_state=data["model_state"]
-    model=data["model"]
+    model=data["models"]
     p:Parameters=data["parameters"]
     o:Options = data["options"]
     scores=data["scores"]
     # dataset=datasets.get(p.dataset)
-    #model, optimizer = model_loading.get_model(p.model,dataset,use_cuda)
+    #models, optimizer = model_loading.get_model(p.models,dataset,use_cuda)
     if load_state:
         model.load_state_dict(model_state)
         model.eval()
@@ -212,19 +166,3 @@ def load_model(filename:str,use_cuda:bool,load_state=True)->(nn.Module,Parameter
 def print_scores(scores):
     for k, v in scores.items():
         print('%s score: loss=%f, accuracy=%f' % (k, v[0], v[1]))
-
-
-def write_experiment(p:Parameters,o:Options,scores):
-    # with open(output_file, "a+") as f:
-    #     f.write(general_message)
-    #     print(general_message)
-    #     for k, v in scores.items():
-    #         message = '%s score: loss=%f, accuracy=%f\n' % (k, v[0], v[1])
-    #         print(message)
-    #         f.write(message)
-    #     if config:
-    #         config_message="Config: "+str(config)
-    #         print(config_message)
-    #         f.write(config_message)
-    #         f.write("\n\n")
-    pass

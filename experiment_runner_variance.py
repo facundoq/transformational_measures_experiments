@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
-import os
 import runner_utils
-from pytorch import variance
 import transformation_measure as tm
-import datasets
-from pytorch.experiment import training
+from experiment import variance, training,model_loading
+import config
 import util
 
-def run_experiment(model_path:str, measure:tm.Measure,d:variance.DatasetParameters, transformation:tm.TransformationSet, venv_path:str):
+def run_experiment(model_path:str, measure:tm.Measure, d: variance.DatasetParameters, transformation:tm.TransformationSet, venv_path:str):
     python_command=f"experiment_variance.py -mo \"{model_path}\"" \
         f" -me \"{measure.id()}\" -d \"{d.id()}\" -t \"{transformation.id()}\" -verbose False"
     runner_utils.run_python(venv_path, python_command)
@@ -19,10 +17,10 @@ def run_experiment(model_path:str, measure:tm.Measure,d:variance.DatasetParamete
 
 if __name__ == '__main__':
     venv_path=runner_utils.get_venv_path()
-    model_names=training.get_models()
+    model_names=config.get_models_filepaths()
     model_names.sort()
     measures = tm.common_measures()
-    dataset_subsets=  [variance.DatasetSubset.train,variance.DatasetSubset.test]
+    dataset_subsets=  [variance.DatasetSubset.train, variance.DatasetSubset.test]
     dataset_percentages= [0.1, 0.5, 1.0]
     message=f"""Running variance measure experiments.
     Models: {", ".join(model_names)}
@@ -32,8 +30,8 @@ if __name__ == '__main__':
         for measure in measures:
             for dataset_subset in dataset_subsets:
                 for dataset_percentage in dataset_percentages:
-                    model,p,o,scores=training.load_model(model_path, False,load_state=False)
-                    dataset=variance.DatasetParameters(p.dataset,dataset_subset,dataset_percentage)
+                    model,p,o,scores= training.load_model(model_path, False, load_state=False)
+                    dataset= variance.DatasetParameters(p.dataset, dataset_subset, dataset_percentage)
                     if len(p.transformations)>1:
                         configurations.append((model_path,measure,p.transformations,dataset))
                     else:
@@ -51,6 +49,6 @@ if __name__ == '__main__':
         print(f"{i}/{n}")
         run_experiment(model_path, measure, dataset, transformations, venv_path)
         p.event(f"end")
-        print(p.summary())
+        print(p.summary(seconds=True))
     p_all.event("end")
-    print(p_all.summary())
+    print(p_all.summary(seconds=True))
