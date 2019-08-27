@@ -42,6 +42,10 @@ def variance_results_folder()->str:
 
 from experiment import variance
 
+def results_paths(ps:[variance.Parameters], results_folder=variance_results_folder()):
+    variance_paths= [f'{results_path(p)}' for p in ps]
+    return variance_paths
+
 def results_path(p:variance.Parameters, results_folder=variance_results_folder()):
 
     return  os.path.join(results_folder, f"{p.id()}.pickle")

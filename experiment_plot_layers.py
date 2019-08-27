@@ -40,4 +40,4 @@ if __name__ == '__main__':
             print(f"Path to non-existent result file {result_path}")
             sys.exit()
     results= config.load_results(results_paths)
-    visualization.plot_collapsing_layers(results, filepath=output_filepath, experiment_name=experiment_name)
+    visualization.plot_collapsing_layers(results, filepath=output_filepath, title=experiment_name)

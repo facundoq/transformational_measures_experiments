@@ -102,7 +102,7 @@ def plot(all_stds,model,dataset_name,savefig=False,savefig_suffix="",class_names
 from experiment import variance
 
 
-def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, experiment_name=""):
+def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, labels=None,title="",linestyles=None):
     n=len(results)
     if n==2:
         color = np.array([[1,0,0],[0,0,1]])
@@ -111,12 +111,20 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
 
 
     f,ax=plt.subplots(dpi=min(350,max(150,n*15)))
-    f.suptitle(experiment_name)
+    f.suptitle(title)
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
         x= np.arange(n_layers)+1
         y= result.measure_result.per_layer_average()
-        ax.plot(x,y,label= result.parameters.id(),linestyle="--",color=color[i,:]*0.7)
+        if labels is None:
+            label=result.parameters.id()
+        else:
+            label=labels[i]
+        if linestyles is None:
+            linestyle="-"
+        else:
+            linestyle=linestyles[i]
+        ax.plot(x,y,label=label,linestyle=linestyle,color=color[i,:]*0.7)
         ax.set_ylabel("Variance")
         ax.set_xlabel("Layer")
         # ax.set_ylim(max_measure)
@@ -186,4 +194,4 @@ def plot_all(model,rotated_model,dataset,results):
     r=results
 
     plot_collapsing_layers(rotated_stratified_layer_vars + rotated_var_all_dataset, stratified_layer_vars + var_all_dataset
-                           , ["stratified","all"], filepath=folderpath, experiment_name="global")
+                           , ["stratified","all"], filepath=folderpath, title="global")
