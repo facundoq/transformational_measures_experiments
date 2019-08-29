@@ -45,9 +45,10 @@ class Parameters:
         return f"VarianceExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, measure={measure}"
 
 class Options:
-    def __init__(self,verbose:bool,batch_size:int):
+    def __init__(self,verbose:bool,batch_size:int,num_workers:int):
         self.verbose=verbose
         self.batch_size=batch_size
+        self.num_workers=num_workers
 
 
 dataset_names=["mnist","cifar10"]
@@ -96,8 +97,12 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
     parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,
                         help=f'Print info about dataset/models/transformations')
+    parser.add_argument('-num_workers', metavar='nw'
+                        , help=f'num_workersto use during training'
+                        , type=int
+                        , default=2)
     parser.add_argument('-batchsize', metavar='b'
-                        , help=f'batchsize to use during training'
+                        , help=f'batchsize to use during eval'
                         , type=int
                         , default=256)
 
@@ -109,7 +114,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
                    datasets[args.dataset],
                    transformations[args.transformation],
                    measures[args.measure],stratified=args.stratified)
-    o = Options(args.verbose,args.batchsize)
+    o = Options(args.verbose,args.batchsize,args.num_workers)
     return p,o
 
 class VarianceExperimentResult:

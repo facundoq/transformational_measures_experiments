@@ -1,7 +1,5 @@
-* Make exp in experiment_definitions into classes
 * Define more experiment configurations
     * Invariance vs epochs trained, ¿for all datasets/models? (how to implement?)
-    * eval sm vs tm vs normalized => for mnist/cifar10, simpleconv, dataset 10%,50%,100% DONE
     * Stratified vs none -> mnist/cifar, simple_conv/resnet
    * Invariance to rotation: train with n rotations, test with more.
     * Invariance to X vs epochs needed to train
@@ -25,4 +23,4 @@
     * They should also implement a to_cmd() method, that generates the command line string representation, so that the runners can create Parameter objects and then just use to_cmd() to call the other scripts
     * Also centralize somewhere the map from a parameter object to a filename which contains the result.
 * Retraining experiments; which layers get the invariance now?
-
+* check layer_names repeated in Measure

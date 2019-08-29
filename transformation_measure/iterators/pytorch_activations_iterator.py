@@ -8,7 +8,7 @@ import numpy as np
 
 class PytorchActivationsIterator(ActivationsIterator):
 
-    def __init__(self, model, dataset, transformations, batch_size=32,num_workers=8):
+    def __init__(self, model, dataset, transformations, batch_size=32,num_workers=0):
         '''
         models: a pytorch models that implements the forward_intermediate() method
         dataset: a dataset that yields x,y tuples
@@ -19,6 +19,7 @@ class PytorchActivationsIterator(ActivationsIterator):
         self.image_dataset=ImageDataset(self.dataset)
         self.batch_size=batch_size
         self.num_workers=num_workers
+        self.use_cuda=torch.cuda.is_available()
 
     def activation_names(self):
         return self.model.activation_names()
@@ -29,7 +30,7 @@ class PytorchActivationsIterator(ActivationsIterator):
     '''
     def transformations_first(self):
         for transformation in self.transformations:
-            dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, drop_last=True)
+            dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, drop_last=True,pin_memory=True)
             yield transformation, self.samples_activation(transformation,dataloader)
 
 
@@ -37,7 +38,7 @@ class PytorchActivationsIterator(ActivationsIterator):
         for x, y_true in dataloader:
             x=self.transform_batch(transformation,x)
             x_transformed = x.numpy()
-            if torch.cuda.is_available():
+            if self.use_cuda:
                 x = x.cuda()
             with torch.no_grad():
                 y, batch_activations = self.model.forward_intermediates(x)
@@ -55,25 +56,53 @@ class PytorchActivationsIterator(ActivationsIterator):
         #x = x.permute(0,3,1,2)
         return x
 
-    def transform_sample(self,x):
+    def transform_sample(self,x:torch.Tensor):
         all = torch.empty((len(self.transformations), *x.shape))
-        sample_np = x.numpy().transpose((1,2,0))
+        sample_np = x.numpy()
         for i,transformation in enumerate(self.transformations):
-            transformed_np=transformation(sample_np ).transpose((2,0,1))
+            transformed_np=transformation(sample_np)
             all[i,:]=torch.from_numpy(transformed_np)
         return all
 
     def transformations_activations(self,x):
         x_transformed = self.transform_sample(x)
+        dataloader = DataLoader(x_transformed, batch_size=self.batch_size, shuffle=False,
+                                num_workers=0, drop_last=False)
 
-        if torch.cuda.is_available():
-            x = x_transformed.cuda()
-        else:
-            x = x_transformed
-        with torch.no_grad():
-            y, batch_activations = self.model.forward_intermediates(x)
-            batch_activations = [a.detach().cpu().numpy() for a in batch_activations]
-            return batch_activations,x_transformed
+        l=len(self.activation_names())
+        activations=[[] for i in range(l)]
+
+        for batch in dataloader:
+            if self.use_cuda:
+                batch=batch.cuda()
+            y, batch_activations = self.model.forward_intermediates(batch)
+            for i,a in enumerate(batch_activations):
+                activations[i].append(a.detach().cpu().numpy())
+        activations=[ np.vstack(a) for a in activations]
+        # n = x.shape[0]
+        # if self.use_cuda:
+        #     x= x.cuda()
+        # else:
+        #     x=x_transformed
+        # b=self.batch_size
+        # if n>b:
+        #     b=n
+        # batches=n//b
+        # for i in range(batches):
+        #     y, batch_activations = self.model.forward_intermediates(batch)
+        #     batch=x[i*b:(i+1)*b,]
+        #     batch_activations = [a.detach().cpu().numpy() for a in batch_activations]
+        #     activations.append(batch_activations)
+        #
+        # remaining = n - batches * self.batch_size
+        # if remaining>0:
+        #     batch = x[-remaining:, ]
+        #     y, batch_activations = self.model.forward_intermediates(batch)
+        #     batch_activations = [a.detach().cpu().numpy() for a in batch_activations]
+        #     activations.append(batch_activations)
+        #
+
+        return activations,x_transformed
 
     '''
         Returns the activations of the models by iterating first over transformations and 
@@ -81,11 +110,11 @@ class PytorchActivationsIterator(ActivationsIterator):
     '''
     def samples_first(self):
         dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, drop_last=True)
-
-        for x, y_true in dataloader:
-            for i in range(x.shape[0]):
-                activations,x_transformed=self.transformations_activations(x[i, :])
-                yield activations,x_transformed.numpy()
+        with torch.no_grad():
+            for x, y_true in dataloader:
+                for i in range(x.shape[0]):
+                    activations,x_transformed=self.transformations_activations(x[i, :])
+                    yield activations,x_transformed.numpy()
 
 
 from abc import abstractmethod

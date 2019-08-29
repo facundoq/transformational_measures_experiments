@@ -1,48 +1,45 @@
 import models
 import datasets
 import torch
-
+import util
+import os
 from pytorch.numpy_dataset import NumpyDataset
+from experiment import model_loading
+
+import transformation_measure as tm
+import matplotlib
+from transformation_measure.iterators.pytorch_activations_iterator import ImageDataset
+matplotlib.use('Agg')
+
 
 dataset_name="mnist"
-model_name= models.SimpleConv.__name__
+model_name= models.ResNet.__name__
 
 print(f"### Loading dataset {dataset_name} and model {model_name}....")
 
 use_cuda=torch.cuda.is_available()
 dataset = datasets.get(dataset_name)
-
-from experiment import training
-
-model,rotated_model,scores,config= training.load_models(dataset, model_name, use_cuda)
-
-
-from variance_measure.iterators.pytorch_activations_iterator import PytorchActivationsIterator
-import numpy as np
-from testing.utils import plot_image_grid
-from variance_measure import transformations as tf
-import matplotlib
-matplotlib.use('TkAgg')
-
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
+image_dataset=ImageDataset(numpy_dataset)
+model, optimizer = model_loading.get_model(model_name, dataset, use_cuda)
+p=util.Profiler()
+p.event("start")
 
-n_rotations=16
-rotations = np.linspace(-np.pi, np.pi, n_rotations, endpoint=False)
-transformations_parameters={"rotation":rotations,"scale":[(1, 0.5)],"translation":[(0,2)]}
-transformations_parameters_combinations=tf.generate_transformation_parameter_combinations(transformations_parameters)
-transformations=tf.generate_transformations(transformations_parameters_combinations,dataset.input_shape[0:2])
+transformations=tm.SimpleAffineTransformationGenerator(n_rotations=8,n_scales=2,n_translations=2)
 
-iterator = PytorchActivationsIterator(model,numpy_dataset,transformations,config)
+iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=64,num_workers=0)
 
 batch_size=64
 i=0
-
+from testing import utils
 for activations,x_transformed in iterator.samples_first():
 
     x=x_transformed.transpose( (0,2,3,1))
-    plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=f"t{i}.png")
+    filepath=os.path.expanduser(f"~/variance/test/samples_first_{i}.png")
+    utils.plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=filepath)
     i = i + 1
     if i ==10:
         break
 
+p.event("end")
 

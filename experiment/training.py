@@ -18,7 +18,7 @@ class Parameters:
     def __init__(self,model:str,dataset:str
                  ,transformations:tm.TransformationSet
                  ,epochs:int
-                 ,notransform_epochs:int):
+                 ,notransform_epochs:int=0):
         self.model=model
         self.dataset=dataset
         self.transformations=transformations

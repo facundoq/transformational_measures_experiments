@@ -116,13 +116,37 @@ class SimpleAffineTransformationGenerator(TransformationSet):
     def __iter__(self)->Iterator[Transformation]:
         return self.affine_transformation_generator.__iter__()
 
+
+    def infinite_binary_progression(self):
+        yield 1.0
+        values=[ (0,1.0)]
+        while True:
+            new_values=[]
+            for (l,u) in values:
+                mid=(l+u)/2
+                yield mid
+                new_values.append((l,mid))
+                new_values.append((mid, l))
+            values=new_values
+    def infinite_harmonic_series(self):
+        value = 1.0
+        n=1.0
+        while True:
+            yield value/n
+            n+=1
+    def infinite_geometric_series(self,base):
+        n=1
+        while True:
+            yield pow(base,n)
+
+    import itertools
     def generate_transformation_values(self):
         rotations = list(np.linspace(-np.pi, np.pi, self.n_rotations, endpoint=False))
 
-        scales=[]
-        effective_scales=self.n_scales+1
-        for s in range(effective_scales):
-            r=float(s+1)/effective_scales
+        scales=[(1.0,1.0)]
+        scale_series=self.infinite_geometric_series(0.5)
+        for s in itertools.islice(scale_series,self.n_scales):
+            r=1.0 - s
             scales.append( (r,r) )
 
         translations=[(0,0)]

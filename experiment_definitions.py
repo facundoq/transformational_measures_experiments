@@ -49,13 +49,13 @@ class Experiment():
         python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -verbose False -train_verbose False -num_workers 4'
         runner_utils.run_python(venv_path, python_command)
 
-    def experiment_variance(self,p: variance.Parameters,model_path:str):
+    def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2):
 
         results_path = config.results_path(p)
         if os.path.exists(results_path):
             return
 
-        python_command = f'experiment_variance.py -mo "{model_path}" -me "{p.measure.id()}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose False'
+        python_command = f'experiment_variance.py -mo "{model_path}" -me "{p.measure.id()}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose False -batchsize {batch_size} -num_workers {num_workers}'
         runner_utils.run_python(venv_path, python_command)
 
     def experiment_plot_layers(self,variance_parameters:[variance.Parameters], plot_filepath: str, experiment_name:str):
@@ -72,7 +72,7 @@ class CompareMeasures(Experiment):
         # model_names=["ResNet"]
         for model in model_names:
             for dataset in datasets:
-                p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, 1.0)
+                p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
                 for transformation in tm.common_transformations_without_identity():
                     experiment_name=f"{model}_{p_dataset.id()}_{transformation.id()}"
                     plot_filepath=os.path.join(self.plot_folderpath,f"{experiment_name}.png")
@@ -95,7 +95,7 @@ class MeasureVsDatasetSize(Experiment):
         epochs= 0
         combinations=itertools.product(*[model_names,datasets,tm.common_transformations_without_identity(),measures])
         for model,dataset,transformation,measure in combinations:
-            p_training = training.Parameters(model, dataset, transformation, epochs, 0)
+            p_training = training.Parameters(model, dataset, transformation, epochs)
             self.experiment_training(p_training)
             p_datasets = [variance.DatasetParameters(dataset, variance.DatasetSubset.test, p) for p in dataset_sizes]
             experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure.id()}"
@@ -108,6 +108,27 @@ class MeasureVsDatasetSize(Experiment):
             labels=[f"Dataset percentage: {d.percentage*100:2}%" for d in p_datasets]
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels,title=experiment_name)
 
+class MeasureVsDatasetSubset(Experiment):
+    '''
+    Vary the test dataset subset and see how it affects the measure's value
+    '''
+    def run(self):
+        dataset_sizes=[ (variance.DatasetSubset.test,0.1), (variance.DatasetSubset.train,0.02)]
+        epochs= 0
+        combinations=itertools.product(*[model_names,datasets,tm.common_transformations_without_identity(),measures])
+        for model,dataset,transformation,measure in combinations:
+            p_training = training.Parameters(model, dataset, transformation, epochs)
+            self.experiment_training(p_training)
+            p_datasets = [variance.DatasetParameters(dataset, subset, p) for (subset,p) in dataset_sizes]
+            experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            variance_parameters= [variance.Parameters(p_training.id(), p_dataset, transformation, measure) for p_dataset in p_datasets]
+            model_path=config.model_path(p_training)
+            for p_variance in variance_parameters:
+                self.experiment_variance(p_variance,model_path)
+            results = config.load_results(config.results_paths(variance_parameters))
+            labels=[f"Dataset subset {d.subset},  (percentage of data {d.percentage*100:2})%" for d in p_datasets]
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels,title=experiment_name)
 
 class InvarianceVsTransformationDiversity(Experiment):
     '''
@@ -128,7 +149,7 @@ class InvarianceVsTransformationDiversity(Experiment):
                 for transformation in set:
                     p_training = training.Parameters(model, dataset, transformation, epochs, 0)
                     self.experiment_training(p_training)
-                    p_dataset =variance.DatasetParameters(dataset, variance.DatasetSubset.test,1.0)
+                    p_dataset =variance.DatasetParameters(dataset, variance.DatasetSubset.test,0.1)
                     p_variance=variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                     model_path = config.model_path(p_training)
                     self.experiment_variance(p_variance, model_path)

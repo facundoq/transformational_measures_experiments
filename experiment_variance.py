@@ -10,7 +10,7 @@
 import datasets
 import torch,config
 from experiment import variance, training
-
+import util
 
 def experiment(p: variance.Parameters, o: variance.Options):
     assert(len(p.transformations)>1)
@@ -39,23 +39,30 @@ def experiment(p: variance.Parameters, o: variance.Options):
         numpy_dataset = NumpyDataset(dataset.x_train, dataset.y_train)
     else:
         raise ValueError(p.dataset.subset)
+
+
     if not p.stratified:
         iterator = tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size)
-        print(f"Calculating measure {p.measure}...")
+        print(f"Calculating measure {p.measure} dataset size {len(numpy_dataset)}...")
 
         measure_result = p.measure.eval(iterator,model.activation_names())
     else:
         print(f"Calculating stratified version of measure {p.measure}...")
         stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test, dataset.x_test)
-        stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size) for numpy_dataset in stratified_numpy_datasets]
+        stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size,num_workers=o.num_workers) for numpy_dataset in stratified_numpy_datasets]
         measure_result = p.measure.eval_stratified(stratified_iterators,model.activation_names(),dataset.labels)
 
     return variance.VarianceExperimentResult(p, measure_result)
 
 if __name__ == "__main__":
+    profiler=util.Profiler()
+    profiler.event("start")
     p, o = variance.parse_parameters()
     print(f"Experimenting with parameters: {p}")
     measures_results=experiment(p,o)
+    profiler.event("end")
+    print(profiler.summary(seconds=True))
     config.save_results(measures_results)
+
 
 
