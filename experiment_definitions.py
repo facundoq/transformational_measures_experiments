@@ -15,7 +15,7 @@ model_names= models.names
 model_names.sort()
 #model_names=["SimpleConv"]
 
-measures = tm.common_measures()
+measures = config.common_measures()
 
 # dataset_subsets=  [variance.DatasetSubset.train,variance.DatasetSubset.test]
 # dataset_percentages= [0.1, 0.5, 1.0]x
@@ -73,7 +73,7 @@ class CompareMeasures(Experiment):
         for model in model_names:
             for dataset in datasets:
                 p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
-                for transformation in tm.common_transformations_without_identity():
+                for transformation in config.common_transformations_without_identity():
                     experiment_name=f"{model}_{p_dataset.id()}_{transformation.id()}"
                     plot_filepath=os.path.join(self.plot_folderpath,f"{experiment_name}.png")
                     p_training= training.Parameters(model, dataset, transformation, epochs, 0)
@@ -93,7 +93,7 @@ class MeasureVsDatasetSize(Experiment):
     def run(self):
         dataset_sizes=[0.1,0.5,1.0]
         epochs= 0
-        combinations=list(itertools.product(*[model_names,datasets,tm.common_transformations_without_identity(),measures]))
+        combinations=list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
             p_training = training.Parameters(model, dataset, transformation, epochs)
@@ -116,7 +116,7 @@ class MeasureVsDatasetSubset(Experiment):
     def run(self):
         dataset_sizes=[ (variance.DatasetSubset.test,0.1), (variance.DatasetSubset.train,0.02)]
         epochs= 0
-        combinations=list(itertools.product(*[model_names,datasets,tm.common_transformations_without_identity(),measures]))
+        combinations=list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
             p_training = training.Parameters(model, dataset, transformation, epochs)
@@ -138,12 +138,13 @@ class InvarianceVsTransformationDiversity(Experiment):
     '''
     def run(self):
         epochs= 0
+        n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
         measure=tm.NormalizedMeasure(tm.TransformationMeasure(measure_function,conv_agg),tm.SampleMeasure(measure_function,conv_agg))
         combinations=itertools.product(*[model_names,datasets])
         for model,dataset in combinations:
             print(model,dataset)
-            sets=[tm.rotation_transformations(),tm.translation_transformations(),tm.scale_transformations()]
+            sets=[config.rotation_transformations(n_transformations),config.translation_transformations(n_transformations),config.scale_transformations(n_transformations)]
             names=["rotation","translation","scale"]
             for i,(transformation_set,name) in enumerate(zip(sets,names)):
                 transformation_plot_folderpath=os.path.join(self.plot_folderpath,name)

@@ -19,7 +19,7 @@ if __name__ == '__main__':
     venv_path=runner_utils.get_venv_path()
     model_names=config.get_models_filepaths()
     model_names.sort()
-    measures = tm.common_measures()
+    measures = config.common_measures()
     dataset_subsets=  [variance.DatasetSubset.train, variance.DatasetSubset.test]
     dataset_percentages= [0.1, 0.5, 1.0]
     message=f"""Running variance measure experiments.
@@ -36,7 +36,7 @@ if __name__ == '__main__':
                         configurations.append((model_path,measure,p.transformations,dataset))
                     else:
                         #Model trained without transforms. Test with all transforms
-                        for t in tm.common_transformations_without_identity():
+                        for t in config.common_transformations_without_identity():
                             configurations.append( (model_path, measure, t, dataset) )
 
     n=len(configurations)

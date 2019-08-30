@@ -53,12 +53,11 @@ class Options:
 
 dataset_names=["mnist","cifar10"]
 
-from experiment import training
-
+import config
 
 def possible_experiment_parameters()->[]:
-    transformations = tm.all_transformations()
-    measures= tm.common_measures()
+    transformations = config.all_transformations(10)
+    measures= config.common_measures()
 
     dataset_percentages = [.1, .5, 1.0]
     dataset_subsets=[DatasetSubset.train,DatasetSubset.test]

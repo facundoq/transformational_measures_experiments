@@ -22,4 +22,4 @@ opencv-python
 imageio
 Shapely
 imgaug
-textable
+texttable

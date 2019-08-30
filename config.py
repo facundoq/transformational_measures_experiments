@@ -2,9 +2,9 @@ import os,pickle
 
 
 
+
 def base_path():
     return os.path.expanduser("~/variance/")
-
 
 
 from experiment import training
@@ -80,3 +80,43 @@ def plots_base_folder():
 #     if not os.path.exists(folderpath):
 #         os.makedirs(folderpath,exist_ok=True)
 #     return folderpath
+
+
+
+
+from transformation_measure import *
+
+def common_measures()-> [Measure]:
+    measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum),
+             TransformationMeasure(MeasureFunction.std, ConvAggregation.sum),
+     NormalizedMeasure(TransformationMeasure(MeasureFunction.std, ConvAggregation.sum), SampleMeasure(MeasureFunction.std, ConvAggregation.sum))
+        Anova
+
+    ]
+    return measures
+
+def common_transformations() -> [TransformationSet]:
+    transformations = [SimpleAffineTransformationGenerator()]
+    return transformations+common_transformations_without_identity()
+
+def common_transformations_without_identity()-> [TransformationSet]:
+    transformations = [SimpleAffineTransformationGenerator(n_rotations=16)
+        , SimpleAffineTransformationGenerator(n_translations=2)
+        , SimpleAffineTransformationGenerator(n_scales=2)]
+    return transformations
+
+def rotation_transformations(n:int):
+    return [SimpleAffineTransformationGenerator(n_rotations=2**r) for r in range(1,n+1)]
+
+def scale_transformations(n:int):
+    return [SimpleAffineTransformationGenerator(n_scales=2**r) for r in range(n)]
+
+def translation_transformations(n:int):
+    return [SimpleAffineTransformationGenerator(n_translations=r) for r in range(1,n+1)]
+
+def all_transformations(n:int):
+    return common_transformations()+rotation_transformations(n)+scale_transformations(n)+translation_transformations(n)
+
+
+
+
