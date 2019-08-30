@@ -5,8 +5,10 @@ from typing import Dict, List, Tuple
 from .running_stats import RunningMean
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 
+ActivationsByLayer = [np.ndarray]
+
 class   MeasureResult:
-    def __init__(self,layers:List[np.ndarray],layer_names:List[str],measure:'Measure'):
+    def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure'):
         self.layers=layers
         self.layer_names=layer_names
         self.measure=measure
@@ -51,7 +53,7 @@ class   MeasureResult:
         return MeasureResult(results,self.layer_names,self.measure)
 
 class StratifiedMeasureResult(MeasureResult):
-    def __init__(self,layers:List[np.ndarray],layer_names:List[str],measure:'Measure'
+    def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure'
                  ,class_measures:List[MeasureResult],class_labels:List[str]):
         super().__init__(layers,layer_names,measure)
         self.class_measures=class_measures

@@ -1,4 +1,4 @@
-from .base import Measure,MeasureResult
+from .base import Measure,MeasureResult,ActivationsByLayer
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
 from typing import List
@@ -20,7 +20,7 @@ class NormalizedMeasure(Measure):
         v=self.eval_v_normalized(v_transformations.layers,v_samples.layers)
         return MeasureResult(v,layer_names,self)
 
-    def eval_v_normalized(self,v_transformations,v_samples):
+    def eval_v_normalized(self,v_transformations,v_samples)->ActivationsByLayer:
         eps = 0
         measures = []  # coefficient of variations
 
