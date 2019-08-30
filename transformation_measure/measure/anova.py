@@ -20,9 +20,31 @@ class AnovaMeasure(Measure):
         n_layers=len(activations_iterator.activation_names())
         global_means=self.eval_global_means(means_per_layer_and_transformation,n_layers)
         ssdb_per_layer=self.eval_between_transformations_ssd(means_per_layer_and_transformation,global_means)
-        ssdb_per_layer
+        ssdw_per_layer=self.eval_within_transformations_ssd(activations_iterator,means_per_layer_and_transformation)
+
 
         return MeasureResult(mean_variances,layer_names,self)
+
+    def eval_within_transformations_ssd(self,activations_iterator:ActivationsIterator,means_per_layer_and_transformation:[[np.ndarray]],)->[np.ndarray]:
+            n_layers = len(activations_iterator.activation_names())
+            means_per_transformation = []
+            samples_per_transformation = []
+            for means_per_layer,(transformation, transformation_activations) in zip(means_per_layer_and_transformation, activations_iterator.transformations_first()):
+                samples_variances_running = [0 for i in range(n_layers)]
+                # calculate the variance of all samples for this transformation
+                n_samples = 0
+                for x, batch_activations in transformation_activations:
+                    n_samples += x.shape[0]
+                    for j, layer_activations in enumerate(batch_activations):
+                        for i in range(layer_activations.shape[0]):
+                            layer_activations = self.preprocess_activations(layer_activations)
+                            d=(layer_activations[i,]-means_per_layer[j])**2
+                            samples_variances_running[j]=samples_variances_running[j]+d
+                samples_per_transformation.append(n_samples)
+                means_per_transformation.append([rm.mean() for rm in samples_variances_running])
+                
+            return means_per_transformation, samples_per_transformation
+
     def eval_between_transformations_ssd(self,means_per_layer_and_transformation:[[np.ndarray]],global_means:[np.ndarray],samples_per_transformation:[int])->[np.ndarray]:
         '''
 

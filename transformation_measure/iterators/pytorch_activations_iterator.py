@@ -67,7 +67,7 @@ class PytorchActivationsIterator(ActivationsIterator):
     def transformations_activations(self,x):
         x_transformed = self.transform_sample(x)
         dataloader = DataLoader(x_transformed, batch_size=self.batch_size, shuffle=False,
-                                num_workers=0, drop_last=False)
+                                num_workers=self.num_workers, drop_last=False)
 
         l=len(self.activation_names())
         activations=[[] for i in range(l)]
@@ -109,7 +109,7 @@ class PytorchActivationsIterator(ActivationsIterator):
         then, for each transformation, over samples
     '''
     def samples_first(self):
-        dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, drop_last=True)
+        dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2, drop_last=True)
         with torch.no_grad():
             for x, y_true in dataloader:
                 for i in range(x.shape[0]):

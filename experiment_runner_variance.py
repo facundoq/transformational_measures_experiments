@@ -49,6 +49,6 @@ if __name__ == '__main__':
         print(f"{i}/{n}")
         run_experiment(model_path, measure, dataset, transformations, venv_path)
         p.event(f"end")
-        print(p.summary(seconds=True))
+        print(p.summary(human=True))
     p_all.event("end")
-    print(p_all.summary(seconds=True))
+    print(p_all.summary(human=True))

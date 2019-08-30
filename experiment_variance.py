@@ -61,7 +61,7 @@ if __name__ == "__main__":
     print(f"Experimenting with parameters: {p}")
     measures_results=experiment(p,o)
     profiler.event("end")
-    print(profiler.summary(seconds=True))
+    print(profiler.summary(human=True))
     config.save_results(measures_results)
 
 

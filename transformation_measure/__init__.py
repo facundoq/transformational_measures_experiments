@@ -29,13 +29,13 @@ def common_transformations_without_identity()-> List[TransformationSet]:
     return transformations
 
 def rotation_transformations():
-    return [SimpleAffineTransformationGenerator(n_rotations=r) for r in [1,2,4,8,16,32]]
+    return [SimpleAffineTransformationGenerator(n_rotations=r) for r in [2,4,8,16,32]]
 
 def scale_transformations():
-    return [SimpleAffineTransformationGenerator(n_scales=r) for r in [1,2,4,8,16,32]]
+    return [SimpleAffineTransformationGenerator(n_scales=r) for r in [1,2,4,8,16]]
 
 def translation_transformations():
-    return [SimpleAffineTransformationGenerator(n_translations=r) for r in [1,2,3,4,5,6]]
+    return [SimpleAffineTransformationGenerator(n_translations=r) for r in [1,2,3,4,5]]
 
 def all_transformations():
     return common_transformations()+rotation_transformations()+scale_transformations()+translation_transformations()
