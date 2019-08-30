@@ -5,6 +5,7 @@ from transformation_measure.measure.running_stats import RunningMeanAndVariance,
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 from typing import List
 from .transformations import TransformationMeasure
+
 class AnovaMeasure(Measure):
     def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
         super().__init__()
