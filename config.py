@@ -1,6 +1,5 @@
 import os,pickle
-
-
+from experiment import variance
 
 
 def base_path():
@@ -40,14 +39,13 @@ def training_plots_path():
 def variance_results_folder()->str:
     return os.path.join(base_path(), "results")
 
-from experiment import variance
+
 
 def results_paths(ps:[variance.Parameters], results_folder=variance_results_folder()):
     variance_paths= [f'{results_path(p)}' for p in ps]
     return variance_paths
 
 def results_path(p:variance.Parameters, results_folder=variance_results_folder()):
-
     return  os.path.join(results_folder, f"{p.id()}.pickle")
 
 def save_results(r:variance.VarianceExperimentResult, results_folder=variance_results_folder()):
@@ -90,7 +88,8 @@ def common_measures()-> [Measure]:
     measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum),
              TransformationMeasure(MeasureFunction.std, ConvAggregation.sum),
      NormalizedMeasure(TransformationMeasure(MeasureFunction.std, ConvAggregation.sum), SampleMeasure(MeasureFunction.std, ConvAggregation.sum))
-        Anova
+        ,AnovaFMeasure(ConvAggregation.sum)
+        ,AnovaMeasure(ConvAggregation.sum,alpha=0.05)
 
     ]
     return measures

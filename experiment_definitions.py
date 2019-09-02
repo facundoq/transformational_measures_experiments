@@ -26,18 +26,27 @@ venv_path=runner_utils.get_venv_path()
 measure=tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
 import abc
 
+
 class Experiment():
     def __init__(self):
         self.plot_folderpath = os.path.join(config.plots_base_folder(),self.id())
         os.makedirs(self.plot_folderpath, exist_ok=True)
+        with open(os.path.join(self.plot_folderpath,"description.txt"),"w") as f:
+            f.write(self.description())
+
     def id(self):
         return self.__class__.__name__
+
     def __call__(self, *args, **kwargs):
         print(f"Running experiment {self.id()}")
         self.run()
 
     @abc.abstractmethod
     def run(self):
+        pass
+
+    @abc.abstractmethod
+    def description(self)->str:
         pass
 
     def experiment_training(self,p: training.Parameters):
@@ -66,6 +75,8 @@ class Experiment():
 
 
 class CompareMeasures(Experiment):
+    def description(self):
+        return """Test different measures for a given dataset/model/transformation combination to evaluate their differences."""
     def run(self):
         epochs= 0
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
@@ -87,11 +98,12 @@ class CompareMeasures(Experiment):
                     visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 class MeasureVsDatasetSize(Experiment):
-    '''
-    Vary the test dataset size and see how it affects the measure's value
-    '''
+
+    def description(self):
+        return '''Vary the test dataset size and see how it affects the measure's value. That is, vary the size of the dataset used to compute the invariance (not the training dataset) and see how it affects the calculation of the measure.'''
+
     def run(self):
-        dataset_sizes=[0.1,0.5,1.0]
+        dataset_sizes=[0.01,0.05,0.1,0.5,1.0]
         epochs= 0
         combinations=list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
@@ -110,9 +122,10 @@ class MeasureVsDatasetSize(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels,title=experiment_name)
 
 class MeasureVsDatasetSubset(Experiment):
-    '''
-    Vary the test dataset subset and see how it affects the measure's value
-    '''
+
+    def description(self):
+        return '''Vary the test dataset subset (either train o testing) and see how it affects the measure's value.'''
+
     def run(self):
         dataset_sizes=[ (variance.DatasetSubset.test,0.1), (variance.DatasetSubset.train,0.02)]
         epochs= 0
@@ -133,9 +146,10 @@ class MeasureVsDatasetSubset(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels,title=experiment_name)
 
 class InvarianceVsTransformationDiversity(Experiment):
-    '''
-    Vary the test transformation diversity and see how it affects the invariance
-    '''
+
+    def description(self):
+        return '''Vary the scale of transformation both when training a computing the measure, and see how it affects the invariance. For example, train with 2 rotations, then measure the invariance with 2 rotations. Train with 4 rotations, measure with 4 rotations, and so on. '''
+
     def run(self):
         epochs= 0
         n_transformations=5
@@ -167,10 +181,52 @@ class InvarianceVsTransformationDiversity(Experiment):
                 visualization.plot_collapsing_layers(results, plot_filepath, labels=labels,title=experiment_name)
 
 
+class InvarianceVsTransformationDifferentScales(Experiment):
+
+    def description(self):
+        return """Train a model/dataset with a transformation of scale X and then test with scales Y and Z of the same type, where Y<X and Z>X. Ie, train with 8 rotations, measure variance with 2, 4, 8 and 16. """
+
+    def run(self):
+        epochs= 0
+        n_transformations=5
+        measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
+        measure=tm.NormalizedMeasure(tm.TransformationMeasure(measure_function,conv_agg),tm.SampleMeasure(measure_function,conv_agg))
+        combinations=itertools.product(*[model_names,datasets])
+        for model,dataset in combinations:
+            print(model,dataset)
+            sets=[config.rotation_transformations(n_transformations),config.translation_transformations(n_transformations),config.scale_transformations(n_transformations)]
+            names=["rotation","translation","scale"]
+            for i,(transformation_set,name) in enumerate(zip(sets,names)):
+                n_experiments=(len(transformation_set)+1)*len(transformation_set)
+                print(f"    {name}, experiments:{n_experiments}")
+                for j,train_transformation in enumerate(transformation_set+[tm.SimpleAffineTransformationGenerator()]):
+                    transformation_plot_folderpath = os.path.join(self.plot_folderpath, name)
+                    os.makedirs(transformation_plot_folderpath, exist_ok=True)
+                    experiment_name = f"{model}_{dataset}_{measure.id()}_{train_transformation.id()}"
+                    plot_filepath = os.path.join(transformation_plot_folderpath, f"{experiment_name}.png")
+                    variance_parameters = []
+                    print(f"{j}, ",end="")
+                    p_training = training.Parameters(model, dataset, train_transformation, epochs, 0)
+                    self.experiment_training(p_training)
+                    for k,test_transformation in enumerate(transformation_set):
+                        p_dataset  = variance.DatasetParameters(dataset, variance.DatasetSubset.test,0.1)
+                        p_variance = variance.Parameters(p_training.id(), p_dataset, test_transformation , measure)
+                        model_path = config.model_path(p_training)
+                        self.experiment_variance(p_variance, model_path)
+                        variance_parameters.append(p_variance)
+
+                    title=f"Invariance to \n. Model: {model}, Dataset: {dataset}, Measure {measure.id()} \n Train transformation: {train_transformation.id()} "
+                    labels = [f"Test transformation: {t}" for t in transformation_set]
+                    results=config.load_results(config.results_paths(variance_parameters))
+                    visualization.plot_collapsing_layers(results, plot_filepath, labels=labels,title=title)
+
+
+
 
 
 if __name__ == '__main__':
-    experiments=[CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity()]
+    experiments=[CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales()]
+
     for e in experiments:
         e()
 

@@ -5,15 +5,12 @@ from typing import List
 
 from transformation_measure.measure.base import MeasureResult
 
-def plot_heatmap(title, m:MeasureResult, layer_names, vmin=0, vmax=None, savefig=None, savefig_name=None):
+def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
 
 
-    n = len(layer_names)
+    n = len(m.layer_names)
     f, axes = plt.subplots(1, n, dpi=150)
-
-    for i, (activation, name) in enumerate(zip(m.layers, layer_names)):
-
-
+    for i, (activation, name) in enumerate(zip(m.layers, m.layer_names)):
         ax = axes[i]
         ax.axis("off")
         activation = activation[:, np.newaxis]
@@ -34,11 +31,7 @@ def plot_heatmap(title, m:MeasureResult, layer_names, vmin=0, vmax=None, savefig
     cbar=f.colorbar(mappable, cax=cbar_ax, extend='max')
     cbar.cmap.set_over('green')
     cbar.cmap.set_bad(color='blue')
-    if not savefig is None:
-        image_name=f"{savefig_name}.png"
-        path=os.path.join(savefig,image_name)
-        plt.savefig(path)
-    #plt.show()
+    plt.savefig(filepath)
     plt.close()
 
 def pearson_outlier_range(values,iqr_away):
@@ -85,18 +78,6 @@ def outlier_range(stds,iqr_away):
 
     return outlier_range_values(values,iqr_away)
 
-def plot(all_stds,model,dataset_name,savefig=False,savefig_suffix="",class_names=None,vmax=None):
-    vmin=0
-    classes=len(all_stds)
-    for i,c in enumerate(range(classes)):
-        stds=all_stds[i]
-        if class_names:
-            name=class_names[c]
-        else:
-            name=str(c)
-        plot_heatmap(i, name, stds, vmin, vmax, model.activation_names(), model.name,
-                     dataset_name, savefig,
-                     savefig_suffix)
 
 
 from experiment import variance
@@ -143,55 +124,3 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     plt.close()
 
 
-
-
-def collapse_measure_layers(measures):
-    return [np.array([np.mean(layer[np.isfinite(layer)]) for layer in measure]) for measure in measures]
-
-def plot_heatmaps(model,rotated_model,dataset,results,folderpath):
-    var, stratified_layer_vars, var_all_dataset, rotated_var, rotated_stratified_layer_vars, rotated_var_all_dataset = results
-    vmin, vmax = outlier_range_all(results, iqr_away=3)
-    vmin = vmin_all = vmin_class = 0
-    vmax_all = vmax_class = vmax
-    # vmin_class, vmax_class = outlier_range_both(rotated_var, var)
-    # vmin_class = 0
-    # vmin_class, vmax_class = outlier_range_both(rotated_stratified_layer_vars, stratified_layer_vars)
-    # vmin_class = 0
-    # vmin_all, vmax_all = outlier_range_both(rotated_var, var)
-
-    plot(rotated_var, model, dataset.name, savefig=folderpath,
-         savefig_suffix="rotated", vmax=vmax_class, class_names=dataset.labels)
-    plot(var, model, dataset.name, savefig=folderpath, savefig_suffix="unrotated",
-         vmax=vmax_class, class_names=dataset.labels)
-    plot(rotated_stratified_layer_vars, rotated_model, dataset.name,
-         class_names=["all_stratified"], savefig=folderpath,
-         savefig_suffix="rotated", vmax=vmax_class)
-    plot(stratified_layer_vars, model, dataset.name, class_names=["all_stratified"],
-         savefig=folderpath, savefig_suffix="unrotated", vmax=vmax_class)
-
-    plot(rotated_var_all_dataset, rotated_model, dataset.name,
-         savefig=folderpath, savefig_suffix="rotated", class_names=["all"], vmax=vmax_all)
-    plot(var_all_dataset, model, dataset.name,
-         savefig=folderpath, savefig_suffix="unrotated", class_names=["all"], vmax=vmax_all)
-
-
-def plot_all(model,rotated_model,dataset,results):
-
-    folderpath=plots_folder(model.name,dataset.name)
-
-    var, stratified_layer_vars, var_all_dataset, rotated_var, rotated_stratified_layer_vars, rotated_var_all_dataset=results
-
-    plot_heatmaps(model, rotated_model, dataset, results,folderpath)
-
-    # print("plotting layers invariance (by classes)")
-    # plot_collapsing_layers(rotated_var, var, dataset.labels
-    #                        , savefig=folderpath, savefig_suffix="classes")
-
-    # max_rotated = max([m.max() for m in rotated_measures_collapsed])
-    # max_unrotated = max([m.max() for m in measures_collapsed])
-    # max_measure = max([max_rotated, max_unrotated])
-    #print("plotting layers invariance (global)")
-    r=results
-
-    plot_collapsing_layers(rotated_stratified_layer_vars + rotated_var_all_dataset, stratified_layer_vars + var_all_dataset
-                           , ["stratified","all"], filepath=folderpath, title="global")

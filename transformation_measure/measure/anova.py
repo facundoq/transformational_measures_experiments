@@ -5,47 +5,50 @@ from transformation_measure.measure.running_stats import RunningMeanAndVariance,
 from .layer_transformation import ConvAggregation,apply_aggregation_function
 from typing import List
 from .transformations import TransformationMeasure
+import scipy.stats
 
 class AnovaMeasure(Measure):
-    def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation,alpha:float):
+    def __init__(self, conv_aggregation: ConvAggregation,alpha:float):
         super().__init__()
-        self.anova_f_measure=AnovaFMeasure(measure_function,conv_aggregation)
+        self.anova_f_measure=AnovaFMeasure(conv_aggregation)
         assert(alpha>0)
         assert (alpha <1)
         self.alpha=alpha
 
+
     def __repr__(self):
-        return f"AnovaMeasure(f={self.anova_f_measure.measure_function},ca={self.anova_f_measure.conv_aggregation.value})"
+        return f"AnovaMeasure(ca={self.anova_f_measure.conv_aggregation.value})"
 
     def eval(self, activations_iterator: ActivationsIterator, layer_names: List[str]) -> MeasureResult:
         f_result=self.anova_f_measure.eval(activations_iterator,layer_names)
-        f_result.layers=[f for f in f_result.layers]
-
+        d_b=f_result.extra_values["d_b"]
+        d_w = f_result.extra_values["d_w"]
+        critical_value = scipy.stats.f.ppf(self.alpha,dfn=d_b,dfd=d_w)
+        f_result.layers=[ f>critical_value for f in f_result.layers]
         return f_result
 
 class AnovaFMeasure(Measure):
-    def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
+    def __init__(self, conv_aggregation: ConvAggregation):
         super().__init__()
-        self.measure_function = measure_function
         self.conv_aggregation = conv_aggregation
 
+
     def __repr__(self):
-        return f"AnovafMeasure(f={self.measure_function},ca={self.conv_aggregation.value})"
+        return f"AnovaFMeasure(ca={self.conv_aggregation.value})"
 
     def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
 
         means_per_layer_and_transformation,samples_per_transformation=self.eval_means_per_transformation(activations_iterator)
         n_layers=len(activations_iterator.activation_names())
         global_means=self.eval_global_means(means_per_layer_and_transformation,n_layers)
-        ssdb_per_layer=self.eval_between_transformations_ssd(means_per_layer_and_transformation,global_means)
-        ssdw_per_layer=self.eval_within_transformations_ssd(activations_iterator,means_per_layer_and_transformation)
-        freedom_degrees=(samples_per_transformation[0]-1)*len(samples_per_transformation)
-        ssdw_per_layer=[s/freedom_degrees for s in ssdw_per_layer]
+        ssdb_per_layer,d_b=self.eval_between_transformations_ssd(means_per_layer_and_transformation,global_means,samples_per_transformation)
+        ssdw_per_layer, d_w=self.eval_within_transformations_ssd(activations_iterator, means_per_layer_and_transformation)
+
         f_score=self.divide_per_layer(ssdb_per_layer,ssdw_per_layer)
 
-        return MeasureResult(f_score,layer_names,self)
+        return MeasureResult(f_score,layer_names,self,extra_values={"d_b":d_b,"d_w":d_w})
 
-    def divide_per_layer(self,a_per_layer:ActivationsByLayer,b_per_layer:ActivationsByLayer)->ActivationsByLayer:
+    def divide_per_layer(self,a_per_layer:ActivationsByLayer,b_per_layer:ActivationsByLayer)->(ActivationsByLayer,int):
         return [a/b for (a,b) in zip(a_per_layer,b_per_layer)]
 
     def eval_within_transformations_ssd(self,activations_iterator:ActivationsIterator,means_per_layer_and_transformation:[ActivationsByLayer],)->ActivationsByLayer:
@@ -65,10 +68,12 @@ class AnovaFMeasure(Measure):
                             d=(layer_activations[i,]-means_per_layer[j])**2
                             ssdw_per_layer[j]=ssdw_per_layer[j]+d
                 samples_per_transformation.append(n_samples)
+            # divide by degrees of freedom
+            degrees_of_freedom = (samples_per_transformation[0] - 1) * len(samples_per_transformation)
+            ssdw_per_layer = [s / degrees_of_freedom for s in ssdw_per_layer]
+            return ssdw_per_layer,degrees_of_freedom
 
-            return ssdw_per_layer
-
-    def eval_between_transformations_ssd(self,means_per_layer_and_transformation:[ActivationsByLayer],global_means:ActivationsByLayer,samples_per_transformation:[int])->ActivationsByLayer:
+    def eval_between_transformations_ssd(self,means_per_layer_and_transformation:[ActivationsByLayer],global_means:ActivationsByLayer,samples_per_transformation:[int])->(ActivationsByLayer,int):
         '''
 
         :param means_per_transformation: has len(transformations), each item has len(layers)
@@ -81,11 +86,11 @@ class AnovaFMeasure(Measure):
         for  i,means_per_layer in enumerate(means_per_layer_and_transformation):
             n=samples_per_transformation[i]
             for j in range(n_layers):
-                ssdb_per_layer[j] += n* ((means_per_layer[i]-global_means[j])**2)
-
+                ssdb_per_layer[j] += n* ((means_per_layer[j]-global_means[j])**2)
+        degrees_of_freedom=(n_transformations-1)
         for j in range(n_layers):
-            ssdb_per_layer[j]/=(n_transformations-1)
-        return ssdb_per_layer
+            ssdb_per_layer[j]/=degrees_of_freedom
+        return ssdb_per_layer,degrees_of_freedom
 
     def eval_global_means(self, means_per_layer_and_transformation:[[np.ndarray]], n_layers:int)->ActivationsByLayer:
         n_transformations=len(means_per_layer_and_transformation)
@@ -115,16 +120,6 @@ class AnovaFMeasure(Measure):
             samples_per_transformation.append(n_samples)
             means_per_transformation.append([rm.mean() for rm in samples_variances_running])
         return means_per_transformation,samples_per_transformation
-
-    def samples_variance(self,samples_variance_running):
-        if self.measure_function == MeasureFunction.var:
-            return samples_variance_running.var()
-        elif self.measure_function == MeasureFunction.std:
-            return samples_variance_running.std()
-        elif self.measure_function == MeasureFunction.mean:
-            return samples_variance_running.mean()
-        else:
-            raise ValueError(f"Unsupported measure function {self.measure_function}")
 
     def preprocess_activations(self, layer_activations):
         if len(layer_activations.shape) == 4:

@@ -50,6 +50,18 @@ class Options:
         self.batch_size=batch_size
         self.num_workers=num_workers
 
+class VarianceExperimentResult:
+    def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult):
+        self.parameters=parameters
+        self.measure_result=measure_result
+
+    def __repr__(self):
+        description = f"VarianceExperimentResult, params: {self.parameters}"
+        return description
+
+    def id(self):
+        return f"{self.parameters.id()}"
+
 
 dataset_names=["mnist","cifar10"]
 
@@ -116,15 +128,4 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     o = Options(args.verbose,args.batchsize,args.num_workers)
     return p,o
 
-class VarianceExperimentResult:
-    def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult):
-        self.parameters=parameters
-        self.measure_result=measure_result
-
-    def __repr__(self):
-        description = f"VarianceExperimentResult, params: {self.parameters}"
-        return description
-
-    def id(self):
-        return f"{self.parameters.id()}"
 
