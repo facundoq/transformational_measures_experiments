@@ -71,7 +71,7 @@ def possible_experiment_parameters()->[]:
     transformations = config.all_transformations(10)
     measures= config.common_measures()
 
-    dataset_percentages = [0.01,0.05,.1, .5, 1.0]
+    dataset_percentages = config.common_dataset_sizes()
     dataset_subsets=[DatasetSubset.train,DatasetSubset.test]
     datasets=[]
     for dataset in dataset_names:
@@ -108,6 +108,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
     parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,
                         help=f'Print info about dataset/models/transformations')
+
     parser.add_argument('-num_workers', metavar='nw'
                         , help=f'num_workersto use during training'
                         , type=int

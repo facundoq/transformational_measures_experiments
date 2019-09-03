@@ -103,9 +103,9 @@ class MeasureVsDatasetSize(Experiment):
         return '''Vary the test dataset size and see how it affects the measure's value. That is, vary the size of the dataset used to compute the invariance (not the training dataset) and see how it affects the calculation of the measure.'''
 
     def run(self):
-        dataset_sizes=[0.01,0.05,0.1,0.5,1.0]
+        dataset_sizes = config.common_dataset_sizes()
         epochs= 0
-        combinations=list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
+        combinations = list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
             p_training = training.Parameters(model, dataset, transformation, epochs)

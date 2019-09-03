@@ -9,6 +9,3 @@ from .measure.normalized import NormalizedMeasure
 from .measure.samples import SampleMeasure
 from .measure.transformations import TransformationMeasure
 from .measure.anova import AnovaMeasure,AnovaFMeasure
-
-
-from typing import List
