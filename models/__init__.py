@@ -3,28 +3,7 @@ from models.simple_conv import *
 from models.vgg_like import *
 from models.all_conv import *
 from models.resnet import *
+from models.ff import *
 
-names= [SimpleConv.__name__, VGGLike.__name__, ResNet.__name__, AllConvolutional.__name__]
-
-class FFNet(nn.Module):
-    def __init__(self,input_shape,num_classes,h1=120,h2=84):
-        super(FFNet, self).__init__()
-        h,w,channels=input_shape
-
-        self.linear_size = h * w * channels
-        self.fc= nn.Sequential(
-                nn.Linear(self.linear_size, 120),
-             #   nn.BatchNorm1d(120),
-                nn.ReLU(),
-                nn.Linear(h1, h2),
-              #  nn.BatchNorm1d(84),
-                nn.ReLU(),
-                nn.Linear(h2, num_classes)
-                )
-
-    def forward(self, x):
-        x = x.view(-1, self.linear_size)
-        x = self.fc(x)
-
-        return x
+names= [SimpleConv.__name__, VGGLike.__name__, ResNet.__name__, AllConvolutional.__name__, FFNet.__name__]
 

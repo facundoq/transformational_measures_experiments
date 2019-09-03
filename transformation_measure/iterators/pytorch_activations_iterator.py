@@ -126,7 +126,7 @@ class ObservableLayersModel:
         raise NotImplementedError()
 
     @abstractmethod
-    def forward_intermediates(self)->(object,[]):
+    def forward_intermediates(self,args)->(object,[]):
         raise NotImplementedError()
 
     def n_intermediates(self):
