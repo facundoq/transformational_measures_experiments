@@ -13,10 +13,7 @@ class ExperimentModel:
         self.optimizer = optimizer
 
 def get_model_names():
-    return [models.SimpleConv.__name__
-        , models.AllConvolutional.__name__
-        , models.VGGLike.__name__
-        , models.ResNet.__name__]
+    return models.names
 
 
 def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tuple[nn.Module,Optimizer]:
@@ -27,6 +24,15 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         parameters = training.add_weight_decay(model.named_parameters(), wd)
         optimizer = optim.Adam(parameters, lr=lr)
         return optimizer
+
+    def ffnet()->Tuple[nn.Module,Optimizer]:
+        fc1 = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
+        fc2= {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
+        model = models.FFNet(dataset.input_shape, dataset.num_classes,
+                                  h1=fc1[dataset.name], h2=fc2[dataset.name])
+        optimizer=setup_model(model,0.001,1e-9)
+        return model, optimizer
+
 
     def simple_conv()->Tuple[nn.Module,Optimizer]:
         conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
@@ -65,6 +71,7 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
                   models.AllConvolutional.__name__: all_convolutional,
                   models.VGGLike.__name__: vgglike,
                   models.ResNet.__name__: resnet,
+                  models.FFNet.__name__:ffnet,
                   }
     if name not in all_models :
         raise ValueError(f"Model \"{name}\" does not exist. Choices: {', '.join(all_models .keys())}")
@@ -83,6 +90,8 @@ def get_epochs(model:str,dataset:str, t:tm.TransformationSet)-> int:
         epochs={'cifar10':70,'mnist':15,'fashion_mnist':12,}
     elif model== models.ResNet.__name__:
         epochs={'cifar10':70,'mnist':15,'fashion_mnist':12}
+    elif model == models.FFNet.__name__:
+        epochs = {'cifar10': 10, 'mnist': 5, 'fashion_mnist': 8}
     else:
         raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(get_model_names())}")
 

@@ -1,6 +1,7 @@
 from torch import nn
 from transformation_measure import ObservableLayersModel
 from models import SequentialWithIntermediates
+import torch.nn.functional as F
 
 class FFNet(nn.Module,ObservableLayersModel):
     def __init__(self,input_shape,num_classes,h1=128,h2=64):
@@ -18,7 +19,6 @@ class FFNet(nn.Module,ObservableLayersModel):
                nn.BatchNorm1d(h2),
                 nn.ReLU(),
                 nn.Linear(h2, num_classes),
-                nn.LogSoftmax()
                 )
 
     def forward(self, x):
@@ -32,5 +32,6 @@ class FFNet(nn.Module,ObservableLayersModel):
     def forward_intermediates(self,x)->(object,[]):
         x = x.view(-1, self.linear_size)
         x,intermediates = self.fc.forward_intermediates(x)
-        return x,intermediates
+        x=F.log_softmax(x)
+        return x,intermediates+[x]
 

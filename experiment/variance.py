@@ -71,7 +71,7 @@ def possible_experiment_parameters()->[]:
     transformations = config.all_transformations(10)
     measures= config.common_measures()
 
-    dataset_percentages = [.1, .5, 1.0]
+    dataset_percentages = [0.01,0.05,.1, .5, 1.0]
     dataset_subsets=[DatasetSubset.train,DatasetSubset.test]
     datasets=[]
     for dataset in dataset_names:
