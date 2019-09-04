@@ -78,6 +78,12 @@ class CompareMeasures(Experiment):
     def description(self):
         return """Test different measures for a given dataset/model/transformation combination to evaluate their differences."""
     def run(self):
+        sm=tm.SampleMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
+        ttm=tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
+        measures=[tm.AnovaMeasure(tm.ConvAggregation.sum,0.99)
+                  ,sm
+                  ,ttm
+                  ,tm.NormalizedMeasure(ttm,sm)]
         epochs= 0
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
