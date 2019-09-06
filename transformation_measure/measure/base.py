@@ -7,7 +7,7 @@ from .layer_transformation import ConvAggregation,apply_aggregation_function
 
 ActivationsByLayer = [np.ndarray]
 
-class   MeasureResult:
+class MeasureResult:
     def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure',extra_values={}):
         self.layers=layers
         self.layer_names=layer_names

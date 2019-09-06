@@ -1,9 +1,12 @@
-from .base import Measure,MeasureResult,ActivationsByLayer
+from .base import Measure,MeasureResult,ActivationsByLayer,MeasureFunction
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
 from typing import List
+from .layer_transformation import ConvAggregation
+from .samples import SampleMeasure
+from .transformations import TransformationMeasure
 
-class NormalizedMeasure(Measure):
+class QuotientMeasure(Measure):
     def __init__(self, numerator_measure:Measure,denominator_measure:Measure):
         super().__init__()
         self.numerator_measure=numerator_measure
@@ -38,3 +41,15 @@ class NormalizedMeasure(Measure):
             measures.append(normalized_measure)
         return measures
 
+
+
+class NormalizedMeasure(QuotientMeasure):
+    def __init__(self,measure_function:MeasureFunction,conv_aggregation:ConvAggregation):
+        sm = SampleMeasure(measure_function,conv_aggregation)
+        ttm = TransformationMeasure(measure_function,conv_aggregation)
+        super().__init__(ttm,sm)
+        self.numerator_measure = ttm
+        self.denominator_measure = sm
+
+    def __repr__(self):
+        return f"NM({self.numerator_measure}_DIV_{self.denominator_measure})"

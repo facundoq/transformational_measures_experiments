@@ -78,30 +78,38 @@ class CompareMeasures(Experiment):
     def description(self):
         return """Test different measures for a given dataset/model/transformation combination to evaluate their differences."""
     def run(self):
-        sm=tm.SampleMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
-        ttm=tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
-        measures=[tm.AnovaMeasure(tm.ConvAggregation.sum,0.99)
-                  ,sm
-                  ,ttm
-                  ,tm.NormalizedMeasure(ttm,sm)]
+        mf,ca=tm.MeasureFunction.std,tm.ConvAggregation.sum
+        measure_sets={"LowLevel":[tm.SampleMeasure(mf,ca)
+                  ,tm.TransformationMeasure(mf,ca)],
+                      "HighLevel":[tm.AnovaMeasure(tm.ConvAggregation.none,0.99)
+                  ,tm.NormalizedMeasure(mf,ca)]}
         epochs= 0
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
-        for model in model_names:
-            for dataset in datasets:
-                p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
-                for transformation in config.common_transformations_without_identity():
-                    experiment_name=f"{model}_{p_dataset.id()}_{transformation.id()}"
-                    plot_filepath=os.path.join(self.plot_folderpath,f"{experiment_name}.png")
-                    p_training= training.Parameters(model, dataset, transformation, epochs, 0)
-                    self.experiment_training(p_training)
-                    variance_parameters= [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
-                    model_path=config.model_path(p_training)
-                    for p_variance in variance_parameters:
-                        self.experiment_variance(p_variance,model_path)
-                    results = config.load_results(config.results_paths(variance_parameters))
-                    labels=[m.id() for m in measures]
-                    visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
+        combinations = itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measure_sets.items()])
+        for (model,dataset,transformation,measure_set) in combinations:
+            # train
+            p_training= training.Parameters(model, dataset, transformation, epochs, 0)
+            self.experiment_training(p_training)
+            # generate variance params
+            variance_parameters=[]
+            measure_set_name, measures = measure_set
+            for m in measures:
+                p= 0.5 if m.__class__==tm.AnovaMeasure else 0.1
+                p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
+                p_variance=variance.Parameters(p_training.id(), p_dataset, transformation, m)
+                variance_parameters.append(p_variance)
+            # evaluate variance
+            model_path=config.model_path(p_training)
+            for p_variance in variance_parameters:
+                self.experiment_variance(p_variance,model_path)
+
+            # plot results
+            experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure_set_name}"
+            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            results = config.load_results(config.results_paths(variance_parameters))
+            labels=[m.id() for m in measures]
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 class MeasureVsDatasetSize(Experiment):
 
@@ -109,7 +117,7 @@ class MeasureVsDatasetSize(Experiment):
         return '''Vary the test dataset size and see how it affects the measure's value. That is, vary the size of the dataset used to compute the invariance (not the training dataset) and see how it affects the calculation of the measure.'''
 
     def run(self):
-        dataset_sizes = config.common_dataset_sizes()
+        dataset_sizes = [0.01,0.05,0.1,0.5,1.0]
         epochs= 0
         combinations = list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
@@ -134,13 +142,19 @@ class MeasureVsDatasetSubset(Experiment):
 
     def run(self):
         dataset_sizes=[ (variance.DatasetSubset.test,0.1), (variance.DatasetSubset.train,0.02)]
+
         epochs= 0
         combinations=list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
             p_training = training.Parameters(model, dataset, transformation, epochs)
             self.experiment_training(p_training)
-            p_datasets = [variance.DatasetParameters(dataset, subset, p) for (subset,p) in dataset_sizes]
+
+            p_datasets=[]
+            for (subset,p) in dataset_sizes:
+                if measure.__class__==tm.AnovaMeasure.__class__:
+                    p=p*5
+                p_datasets.append(variance.DatasetParameters(dataset, subset, p))
             experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
             variance_parameters= [variance.Parameters(p_training.id(), p_dataset, transformation, measure) for p_dataset in p_datasets]
@@ -160,7 +174,7 @@ class InvarianceVsTransformationDiversity(Experiment):
         epochs= 0
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
-        measure=tm.NormalizedMeasure(tm.TransformationMeasure(measure_function,conv_agg),tm.SampleMeasure(measure_function,conv_agg))
+        measure=tm.NormalizedMeasure(measure_function,conv_agg)
         combinations=itertools.product(*[model_names,datasets])
         for model,dataset in combinations:
             print(model,dataset)
@@ -196,7 +210,7 @@ class InvarianceVsTransformationDifferentScales(Experiment):
         epochs= 0
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
-        measure=tm.NormalizedMeasure(tm.TransformationMeasure(measure_function,conv_agg),tm.SampleMeasure(measure_function,conv_agg))
+        measure=tm.NormalizedMeasure(measure_function,conv_agg)
         combinations=itertools.product(*[model_names,datasets])
         for model,dataset in combinations:
             print(model,dataset)
@@ -229,6 +243,62 @@ class InvarianceVsTransformationDifferentScales(Experiment):
 
 
 
+class CollapseConvBeforeOrAfter(Experiment):
+    def description(self):
+        return """Collapse convolutions spatial dims after/before computing variance."""
+    def run(self):
+        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max]
+        measures=[]
+        for f in functions:
+            measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
+            measures.append(measure)
+        epochs= 0
+
+        combinations = itertools.product(
+            *[model_names, datasets, config.common_transformations_without_identity()])
+        for (model, dataset, transformation) in combinations:
+            # train
+            p_training= training.Parameters(model, dataset, transformation, epochs, 0)
+            self.experiment_training(p_training)
+            # eval variance
+            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
+            variance_parameters= [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
+            model_path=config.model_path(p_training)
+            for p_variance in variance_parameters:
+                self.experiment_variance(p_variance,model_path)
+            #plot
+            experiment_name = f"{model}_{p_dataset.id()}_{transformation.id()}"
+            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            results = config.load_results(config.results_paths(variance_parameters))
+            labels=[m.id() for m in measures]
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
+
+class CompareConvAgg(Experiment):
+    def description(self):
+        return """Test different Convolutional Aggregation (sum,mean,max) functions to evaluate their differences. Convolutional aggregation collapses all the spatial dimensions of feature maps so that a single variance value for the feature map can be obtained."""
+    def run(self):
+        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max]
+        measures=[]
+        for f in functions:
+            measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
+            measures.append(measure)
+        epochs= 0
+
+        combinations = itertools.product(
+            *[model_names, datasets, config.common_transformations_without_identity(),])
+        for (model, dataset, transformation) in combinations:
+            p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
+            experiment_name=f"{model}_{p_dataset.id()}_{transformation.id()}"
+            plot_filepath=os.path.join(self.plot_folderpath,f"{experiment_name}.png")
+            p_training= training.Parameters(model, dataset, transformation, epochs, 0)
+            self.experiment_training(p_training)
+            variance_parameters= [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
+            model_path=config.model_path(p_training)
+            for p_variance in variance_parameters:
+                self.experiment_variance(p_variance,model_path)
+            results = config.load_results(config.results_paths(variance_parameters))
+            labels=[m.id() for m in measures]
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 if __name__ == '__main__':
     experiments=[CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales()]

@@ -85,11 +85,11 @@ def plots_base_folder():
 from transformation_measure import *
 
 def common_measures()-> [Measure]:
-    measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum),
-             TransformationMeasure(MeasureFunction.std, ConvAggregation.sum),
-     NormalizedMeasure(TransformationMeasure(MeasureFunction.std, ConvAggregation.sum), SampleMeasure(MeasureFunction.std, ConvAggregation.sum))
-        ,AnovaFMeasure(ConvAggregation.sum)
-        ,AnovaMeasure(ConvAggregation.sum,alpha=0.05)
+    measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum)
+             ,TransformationMeasure(MeasureFunction.std, ConvAggregation.sum)
+     ,NormalizedMeasure(MeasureFunction.std, ConvAggregation.sum)
+        ,AnovaFMeasure(ConvAggregation.none)
+        ,AnovaMeasure(ConvAggregation.none,alpha=0.05)
 
     ]
     return measures
@@ -119,4 +119,4 @@ def all_transformations(n:int):
 
 
 def common_dataset_sizes()->[float]:
-    return [0.01,0.05,0.1,0.5,1.0]
+    return [0.01,0.02,0.05,0.1,0.5,1.0]

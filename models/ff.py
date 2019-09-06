@@ -24,6 +24,7 @@ class FFNet(nn.Module,ObservableLayersModel):
     def forward(self, x):
         x = x.view(-1, self.linear_size)
         x= self.fc(x)
+        x=F.log_softmax(x)
         return x
 
     def activation_names(self):
