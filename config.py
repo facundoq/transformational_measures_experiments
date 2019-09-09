@@ -84,6 +84,24 @@ def plots_base_folder():
 
 from transformation_measure import *
 
+
+def all_measures()-> [Measure]:
+    cas=[ConvAggregation.max,ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.min,ConvAggregation.none]
+    measures=[]
+    for ca in cas:
+        measures.append(SampleMeasure(MeasureFunction.std,ca))
+        measures.append(TransformationMeasure(MeasureFunction.std, ca))
+        measures.append(NormalizedMeasure(MeasureFunction.std, ca))
+
+    measures.append(AnovaFMeasure(ConvAggregation.none))
+    measures.append(AnovaMeasure(ConvAggregation.none,alpha=0.05))
+    measures.append(AnovaMeasure(ConvAggregation.none, alpha=0.01))
+    measures.append(AnovaMeasure(ConvAggregation.none, alpha=0.001))
+    measures.append(AnovaMeasure(ConvAggregation.none, alpha=0.1))
+
+    return measures
+
+
 def common_measures()-> [Measure]:
     measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum)
              ,TransformationMeasure(MeasureFunction.std, ConvAggregation.sum)

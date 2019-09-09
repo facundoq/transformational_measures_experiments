@@ -69,7 +69,7 @@ import config
 
 def possible_experiment_parameters()->[]:
     transformations = config.all_transformations(10)
-    measures= config.common_measures()
+    measures= config.all_measures()
 
     dataset_percentages = config.common_dataset_sizes()
     dataset_subsets=[DatasetSubset.train,DatasetSubset.test]

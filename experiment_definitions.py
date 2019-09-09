@@ -38,8 +38,10 @@ class Experiment():
         return self.__class__.__name__
 
     def __call__(self, *args, **kwargs):
-        print(f"Running experiment {self.id()}")
+        stars="*"*10
+        print(f"{stars} Running  experiment {self.id()} {stars}")
         self.run()
+        print(f"{stars} Finished experiment {self.id()} {stars}")
 
     @abc.abstractmethod
     def run(self):
@@ -301,7 +303,7 @@ class CompareConvAgg(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 if __name__ == '__main__':
-    experiments=[CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales()]
+    experiments=[CompareConvAgg(),CollapseConvBeforeOrAfter(),CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales(),]
 
     for e in experiments:
         e()
