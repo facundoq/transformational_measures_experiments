@@ -78,6 +78,7 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
     transformation=transformations[args.transformation]
     epochs = model_loading.get_epochs(args.model, args.dataset, transformation)
 
+
     p= training.Parameters(args.model, args.dataset, transformation, epochs, args.notransform_epochs)
     o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots)
     return p,o
@@ -108,7 +109,15 @@ if __name__ == "__main__":
 
     training.plot_history(history, p, config.training_plots_path())
 
+    min_accuracies={"mnist":.95,"cifar10":.5}
+    min_accuracy=min_accuracies[p.dataset]
     # SAVING
     if o.save_model:
-        training.save_model(p, o, model, scores, config.model_path(p))
+        test_accuracy=scores["test"][1]
+        if test_accuracy>=min_accuracy:
+            path=config.model_path(p)
+            training.save_model(p, o, model, scores, path)
+            print(f"Model saved to {path}")
+        else:
+            print(f"Model was not saved since it did not reach minimum accuracy. Accuracy={test_accuracy}<{min_accuracies}.")
 
