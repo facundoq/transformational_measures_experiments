@@ -249,7 +249,7 @@ class CollapseConvBeforeOrAfter(Experiment):
     def description(self):
         return """Collapse convolutions spatial dims after/before computing variance."""
     def run(self):
-        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max]
+        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max,tm.ConvAggregation.none]
         measures=[]
         for f in functions:
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
@@ -268,18 +268,28 @@ class CollapseConvBeforeOrAfter(Experiment):
             model_path=config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_variance(p_variance,model_path)
+            post_measure=tm.NormalizedMeasure(tm.MeasureFunction.std,tm.ConvAggregation.none)
+            no_aggregation_parameters=variance.Parameters(p_training.id(), p_dataset, transformation, post_measure)
+            self.experiment_variance(no_aggregation_parameters, model_path)
+
+            post_results= config.load_results(config.results_paths([no_aggregation_parameters]*len(functions)))
+            for f,r in zip(functions,post_results):
+                r.measure_result=r.measure_result.collapse_convolutions(f)
+
             #plot
             experiment_name = f"{model}_{p_dataset.id()}_{transformation.id()}"
             plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
             results = config.load_results(config.results_paths(variance_parameters))
-            labels=[m.id() for m in measures]
-            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
+
+            labels=[f"Pre: {m.id()}" for m in measures]
+            post_labels=[f"Post({f}): {post_measure.id()}" for f in functions]
+            visualization.plot_collapsing_layers(results+post_results, plot_filepath, labels=labels+post_labels, title=experiment_name)
 
 class CompareConvAgg(Experiment):
     def description(self):
         return """Test different Convolutional Aggregation (sum,mean,max) functions to evaluate their differences. Convolutional aggregation collapses all the spatial dimensions of feature maps so that a single variance value for the feature map can be obtained."""
     def run(self):
-        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max]
+        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max,tm.ConvAggregation.none]
         measures=[]
         for f in functions:
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
