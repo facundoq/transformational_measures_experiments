@@ -27,8 +27,8 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         return optimizer
 
     def ffnet()->Tuple[nn.Module,Optimizer]:
-        fc1 = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
-        fc2= {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
+        fc1 = {"mnist": 64, "cifar10": 256, "fashion_mnist": 128}
+        fc2= {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
         model = models.FFNet(dataset.input_shape, dataset.num_classes,
                                   h1=fc1[dataset.name], h2=fc2[dataset.name])
         optimizer=setup_model(model,0.001,1e-9)

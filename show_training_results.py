@@ -4,10 +4,11 @@
 import os
 from experiment import variance, training
 import texttable
+import config
 
 if __name__ == '__main__':
-    model_names= training.get_models()
-    model_names.sort()
+    models_filepaths= config.get_models_filepaths()
+    models_filepaths.sort()
     message=f"""Training results"""
     print(message)
     table=texttable.Texttable()
@@ -15,7 +16,7 @@ if __name__ == '__main__':
     table.header(header)
 
     data=[]
-    for model_path in model_names:
+    for model_path in models_filepaths:
         model, p, o, scores = training.load_model(model_path, False, load_state=False)
         train_accuracy=scores["train"][1]
         test_accuracy = scores["test"][1]
@@ -25,5 +26,6 @@ if __name__ == '__main__':
     table.add_rows(data,header=False)
     table_str=table.draw()
     print(table_str)
-with open(os.path.join(variance.base_folder(), "latest_training_results.txt"), "w") as f:
-    f.write(table_str)
+
+    with open(os.path.join(config.base_path(), "latest_training_results.txt"), "w") as f:
+        f.write(table_str)

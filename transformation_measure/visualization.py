@@ -4,9 +4,10 @@ import os
 from typing import List
 
 from transformation_measure.measure.base import MeasureResult
-
+import transformation_measure as tm
 def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
 
+    m=m.collapse_convolutions(tm.ConvAggregation.sum)
 
     n = len(m.layer_names)
     f, axes = plt.subplots(1, n, dpi=150)
@@ -14,11 +15,12 @@ def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
         ax = axes[i]
         ax.axis("off")
         activation = activation[:, np.newaxis]
+        #mappable = ax.imshow(cv, cmap='inferno')
         if vmax is not None:
             mappable=ax.imshow(activation,vmin=vmin,vmax=vmax,cmap='inferno',aspect="auto")
         else:
             mappable = ax.imshow(activation, vmin=vmin, cmap='inferno', aspect="auto")
-        #mappable = ax.imshow(cv, cmap='inferno')
+
         if n<40:
             if len(name)>6:
                 name=name[:6]

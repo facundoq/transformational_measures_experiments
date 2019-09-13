@@ -3,7 +3,7 @@ from transformation_measure.iterators.activations_iterator import ActivationsIte
 import numpy as np
 from typing import Dict, List, Tuple
 from .running_stats import RunningMean
-from .layer_transformation import ConvAggregation,apply_aggregation_function
+from .layer_transformation import ConvAggregation,apply_aggregation_function3D
 
 ActivationsByLayer = [np.ndarray]
 
@@ -44,9 +44,9 @@ class MeasureResult:
         results=[]
         for layer in self.layers:
             # if conv average out spatial dims
-            if len(layer.shape) == 4:
-                flat_activations=apply_aggregation_function(layer,conv_aggregation_function)
-                assert (len(flat_activations.shape) == 2)
+            if len(layer.shape) == 3:
+                flat_activations=apply_aggregation_function3D(layer,conv_aggregation_function)
+                assert (len(flat_activations.shape) == 1)
             else:
                 flat_activations = layer.copy()
             results.append(flat_activations)
