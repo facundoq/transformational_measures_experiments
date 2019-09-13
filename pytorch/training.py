@@ -7,12 +7,18 @@ def print_results(dataset,loss,accuracy,correct,n):
     print('{} => Loss: {:.4f}, Accuracy: {:.2f}% ({}/{})'.format(dataset,
         loss, 100. * accuracy, correct, n),flush=True)
 
-def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True):
+def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3):
     # torch.multiprocessing.set_start_method("spawn")
     history={"acc":[],"acc_val":[],"loss":[],"loss_val":[]}
+    max_epochs_without_improvement=int(max_epochs_without_improvement_p*epochs)
     model.train()
+
+    last_accuracy=0
+    no_improvement_epochs=0
+
     for epoch in range(1, epochs + 1):
         loss,accuracy,correct,n=train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose)
+
 
         #train_results = test(models, train_dataset, use_cuda)
         #print_results("Train",*train_results)
@@ -25,6 +31,15 @@ def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_functi
         history["loss_val"].append(test_results[0])
         history["acc"].append(accuracy)
         history["acc_val"].append(test_results[1])
+
+        #
+        if abs(last_accuracy-accuracy)<max_epochs_without_improvement_treshold:
+            no_improvement_epochs += 1
+        else:
+            no_improvement_epochs =0
+        if no_improvement_epochs==max_epochs_without_improvement:
+            break
+
     return history
 
 

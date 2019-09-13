@@ -22,7 +22,8 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         if use_cuda:
             model = model.cuda()
         parameters = training.add_weight_decay(model.named_parameters(), wd)
-        optimizer = optim.Adam(parameters, lr=lr)
+        optimizer = optim.AdamW(parameters, lr=lr)
+        #rp = optim.lr_scheduler.ReduceLROnPlateau(optimizer , patience=2, cooldown=0)
         return optimizer
 
     def ffnet()->Tuple[nn.Module,Optimizer]:
@@ -97,7 +98,7 @@ def get_epochs(model:str,dataset:str, t:tm.TransformationSet)-> int:
 
     n=len(t)
     if n>np.e:
-        factor=1.5*np.log(n)
+        factor=1.3*np.log(n)
     else:
         factor=1
 

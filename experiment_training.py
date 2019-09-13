@@ -119,5 +119,5 @@ if __name__ == "__main__":
             training.save_model(p, o, model, scores, path)
             print(f"Model saved to {path}")
         else:
-            print(f"Model was not saved since it did not reach minimum accuracy. Accuracy={test_accuracy}<{min_accuracies}.")
+            print(f"Model was not saved since it did not reach minimum accuracy. Accuracy={test_accuracy}<{min_accuracy}.")
 
