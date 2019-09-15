@@ -81,25 +81,4 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
 import transformation_measure as tm
 import numpy as np
 
-def get_epochs(model:str,dataset:str, t:tm.TransformationSet)-> int:
 
-    if model== models.SimpleConv.__name__:
-        epochs={'cifar10':70,'mnist':5,'fashion_mnist':12}
-    elif model== models.AllConvolutional.__name__:
-        epochs={'cifar10':32,'mnist':15,'fashion_mnist':12}
-    elif model== models.VGGLike.__name__:
-        epochs={'cifar10':70,'mnist':15,'fashion_mnist':12,}
-    elif model== models.ResNet.__name__:
-        epochs={'cifar10':70,'mnist':15,'fashion_mnist':12}
-    elif model == models.FFNet.__name__:
-        epochs = {'cifar10': 10, 'mnist': 5, 'fashion_mnist': 8}
-    else:
-        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(get_model_names())}")
-
-    n=len(t)
-    if n>np.e:
-        factor=1.3*np.log(n)
-    else:
-        factor=1
-
-    return int(epochs[dataset]*factor)

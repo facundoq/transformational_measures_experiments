@@ -17,7 +17,11 @@ if __name__ == '__main__':
 
     data=[]
     for model_path in models_filepaths:
+        # Avoid intermediate savepoint models.
+        if "savepoint" in model_path:
+            continue
         model, p, o, scores = training.load_model(model_path, False, load_state=False)
+
         train_accuracy=scores["train"][1]
         test_accuracy = scores["test"][1]
         row=(model.name,p.dataset,p.transformations.id(),p.epochs,train_accuracy,test_accuracy)

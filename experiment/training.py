@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-
+from typing import Callable
 from pytorch.training import train,test
 import numpy as np
 import os
@@ -18,12 +18,17 @@ class Parameters:
     def __init__(self,model:str,dataset:str
                  ,transformations:tm.TransformationSet
                  ,epochs:int
-                 ,notransform_epochs:int=0):
+                 ,notransform_epochs:int=0,savepoints:[int]=None):
+
         self.model=model
         self.dataset=dataset
         self.transformations=transformations
         self.epochs=epochs
         self.notransform_epochs=notransform_epochs
+
+        if savepoints is None:
+            savepoints=[]
+        self.savepoints=savepoints
 
     def __repr__(self):
         if self.notransform_epochs>0:
@@ -32,14 +37,22 @@ class Parameters:
             notransform_message=""
         return f"Model: {self.model}, Dataset={self.dataset}, Transformations=({self.transformations}), Epochs={self.epochs}{notransform_message}"
 
-    def id(self):
-        if self.notransform_epochs>0:
-            notransform_message="_notransform_epochs={self.notransform_epochs}"
-        else:
-            notransform_message=""
 
-        return f"{self.model}_{self.dataset}_{self.transformations.id()}{notransform_message}"
 
+    def id(self,savepoint=None):
+
+        result = f"{self.model}_{self.dataset}_{self.transformations.id()}"
+
+        if self.notransform_epochs > 0:
+            notransform_message = "_notransform_epochs={self.notransform_epochs}"
+            result+=notransform_message
+
+        if not savepoint is None:
+            if not self.savepoints.__contains__(savepoint):
+                raise ValueError(f"Invalid savepoint {savepoint}. Options: {', '.join(self.savepoints)}")
+            result += f"_savepoint={savepoint}"
+
+        return result
 
 class Options:
     def __init__(self, verbose:bool,train_verbose:bool, save_model:bool, batch_size:int, num_workers:int, use_cuda:bool, plots:bool):
@@ -58,8 +71,18 @@ class Options:
 
 
 
+
+def do_run(model:nn.Module,dataset:datasets.ClassificationDataset,t:tm.TransformationSet,o:Options, optimizer:Optimizer,epochs:int,loss_function:torch.nn.Module,epochs_callbacks:{int:Callable}):
+
+    train_dataset = get_data_generator(dataset.x_train, dataset.y_train, t, o.batch_size, o.num_workers)
+    test_dataset = get_data_generator(dataset.x_test, dataset.y_test, t, o.batch_size, o.num_workers)
+
+    history = train(model, epochs, optimizer, o.use_cuda, train_dataset, test_dataset, loss_function,verbose=o.train_verbose,epochs_callbacks=epochs_callbacks)
+    return history
+
+
 def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
-        dataset:datasets.ClassificationDataset,loss_function=torch.nn.NLLLoss()):
+        dataset:datasets.ClassificationDataset,loss_function=torch.nn.NLLLoss(),epochs_callbacks:{int:Callable}={}):
 
     if p.notransform_epochs == 0:
         if o.train_verbose:
@@ -68,27 +91,28 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
         if o.train_verbose:
             print(f"### Pretraining rotated models |{model.name}| with unrotated dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=tm.SimpleAffineTransformationGenerator()
-        pre_train_dataset = get_data_generator(dataset.x_train, dataset.y_train,t, o.batch_size,o.num_workers)
-        pre_test_dataset = get_data_generator(dataset.x_test, dataset.y_test,t, o.batch_size,o.num_workers)
+        pre_history =do_run(model,dataset,t,o,optimizer,p.epochs,loss_function,epochs_callbacks)
 
-        pre_history = train(model,p.epochs,optimizer,o.use_cuda,pre_train_dataset,pre_test_dataset,loss_function,verbose=o.train_verbose)
-
-
-
-    train_dataset = get_data_generator(dataset.x_train, dataset.y_train,p.transformations, o.batch_size,o.num_workers)
-    test_dataset = get_data_generator(dataset.x_test, dataset.y_test,p.transformations, o.batch_size,o.num_workers)
-    history = train(model,p.epochs,optimizer,o.use_cuda,train_dataset,test_dataset,loss_function,verbose=o.train_verbose,)
+    history =do_run(model,dataset,p.transformations,o,optimizer,p.epochs,loss_function,epochs_callbacks)
     if o.train_verbose:
         print("### Testing models on dataset...",flush=True)
-
-    datasets={"train":train_dataset,"test":test_dataset}
-    scores={}
-    for k,dataset in datasets.items():
-        loss, accuracy, correct, n = test(model, dataset, o.use_cuda, loss_function)
-        scores[k]=(loss,accuracy)
+    scores=eval_scores(model,dataset,p,o,loss_function)
 
     return scores,history
 
+
+def eval_scores(m:nn.Module,dataset:datasets.ClassificationDataset,p:Parameters,o:Options,loss_function=torch.nn.NLLLoss()):
+
+    train_dataset = get_data_generator(dataset.x_train, dataset.y_train, p.transformations, o.batch_size, o.num_workers)
+    test_dataset = get_data_generator(dataset.x_test, dataset.y_test, p.transformations, o.batch_size, o.num_workers)
+
+    datasets = {"train": train_dataset, "test": test_dataset}
+    scores = {}
+    for k, dataset in datasets.items():
+        loss, accuracy, correct, n = test(m, dataset, o.use_cuda, loss_function)
+        scores[k] = (loss, accuracy)
+
+    return scores
 
 
 from torch.utils.data import DataLoader

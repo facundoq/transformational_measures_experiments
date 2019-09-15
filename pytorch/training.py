@@ -2,12 +2,15 @@ import progressbar
 import torch,torch.multiprocessing
 import numpy as np
 import transformation_measure as tm
-
+from typing import Callable
 def print_results(dataset,loss,accuracy,correct,n):
     print('{} => Loss: {:.4f}, Accuracy: {:.2f}% ({}/{})'.format(dataset,
         loss, 100. * accuracy, correct, n),flush=True)
 
-def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3):
+def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3,eval_test_every_n_epochs:int=None,epochs_callbacks:{int:Callable}={}):
+
+    if eval_test_every_n_epochs == None:
+        eval_test_every_n_epochs= epochs//5
     # torch.multiprocessing.set_start_method("spawn")
     history={"acc":[],"acc_val":[],"loss":[],"loss_val":[]}
     max_epochs_without_improvement=int(max_epochs_without_improvement_p*epochs)
@@ -16,23 +19,24 @@ def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_functi
     last_accuracy=0
     no_improvement_epochs=0
 
+    test_results=(0,0)
+
     for epoch in range(1, epochs + 1):
         loss,accuracy,correct,n=train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose)
 
+        if epoch in epochs_callbacks:
+            epochs_callbacks[epoch]()
 
-        #train_results = test(models, train_dataset, use_cuda)
-        #print_results("Train",*train_results)
-
-        #loss, accuracy, correct,n= test(models,train_dataset, use_cuda, loss_function)
-        test_results = test(model,test_dataset,use_cuda,loss_function)
-        if verbose:
-            print_results("Test", *test_results)
+        if epoch == 0 or epoch==epochs or epoch % eval_test_every_n_epochs == 0:
+            test_results = test(model,test_dataset,use_cuda,loss_function)
+            if verbose:
+                print_results("Test", *test_results)
         history["loss"].append(loss)
         history["loss_val"].append(test_results[0])
         history["acc"].append(accuracy)
         history["acc_val"].append(test_results[1])
 
-        #
+        # abort if no improvement in various epochs
         if abs(last_accuracy-accuracy)<max_epochs_without_improvement_treshold:
             no_improvement_epochs += 1
         else:

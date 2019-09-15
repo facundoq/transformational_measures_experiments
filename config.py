@@ -8,9 +8,9 @@ def base_path():
 
 from experiment import training
 
-def model_path(p: training.Parameters):
+def model_path(p: training.Parameters,savepoint=None):
     model_folderpath= models_folder()
-    filename=f"{p.id()}.pt"
+    filename=f"{p.id(savepoint=savepoint)}.pt"
     filepath=os.path.join(model_folderpath,filename)
     return filepath
 
@@ -138,3 +138,31 @@ def all_transformations(n:int):
 
 def common_dataset_sizes()->[float]:
     return [0.01,0.02,0.05,0.1,0.5,1.0]
+
+
+
+import models
+import transformation_measure as tm
+import numpy as np
+
+def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
+    if model == models.SimpleConv.__name__:
+        epochs = {'cifar10': 70, 'mnist': 5, 'fashion_mnist': 12}
+    elif model == models.AllConvolutional.__name__:
+        epochs = {'cifar10': 32, 'mnist': 15, 'fashion_mnist': 12}
+    elif model == models.VGGLike.__name__:
+        epochs = {'cifar10': 70, 'mnist': 15, 'fashion_mnist': 12, }
+    elif model == models.ResNet.__name__:
+        epochs = {'cifar10': 70, 'mnist': 15, 'fashion_mnist': 12}
+    elif model == models.FFNet.__name__:
+        epochs = {'cifar10': 10, 'mnist': 5, 'fashion_mnist': 8}
+    else:
+        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(models.get_model_names())}")
+
+    n = len(t)
+    if n > np.e:
+        factor = 1.3 * np.log(n)
+    else:
+        factor = 1
+
+    return int(epochs[dataset] * factor)

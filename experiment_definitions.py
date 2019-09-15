@@ -57,7 +57,7 @@ class Experiment():
         if os.path.exists(model_path):
             return
 
-        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -verbose False -train_verbose False -num_workers 4'
+        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4'
         runner_utils.run_python(venv_path, python_command)
 
     def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2):
@@ -85,12 +85,13 @@ class CompareMeasures(Experiment):
                   ,tm.TransformationMeasure(mf,ca)],
                       "HighLevel":[tm.AnovaMeasure(tm.ConvAggregation.none,0.99)
                   ,tm.NormalizedMeasure(mf,ca)]}
-        epochs= 0
+
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
         combinations = itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measure_sets.items()])
         for (model,dataset,transformation,measure_set) in combinations:
             # train
+            epochs = config.get_epochs(model, dataset, transformation)
             p_training= training.Parameters(model, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
             # generate variance params
@@ -120,10 +121,10 @@ class MeasureVsDatasetSize(Experiment):
 
     def run(self):
         dataset_sizes = [0.01,0.05,0.1,0.5,1.0]
-        epochs= 0
         combinations = list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
+            epochs = config.get_epochs(model, dataset, transformation)
             p_training = training.Parameters(model, dataset, transformation, epochs)
             self.experiment_training(p_training)
             p_datasets = [variance.DatasetParameters(dataset, variance.DatasetSubset.test, p) for p in dataset_sizes]
@@ -145,10 +146,10 @@ class MeasureVsDatasetSubset(Experiment):
     def run(self):
         dataset_sizes=[ (variance.DatasetSubset.test,0.1), (variance.DatasetSubset.train,0.02)]
 
-        epochs= 0
         combinations=list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
+            epochs = config.get_epochs(model, dataset, transformation)
             p_training = training.Parameters(model, dataset, transformation, epochs)
             self.experiment_training(p_training)
 
@@ -173,7 +174,6 @@ class InvarianceVsTransformationDiversity(Experiment):
         return '''Vary the scale of transformation both when training a computing the measure, and see how it affects the invariance. For example, train with 2 rotations, then measure the invariance with 2 rotations. Train with 4 rotations, measure with 4 rotations, and so on. '''
 
     def run(self):
-        epochs= 0
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
@@ -191,6 +191,7 @@ class InvarianceVsTransformationDiversity(Experiment):
                 print(f"    {name}, experiments:{len(transformation_set)}")
                 for i,transformation in enumerate(transformation_set):
                     print(f"{i}, ",end="")
+                    epochs = config.get_epochs(model, dataset, transformation)
                     p_training = training.Parameters(model, dataset, transformation, epochs, 0)
                     self.experiment_training(p_training)
                     p_dataset =variance.DatasetParameters(dataset, variance.DatasetSubset.test,0.1)
@@ -209,7 +210,6 @@ class InvarianceVsTransformationDifferentScales(Experiment):
         return """Train a model/dataset with a transformation of scale X and then test with scales Y and Z of the same type, where Y<X and Z>X. Ie, train with 8 rotations, measure variance with 2, 4, 8 and 16. """
 
     def run(self):
-        epochs= 0
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
@@ -228,6 +228,7 @@ class InvarianceVsTransformationDifferentScales(Experiment):
                     plot_filepath = os.path.join(transformation_plot_folderpath, f"{experiment_name}.png")
                     variance_parameters = []
                     print(f"{j}, ",end="")
+                    epochs = config.get_epochs(model, dataset, train_transformation)
                     p_training = training.Parameters(model, dataset, train_transformation, epochs, 0)
                     self.experiment_training(p_training)
                     for k,test_transformation in enumerate(transformation_set):
@@ -254,12 +255,14 @@ class CollapseConvBeforeOrAfter(Experiment):
         for f in functions:
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
             measures.append(measure)
-        epochs= 0
+
 
         combinations = itertools.product(
             *[model_names, datasets, config.common_transformations_without_identity()])
         for (model, dataset, transformation) in combinations:
             # train
+
+            epochs = config.get_epochs(model, dataset, transformation)
             p_training= training.Parameters(model, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
             # eval variance
@@ -294,7 +297,7 @@ class CompareConvAgg(Experiment):
         for f in functions:
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
             measures.append(measure)
-        epochs= 0
+
 
         combinations = itertools.product(
             *[model_names, datasets, config.common_transformations_without_identity(),])
@@ -302,6 +305,7 @@ class CompareConvAgg(Experiment):
             p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
             experiment_name=f"{model}_{p_dataset.id()}_{transformation.id()}"
             plot_filepath=os.path.join(self.plot_folderpath,f"{experiment_name}.png")
+            epochs = config.get_epochs(model, dataset, transformation)
             p_training= training.Parameters(model, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
             variance_parameters= [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
