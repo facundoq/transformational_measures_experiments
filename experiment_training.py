@@ -32,6 +32,10 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
                         , help=f'Print details about the training'
                         , type=bool_parser
                         , default=True)
+    parser.add_argument('-max_restarts', metavar='mr'
+                        , help=f'Maximum number of restarts to train the model until a minimum accuracy is reached'
+                        , type=int
+                        , default=4)
 
     parser.add_argument('-batchsize', metavar='b'
                         , help=f'batchsize to use during training'
@@ -93,68 +97,76 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
     transformation=transformations[args.transformation]
 
     p= training.Parameters(args.model, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints)
-    o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots)
+    o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
     return p,o
 
 if __name__ == "__main__":
     p,o = parse_args()
+    def do_train():
+        dataset = datasets.get(p.dataset)
+        model, optimizer = model_loading.get_model(p.model, dataset, o.use_cuda)
 
-    dataset = datasets.get(p.dataset)
-    model, optimizer = model_loading.get_model(p.model, dataset, o.use_cuda)
+        print("Parameters: ",p)
+        print("Options: ",o)
 
-    print("Parameters: ",p)
-    print("Options: ",o)
+        def generate_epochs_callbacks():
+            epochs_callbacks=[]
+            for sp in p.savepoints:
+                epoch=int(p.epochs*sp/100)
+                def callback(sp=sp,epoch=epoch):
+                    scores=training.eval_scores(model,dataset,p,o)
+                    print(f"Saving model {model.name} at epoch {epoch} ({sp}%).")
+                    training.save_model(p, o, model, scores, config.model_path(p, sp))
+                epochs_callbacks.append((epoch,callback))
 
-    def generate_epochs_callbacks():
-        epochs_callbacks=[]
-        for sp in p.savepoints:
-            epoch=int(p.epochs*sp/100)
-            def callback(sp=sp,epoch=epoch):
-                scores=training.eval_scores(model,dataset,p,o)
-                print(f"Saving model {model.name} at epoch {epoch} ({sp}%).")
-                training.save_model(p, o, model, scores, config.model_path(p, sp))
-            epochs_callbacks.append((epoch,callback))
+            return dict(epochs_callbacks)
 
-        return dict(epochs_callbacks)
+        epochs_callbacks=generate_epochs_callbacks()
 
-    epochs_callbacks=generate_epochs_callbacks()
-
-    if o.verbose:
-        print(f"Experimenting with dataset {p.dataset}.")
-        print(dataset.summary())
-        print(f"Training with models {p.model}.")
-        print(model)
-        if len(p.savepoints):
-            savepoints_str=", ".join([f"{sp}%" for sp in p.savepoints])
-            epochs_str= ", ".join([f"{epoch}" for epoch in epochs_callbacks.keys()])
-            print(f"Savepoints at {savepoints_str} (epochs {epochs_str})")
-
-
-
-    # TRAINING
-    import time
+        if o.verbose:
+            print(f"Experimenting with dataset {p.dataset}.")
+            print(dataset.summary())
+            print(f"Training with models {p.model}.")
+            print(model)
+            if len(p.savepoints):
+                savepoints_str=", ".join([f"{sp}%" for sp in p.savepoints])
+                epochs_str= ", ".join([f"{epoch}" for epoch in epochs_callbacks.keys()])
+                print(f"Savepoints at {savepoints_str} (epochs {epochs_str})")
 
 
 
+        # TRAINING
+        import time
 
-    t=time.perf_counter()
-    scores,history= training.run(p, o, model, optimizer, dataset,epochs_callbacks=epochs_callbacks)
-    print(f"Elapsed {time.perf_counter()-t} seconds.")
+        t=time.perf_counter()
+        scores,history= training.run(p, o, model, optimizer, dataset,epochs_callbacks=epochs_callbacks)
+        print(f"Elapsed {time.perf_counter()-t} seconds.")
 
-    training.print_scores(scores)
+        training.print_scores(scores)
+        return model,history,scores
 
-    training.plot_history(history, p, config.training_plots_path())
+    converged=False
+    restarts=0
+    min_accuracies = {"mnist": .95, "cifar10": .5}
+    min_accuracy = min_accuracies[p.dataset]
 
-    min_accuracies={"mnist":.95,"cifar10":.5}
-    min_accuracy=min_accuracies[p.dataset]
+    while not converged and restarts<=o.max_restarts:
+        model,history,scores=do_train()
+        test_accuracy = scores["test"][1]
+        converged= test_accuracy > min_accuracy
+
+
+
     # SAVING
     if o.save_model:
-        test_accuracy=scores["test"][1]
-        if test_accuracy>=min_accuracy:
+        if converged:
             path=config.model_path(p)
             training.save_model(p, o, model, scores, path)
+            training.plot_history(history, p, config.training_plots_path())
             print(f"Model saved to {path}")
         else:
             print(f"Model was not saved since it did not reach minimum accuracy. Accuracy={test_accuracy}<{min_accuracy}.")
+
+
 
 

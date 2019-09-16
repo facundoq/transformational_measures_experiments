@@ -55,7 +55,7 @@ class Parameters:
         return result
 
 class Options:
-    def __init__(self, verbose:bool,train_verbose:bool, save_model:bool, batch_size:int, num_workers:int, use_cuda:bool, plots:bool):
+    def __init__(self, verbose:bool,train_verbose:bool, save_model:bool, batch_size:int, num_workers:int, use_cuda:bool, plots:bool,max_restarts:int):
         self.batch_size=batch_size
         self.num_workers=num_workers
         self.verbose=verbose
@@ -63,10 +63,11 @@ class Options:
         self.save_model=save_model
         self.plots=plots
         self.use_cuda=use_cuda
+        self.max_restarts=max_restarts
 
     def __repr__(self):
         return f"batch_size={self.batch_size}, num_workers={self.num_workers}, verbose={self.verbose}, train_verbose={self.train_verbose}," \
-            f" save_model={self.save_model}, plots={self.plots}, use_cuda={self.use_cuda}"
+            f" save_model={self.save_model}, plots={self.plots}, use_cuda={self.use_cuda}, max_restarts={self.max_restarts}"
 
 
 
