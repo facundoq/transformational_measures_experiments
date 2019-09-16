@@ -57,7 +57,7 @@ class Experiment():
         if os.path.exists(model_path):
             return
 
-        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4'
+        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -max_restarts 5'
         runner_utils.run_python(venv_path, python_command)
 
     def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2):

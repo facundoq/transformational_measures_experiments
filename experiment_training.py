@@ -49,6 +49,7 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
 
     parser.add_argument('-epochs', metavar='epo'
                         , help=f'Epochs to train the model'
+                        ,required=True
                         , type=int)
 
     parser.add_argument('-notransform_epochs', metavar='nte'
@@ -80,6 +81,11 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
                         help=f'Model to train/use. Allowed values: {", ".join(model_loading.get_model_names())}'
                         ,choices=model_loading.get_model_names()
                         ,required=True)
+
+    parser.add_argument('-usecuda', metavar='c'
+                        , help=f'Use cuda'
+                        , type=bool_parser
+                        , default=torch.cuda.is_available())
 
     parser.add_argument('-dataset', metavar='d',
                         help=f'Dataset to train/eval models. Allowed values: {", ".join(datasets.names)}'
