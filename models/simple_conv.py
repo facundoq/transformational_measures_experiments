@@ -6,7 +6,6 @@ from models import SequentialWithIntermediates
 
 
 class SimpleConv(nn.Module, ObservableLayersModel):
-
     def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128,bn=False):
         super(SimpleConv, self).__init__()
         self.name = self.__class__.__name__
@@ -45,9 +44,9 @@ class SimpleConv(nn.Module, ObservableLayersModel):
         nn.ReLU(),]
 
         if self.bn:
-            conv_layers.insert(1,nn.BatchNorm2d(channels))
+            conv_layers.insert(1,nn.BatchNorm2d(conv_filters))
             conv_layers.insert(4, nn.BatchNorm2d(conv_filters))
-            conv_layers.insert(8, nn.BatchNorm2d(conv_filters))
+            conv_layers.insert(8, nn.BatchNorm2d(conv_filters2))
             conv_layers.insert(11, nn.BatchNorm2d(conv_filters2))
             conv_layers.insert(15, nn.BatchNorm2d(conv_filters4))
 
@@ -96,3 +95,9 @@ class SimpleConv(nn.Module, ObservableLayersModel):
             fc_layer_names.insert(1, "bn6")
 
         return conv_layer_names + fc_layer_names
+
+
+class SimpleConvBN(SimpleConv):
+    def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128):
+        super(SimpleConvBN, self).__init__(input_shape, num_classes, conv_filters=conv_filters, fc_filters=fc_filters,bn=True)
+        self.name = self.__class__.__name__

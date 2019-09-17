@@ -72,11 +72,6 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
                         , type=bool_parser
                         , default=True)
 
-    parser.add_argument('-usecuda', metavar='c'
-                        , help=f'Use cuda'
-                        , type=bool_parser
-                        , default=torch.cuda.is_available())
-
     parser.add_argument('-model', metavar='m',
                         help=f'Model to train/use. Allowed values: {", ".join(model_loading.get_model_names())}'
                         ,choices=model_loading.get_model_names()

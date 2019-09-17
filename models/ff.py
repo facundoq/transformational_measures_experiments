@@ -6,11 +6,10 @@ import torch.nn.functional as F
 
 class FFNet(nn.Module,ObservableLayersModel):
 
-    def use_bn(self): return False
 
-    def __init__(self,input_shape,num_classes,h1=128,h2=64):
-        self.bn=self.use_bn()
+    def __init__(self,input_shape,num_classes,h1=128,h2=64,bn=False):
         super(FFNet, self).__init__()
+        self.bn = bn
         self.name = self.__class__.__name__
 
 
@@ -52,7 +51,7 @@ class FFNet(nn.Module,ObservableLayersModel):
 
 class FFNetBN(FFNet):
 
-    def use_bn(self):
-        return True
+
     def __init__(self,input_shape,num_classes,h1=128,h2=64):
-        super(FFNetBN, self).__init__(input_shape,num_classes,h1=h1,h2=h2)
+        super(FFNetBN, self).__init__(input_shape,num_classes,h1=h1,h2=h2,bn=True)
+        self.name = self.__class__.__name__

@@ -11,7 +11,10 @@ import runner_utils
 import models
 import itertools
 from transformation_measure import visualization
-model_names= models.names
+all_model_names= config.model_names
+bn_model_names = [name for name in models.names if name.endswith("BN")]
+model_names = [name for name in models.names if not name.endswith("BN")]
+
 model_names.sort()
 #model_names=["SimpleConv"]
 
@@ -298,7 +301,6 @@ class CompareConvAgg(Experiment):
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
             measures.append(measure)
 
-
         combinations = itertools.product(
             *[model_names, datasets, config.common_transformations_without_identity(),])
         for (model, dataset, transformation) in combinations:
@@ -316,6 +318,12 @@ class CompareConvAgg(Experiment):
             labels=[m.id() for m in measures]
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
+
+class CompareBN(Experiment):
+    def description(self):
+        return """Compare invariance of models trained with/without batchnormalization."""
+    def run(self):
+        pass
 if __name__ == '__main__':
     experiments=[CompareConvAgg(),CollapseConvBeforeOrAfter(),CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales(),]
 

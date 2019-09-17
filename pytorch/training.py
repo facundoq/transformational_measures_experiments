@@ -10,10 +10,12 @@ def print_results(dataset,loss,accuracy,correct,n):
 def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3,eval_test_every_n_epochs:int=None,epochs_callbacks:{int:Callable}={}):
 
     if eval_test_every_n_epochs == None:
-        eval_test_every_n_epochs= epochs//5
+        eval_test_every_n_epochs= max(epochs//5,1)
+
     # torch.multiprocessing.set_start_method("spawn")
     history={"acc":[],"acc_val":[],"loss":[],"loss_val":[]}
-    max_epochs_without_improvement=int(max_epochs_without_improvement_p*epochs)
+    max_epochs_without_improvement=max(int(max_epochs_without_improvement_p*epochs),1)
+
     model.train()
 
     last_accuracy=0
@@ -42,6 +44,8 @@ def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_functi
         else:
             no_improvement_epochs =0
         if no_improvement_epochs==max_epochs_without_improvement:
+            if verbose:
+                print(f"Stopping training early, epoch {epoch}/{epochs}, epochs without improvement= {max_epochs_without_improvement_treshold}")
             break
 
     return history

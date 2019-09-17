@@ -145,19 +145,22 @@ import models
 import transformation_measure as tm
 import numpy as np
 
+
+model_names=models.names
+
 def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
-    if model == models.SimpleConv.__name__:
+    if model == models.SimpleConv.__name__ or model == models.SimpleConvBN.__name__:
         epochs = {'cifar10': 70, 'mnist': 5, 'fashion_mnist': 12}
-    elif model == models.AllConvolutional.__name__:
+    elif model == models.AllConvolutional.__name__ or model == models.AllConvolutionalBN.__name__:
         epochs = {'cifar10': 32, 'mnist': 15, 'fashion_mnist': 12}
-    elif model == models.VGGLike.__name__:
+    elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:
         epochs = {'cifar10': 70, 'mnist': 15, 'fashion_mnist': 12, }
     elif model == models.ResNet.__name__:
         epochs = {'cifar10': 70, 'mnist': 15, 'fashion_mnist': 12}
-    elif model == models.FFNet.__name__:
+    elif model == models.FFNet.__name__ or model == models.FFNetBN.__name__:
         epochs = {'cifar10': 10, 'mnist': 5, 'fashion_mnist': 8}
     else:
-        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(models.get_model_names())}")
+        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(models.names)}")
 
     n = len(t)
     if n > np.e:
