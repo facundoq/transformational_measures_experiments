@@ -324,6 +324,33 @@ class CompareBN(Experiment):
         return """Compare invariance of models trained with/without batchnormalization."""
     def run(self):
         pass
+
+class InvarianceForRandomNetworks(Experiment):
+    def description(self):
+        return """Analyze the invariance of random (untrained) networks."""
+    def run(self):
+        pass
+
+class InvarianceWhileTraining(Experiment):
+    def description(self):
+        return """Analyze the evolution of invariance in models while they are trained."""
+    def run(self):
+        pass
+
+
+class InvarianceAcrossDatasets(Experiment):
+    def description(self):
+        return """Analyze the invariance of a model by evaluating on dataset X when the model was trained with dataset Y ."""
+    def run(self):
+        pass
+
+class VisualizeInvariantFeatureMaps(Experiment):
+    def description(self):
+        return """Visualize the output of invariant feature maps, to analyze qualitatively if they are indeed invariant."""
+    def run(self):
+        pass
+
+
 if __name__ == '__main__':
     experiments=[CompareConvAgg(),CollapseConvBeforeOrAfter(),CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales(),]
 

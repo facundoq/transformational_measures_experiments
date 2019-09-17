@@ -70,6 +70,8 @@ class PytorchActivationsIterator(ActivationsIterator):
                                 num_workers=self.num_workers, drop_last=False)
 
         l=len(self.activation_names())
+        # print("activations: ",l)
+        # print(self.activation_names())
         activations=[[] for i in range(l)]
 
         for batch in dataloader:
@@ -77,6 +79,8 @@ class PytorchActivationsIterator(ActivationsIterator):
                 batch=batch.cuda()
             y, batch_activations = self.model.forward_intermediates(batch)
             for i,a in enumerate(batch_activations):
+                # print(a.detach().cpu().numpy().shape)
+                # print(self.activation_names()[i],"=> ",a.detach().cpu().numpy().shape)
                 activations[i].append(a.detach().cpu().numpy())
         activations=[ np.vstack(a) for a in activations]
         # n = x.shape[0]

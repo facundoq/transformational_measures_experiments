@@ -65,7 +65,7 @@ class AllConvolutional(nn.Module, ObservableLayersModel):
 
     def forward_intermediates(self, x):
         outputs = []
-        for module in self._modules.values():
+        for module in self.convs._modules.values():
             x,intermediates = module.forward_intermediates(x)
             outputs+=intermediates
         x= self.class_conv(x)
@@ -85,11 +85,12 @@ class AllConvolutional(nn.Module, ObservableLayersModel):
 
     def activation_names(self):
         names=[]
-        for i,module in enumerate(self._modules.values()):
+        for i,module in enumerate(self.convs._modules.values()):
+
             module_names=module.activation_names()
             module_names=[f"{name}_{i}" for name in module_names]
             names+=module_names
-        names+=["avgp","smax"]
+        names+=["class_conv","avgp","smax"]
         return names
 
 class AllConvolutionalBN(AllConvolutional):

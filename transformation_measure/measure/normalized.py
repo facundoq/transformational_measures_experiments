@@ -50,6 +50,8 @@ class NormalizedMeasure(QuotientMeasure):
         super().__init__(ttm,sm)
         self.numerator_measure = ttm
         self.denominator_measure = sm
+        self.measure_function=measure_function
+        self.conv_aggregation=conv_aggregation
 
     def __repr__(self):
-        return f"NM({self.numerator_measure}_DIV_{self.denominator_measure})"
+        return f"NM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
