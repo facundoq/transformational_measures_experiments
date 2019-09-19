@@ -12,10 +12,14 @@ import models
 import itertools
 from transformation_measure import visualization
 all_model_names= config.model_names
+
 bn_model_names = [name for name in models.names if name.endswith("BN")]
+
 model_names = [name for name in models.names if not name.endswith("BN")]
 
 model_names.sort()
+model_names= [name for name in model_names if not name == "ResNet"]
+
 #model_names=["SimpleConv"]
 
 measures = config.common_measures()

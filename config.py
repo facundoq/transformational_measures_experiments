@@ -168,4 +168,25 @@ def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
     else:
         factor = 1
 
+    if not model.endswith("BN"):
+        factor *= 1.2
+
     return int(epochs[dataset] * factor)
+
+import models
+def min_accuracy(model:str,dataset:str)-> float:
+    min_accuracies = {"mnist": .95, "cifar10": .5}
+    min_accuracy = min_accuracies[dataset]
+
+    if dataset == "mnist" and model == models.FFNet.__name__:
+        min_accuracy = 0.85
+    if dataset == "mnist" and model == models.FFNetBN.__name__:
+        min_accuracy = 0.85
+
+    if dataset == "cifar10" and model == models.FFNet.__name__:
+        min_accuracy = 0.45
+    if dataset == "cifar10" and model == models.FFNetBN.__name__:
+        min_accuracy = 0.45
+
+
+    return min_accuracy

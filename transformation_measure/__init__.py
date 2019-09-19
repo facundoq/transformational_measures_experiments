@@ -1,7 +1,7 @@
 from .transformation import TransformationSet,Transformation,IdentityTransformation
 from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationCV
 
-from .iterators.pytorch_activations_iterator import PytorchActivationsIterator,ObservableLayersModel
+from .iterators.pytorch_activations_iterator import PytorchActivationsIterator,ObservableLayersModule
 
 from .measure.base import MeasureResult,Measure,MeasureFunction,StratifiedMeasureResult
 from .measure.layer_transformation import ConvAggregation

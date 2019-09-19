@@ -8,9 +8,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models import Flatten
 from models import SequentialWithIntermediates
-from transformation_measure import  ObservableLayersModel
+from transformation_measure import  ObservableLayersModule
 
-class ConvBNRelu(nn.Module,ObservableLayersModel):
+class ConvBNRelu(ObservableLayersModule):
 
     def __init__(self,input,output,bn):
         super(ConvBNRelu, self).__init__()
@@ -30,10 +30,7 @@ class ConvBNRelu(nn.Module,ObservableLayersModel):
             )
 
     def activation_names(self):
-        if self.bn:
-            return ["c","elu","bn"]
-        else:
-            return ["c", "elu"]
+        return self.layers.activation_names()
 
     def forward(self,x):
         return self.layers.forward(x)
@@ -41,7 +38,7 @@ class ConvBNRelu(nn.Module,ObservableLayersModel):
     def forward_intermediates(self,x):
         return self.layers.forward_intermediates(x)
 
-class VGGLike(nn.Module,ObservableLayersModel):
+class VGGLike(ObservableLayersModule):
     def __init__(self, input_shape, num_classes,conv_filters,fc,bn=False):
         super(VGGLike, self).__init__()
         self.bn=bn
@@ -52,7 +49,7 @@ class VGGLike(nn.Module,ObservableLayersModel):
         filters3=4*filters
         filters4=8*filters
 
-        self.conv_layers = nn.Sequential(
+        conv_layers = SequentialWithIntermediates(
             ConvBNRelu(channels, filters,bn),
             ConvBNRelu(filters, filters,bn),
             nn.MaxPool2d(2,2),
@@ -65,66 +62,68 @@ class VGGLike(nn.Module,ObservableLayersModel):
             ConvBNRelu(filters3, filters4,bn),
             ConvBNRelu(filters4, filters4,bn),
             nn.MaxPool2d(2, 2),
-            Flatten(),
         )
         max_pools=4
         hf, wf = h // (2 ** max_pools), w // (2 ** max_pools)
         flattened_output_size = hf * wf * filters4
 
-        layers=[nn.Linear(flattened_output_size, fc),
-            nn.ReLU(),
-            nn.Linear(fc,num_classes)]
+        layers=[
+            Flatten(),
+            nn.Linear(flattened_output_size, fc),
+            nn.ELU(),
+            nn.Linear(fc,num_classes),
+            nn.LogSoftmax(dim=-1),
+        ]
 
         if self.bn:
-            layers.insert(1,nn.BatchNorm1d(fc))
+            layers.insert(2,nn.BatchNorm1d(fc))
 
-        self.dense_layers = SequentialWithIntermediates(*layers)
-
+        dense_layers = SequentialWithIntermediates(*layers)
+        self.layers=SequentialWithIntermediates(conv_layers,dense_layers)
 
     def forward(self, x):
-        x=self.conv_layers.forward(x)
-        x=self.dense_layers.forward(x)
-        x=F.log_softmax(x, dim=1)
-        return x
+        return self.layers(x)
 
     def forward_intermediates(self,x)->(object,[]):
-        outputs = []
-        for i in range(4):
-            x,intermediates = self.conv_layers[i*3].forward_intermediates(x)
-            outputs.append(intermediates[0])
-            outputs.append(intermediates[1])
-            x,intermediates = self.conv_layers[i*3+1].forward_intermediates(x)
-            outputs.append(intermediates[0])
-            outputs.append(intermediates[1])
-            x = self.conv_layers[i*3+ 2].forward(x)
-            outputs.append(x)
-        x=self.conv_layers[-1].forward(x)# flatten
-        x,intermediates=self.dense_layers.forward_intermediates(x)
-        outputs.append(intermediates[0])
-        outputs.append(intermediates[2])
-        outputs.append(intermediates[3])
-        x = F.log_softmax(x, dim=1)
-        outputs.append(x)
-        return x, outputs
+        return self.layers.forward_intermediates(x)
+        # outputs = []
+        # for i in range(4):
+        #     x,intermediates = self.conv_layers[i*3].forward_intermediates(x)
+        #     outputs.append(intermediates[0])
+        #     outputs.append(intermediates[1])
+        #     x,intermediates = self.conv_layers[i*3+1].forward_intermediates(x)
+        #     outputs.append(intermediates[0])
+        #     outputs.append(intermediates[1])
+        #     x = self.conv_layers[i*3+ 2].forward(x)
+        #     outputs.append(x)
+        # x=self.conv_layers[-1].forward(x)# flatten
+        # x,intermediates=self.dense_layers.forward_intermediates(x)
+        # outputs.append(intermediates[0])
+        # outputs.append(intermediates[2])
+        # outputs.append(intermediates[3])
+        # x = F.log_softmax(x, dim=1)
+        # outputs.append(x)
+        # return x, outputs
 
     def activation_names(self):
-        names=[]
-        for i in range(4):
-            names.append(f"c{i}_0")
-            names.append(f"c{i}_0act")
-            if self.bn:
-                names.append(f"c{i}_0bn")
-            names.append(f"c{i}_1")
-            names.append(f"c{i}_1act")
-            if self.bn:
-                names.append(f"c{i}_1bn")
-            names.append(f"mp{i}")
-
-        fc_names=["fc1","fc1act","fc2","fc2act"]
-        if self.bn:
-            fc_names.insert(1,"bn")
-
-        return names+fc_names
+        return self.layers.activation_names()
+        # names=[]
+        # for i in range(4):
+        #     names.append(f"c{i}_0")
+        #     names.append(f"c{i}_0act")
+        #     if self.bn:
+        #         names.append(f"c{i}_0bn")
+        #     names.append(f"c{i}_1")
+        #     names.append(f"c{i}_1act")
+        #     if self.bn:
+        #         names.append(f"c{i}_1bn")
+        #     names.append(f"mp{i}")
+        #
+        # fc_names=["fc1","fc1act","fc2","fc2act"]
+        # if self.bn:
+        #     fc_names.insert(1,"bn")
+        #
+        # return names+fc_names
 
 
 

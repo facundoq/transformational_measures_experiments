@@ -5,6 +5,7 @@ from torch import optim,nn
 from torch.optim.optimizer import Optimizer
 from typing import Tuple
 import datasets
+from transformation_measure import ObservableLayersModule
 
 class ExperimentModel:
     def __init__(self, model, parameters, optimizer):
@@ -16,9 +17,9 @@ def get_model_names():
     return models.names
 
 
-def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tuple[nn.Module,Optimizer]:
+def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->(ObservableLayersModule,Optimizer):
 
-    def setup_model(model,lr,wd)->Optimizer:
+    def setup_model(model:ObservableLayersModule,lr:float,wd:float)->Optimizer:
         if use_cuda:
             model = model.cuda()
         parameters = training.add_weight_decay(model.named_parameters(), wd)
@@ -26,7 +27,7 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         #rp = optim.lr_scheduler.ReduceLROnPlateau(optimizer , patience=2, cooldown=0)
         return optimizer
 
-    def ffnet(bn=False)->Tuple[nn.Module,Optimizer]:
+    def ffnet(bn=False)->(ObservableLayersModule,Optimizer):
         fc1 = {"mnist": 64, "cifar10": 256, "fashion_mnist": 128}
         fc2= {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
         if bn:
@@ -39,7 +40,7 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         return model, optimizer
 
 
-    def simple_conv(bn=False)->Tuple[nn.Module,Optimizer]:
+    def simple_conv(bn=False)->(ObservableLayersModule,Optimizer):
         conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
         fc_filters = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
         if bn:
@@ -52,7 +53,7 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
 
         return model, optimizer
 
-    def all_convolutional(bn=False)->Tuple[nn.Module,Optimizer]:
+    def all_convolutional(bn=False)->(ObservableLayersModule,Optimizer):
         filters = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32}
 
         if bn:
@@ -60,12 +61,12 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         else:
             klass = models.AllConvolutional
 
-        model = klass(dataset.input_shape, dataset.num_classes,
+        model :ObservableLayersModule = klass(dataset.input_shape, dataset.num_classes,
                                         filters=filters[dataset.name])
         optimizer=setup_model(model,1e-3,1e-13)
         return model, optimizer
 
-    def vgglike(bn=False)->Tuple[nn.Module,Optimizer]:
+    def vgglike(bn=False)->(ObservableLayersModule,Optimizer):
         filters = {"mnist": 16, "cifar10": 64,}
         fc= {"mnist": 64,  "cifar10": 128, }
         if bn:
@@ -78,11 +79,18 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
         optimizer=setup_model(model,0.00001,1e-13)
         return model, optimizer
 
-    def resnet(bn=False)->Tuple[nn.Module,Optimizer]:
-        resnet_version = {"mnist": models.ResNet18,
-                          "cifar10": models.ResNet50,
-                          "fashion_mnist": models.ResNet34,
+    def resnet(bn=False)->(ObservableLayersModule,Optimizer):
+        if bn:
+            resnet_version = {"mnist": models.ResNet18BN,
+                          "cifar10": models.ResNet50BN,
+                          "fashion_mnist": models.ResNet34BN,
                           }
+        else:
+            resnet_version = {"mnist": models.ResNet18,
+                              "cifar10": models.ResNet50,
+                              "fashion_mnist": models.ResNet34,
+                              }
+
         model = resnet_version[dataset.name](dataset.input_shape, dataset.num_classes)
         optimizer=setup_model(model,0.00001,1e-13)
         return model, optimizer
@@ -97,6 +105,7 @@ def get_model(name:str,dataset:datasets.ClassificationDataset,use_cuda:bool)->Tu
                   models.AllConvolutionalBN.__name__: lambda: all_convolutional(bn=True),
                   models.VGGLikeBN.__name__: lambda: vgglike(bn=True),
                   models.SimpleConvBN.__name__: lambda: simple_conv(bn=True),
+                  models.ResNetBN.__name__: lambda: resnet(bn=True),
 
                   }
     if name not in all_models :

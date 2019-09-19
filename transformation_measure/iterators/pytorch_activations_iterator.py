@@ -122,8 +122,9 @@ class PytorchActivationsIterator(ActivationsIterator):
 
 
 from abc import abstractmethod
+from torch import nn
 
-class ObservableLayersModel:
+class ObservableLayersModule(nn.Module):
 
     @abstractmethod
     def activation_names(self)->[str]:

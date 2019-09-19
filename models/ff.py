@@ -1,10 +1,10 @@
 from torch import nn
-from transformation_measure import ObservableLayersModel
+from transformation_measure import ObservableLayersModule
 from models import SequentialWithIntermediates
 import torch.nn.functional as F
+from models.util import Flatten
 
-
-class FFNet(nn.Module,ObservableLayersModel):
+class FFNet( ObservableLayersModule):
 
 
     def __init__(self,input_shape,num_classes,h1=128,h2=64,bn=False):
@@ -18,36 +18,31 @@ class FFNet(nn.Module,ObservableLayersModel):
         self.linear_size = h * w * channels
 
         layers=[
+            Flatten(),
             nn.Linear(self.linear_size, h1),
-            nn.ReLU(),
+            #bn
+            nn.ELU(),
             nn.Linear(h1, h2),
-            nn.ReLU(),
+            #bn
+            nn.ELU(),
             nn.Linear(h2, num_classes),
+            nn.LogSoftmax(dim=-1)
         ]
         if self.bn:
-            layers.insert(1,nn.BatchNorm1d(h1))
-            layers.insert(4, nn.BatchNorm1d(h2))
+            layers.insert(2,nn.BatchNorm1d(h1))
+            layers.insert(5, nn.BatchNorm1d(h2))
 
         self.fc= SequentialWithIntermediates(*layers)
 
     def forward(self, x):
-        x = x.view(-1, self.linear_size)
-        x= self.fc(x)
-        x=F.log_softmax(x,dim=1)
-        return x
+        return self.fc(x)
 
-    def activation_names(self):
-        names=["fc1", "fc1act", "fc2", "fc2act", "fc3", "logsoft"]
-        if self.bn:
-            names.insert(1, "bn1")
-            names.insert(4, "bn2")
-        return names
+
+    def activation_names(self)->[str]:
+        return self.fc.activation_names()
 
     def forward_intermediates(self,x)->(object,[]):
-        x = x.view(-1, self.linear_size)
-        x,intermediates = self.fc.forward_intermediates(x)
-        x=F.log_softmax(x)
-        return x,intermediates+[x]
+        return self.fc.forward_intermediates(x)
 
 class FFNetBN(FFNet):
 

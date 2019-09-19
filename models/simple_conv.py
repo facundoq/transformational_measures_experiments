@@ -1,47 +1,36 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from transformation_measure import ObservableLayersModel
+from transformation_measure import ObservableLayersModule
 
 from models import SequentialWithIntermediates
 
+from models.util import Flatten
 
-class SimpleConv(nn.Module, ObservableLayersModel):
+class SimpleConv(ObservableLayersModule):
     def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128,bn=False):
         super(SimpleConv, self).__init__()
         self.name = self.__class__.__name__
         h, w, channels = input_shape
         self.bn=bn
-        # self.conv=nn.Sequential(
-        #     nn.Conv2d(channels, conv_filters, 3,padding=1),
-        #     nn.ReLU(),
-        #     nn.Conv2d(conv_filters, conv_filters, 3, padding=1),
-        #     nn.ReLU(),
-        #     nn.Conv2d(conv_filters, conv_filters*2, 3, padding=1,stride=2),
-        #     nn.ReLU(),
-        #     nn.Conv2d(conv_filters*2, conv_filters*2, 3, padding=1),
-        #     nn.ReLU(),
-        #     nn.Conv2d(conv_filters*2, conv_filters*4, 3, padding=1,stride=2),
-        #     nn.ReLU(),
-        #     )
         conv_filters2=conv_filters*2
         conv_filters4 = conv_filters * 4
         conv_layers=[nn.Conv2d(channels, conv_filters, 3, padding=1),
         #bn
-        nn.ReLU(),
+        nn.ELU(),
         nn.Conv2d(conv_filters, conv_filters, 3, padding=1),
         # bn
-        nn.ReLU(),
+        nn.ELU(),
         nn.MaxPool2d(stride=2, kernel_size=2),
         nn.Conv2d(conv_filters, conv_filters2, 3, padding=1),
         # bn
-        nn.ReLU(),
+        nn.ELU(),
         nn.Conv2d(conv_filters2, conv_filters2, 3, padding=1),
         # bn
-        nn.ReLU(),
+        nn.ELU(),
         nn.MaxPool2d(stride=2, kernel_size=2),
         nn.Conv2d(conv_filters2, conv_filters4, 3, padding=1),
         # bn
-        nn.ReLU(),]
+        nn.ELU(),]
 
         if self.bn:
             conv_layers.insert(1,nn.BatchNorm2d(conv_filters))
@@ -51,51 +40,32 @@ class SimpleConv(nn.Module, ObservableLayersModel):
             conv_layers.insert(15, nn.BatchNorm2d(conv_filters4))
 
 
-        self.conv = SequentialWithIntermediates(*conv_layers)
+        conv = SequentialWithIntermediates(*conv_layers)
 
         self.linear_size = h * w * (conv_filters * 4) // 4 // 4
 
-        fc_layers=[nn.Linear(self.linear_size, fc_filters),
+        fc_layers=[
+            Flatten(),
+            nn.Linear(self.linear_size, fc_filters),
             # nn.BatchNorm1d(fc_filters),
-            nn.ReLU(),
-            nn.Linear(fc_filters, num_classes)]
+            nn.ELU(),
+            nn.Linear(fc_filters, num_classes),
+            nn.LogSoftmax(dim=-1),
+            ]
         if self.bn:
-            fc_layers.insert(1,nn.BatchNorm1d(fc_filters))
-        self.fc = SequentialWithIntermediates(*fc_layers)
+            fc_layers.insert(2,nn.BatchNorm1d(fc_filters))
+        fc = SequentialWithIntermediates(*fc_layers)
+        self.layers=SequentialWithIntermediates(conv,fc)
 
     def forward(self, x):
-        x = self.conv(x)
-        x = x.view(-1, self.linear_size)
-        x = self.fc(x)
-        x = F.log_softmax(x, dim=-1)
-        return x
+        return self.layers(x)
 
     def forward_intermediates(self, x)->(object,[]):
-        x1, convs = self.conv.forward_intermediates(x)
+        return self.layers.forward_intermediates(x)
 
-        x2 = x1.view(-1, self.linear_size)
-        x3, fcs = self.fc.forward_intermediates(x2)
-        x4 = F.log_softmax(x3, dim=-1)
-        return x4, convs + fcs + [x4]
 
     def activation_names(self):
-        conv_layer_names = ["c1", "c1act", "c2", "c2act", "mp1",
-                            "c3", "c3act", "c4", "c4act", "mp2",
-                            "c5", "c5act"]
-        if self.bn:
-            conv_layer_names.insert(1,  "bn1")
-            conv_layer_names.insert(4,  "bn2")
-            conv_layer_names.insert(8,  "bn3")
-            conv_layer_names.insert(11, "bn4")
-            conv_layer_names.insert(15, "bn5")
-
-        fc_layer_names = ["fc1", "fc1act", "fc2", "softmax"]
-
-        if self.bn:
-            fc_layer_names.insert(1, "bn6")
-
-        return conv_layer_names + fc_layer_names
-
+        return self.layers.activation_names()
 
 class SimpleConvBN(SimpleConv):
     def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128):

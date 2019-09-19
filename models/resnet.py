@@ -2,203 +2,185 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from transformation_measure import ObservableLayersModel
-class BasicBlock(nn.Module):
+from transformation_measure import ObservableLayersModule
+from models.util import SequentialWithIntermediates,Flatten,Add,GlobalAvgPool2d
+
+class Block(ObservableLayersModule):
     expansion = 1
 
-    def __init__(self, in_planes, planes, stride=1):
-        super(BasicBlock, self).__init__()
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
+    def __init__(self, in_planes, planes, stride=1,bn=False):
+        super(Block, self).__init__()
+        layers=[nn.Conv2d(in_planes, planes, kernel_size=3, stride=stride, padding=1, bias=False),
+                #bn1
+                nn.ELU(),
+                nn.Conv2d(planes, planes, kernel_size=3, stride=1, padding=1, bias=False)
+                # bn2
+                ]
+        self.bn=bn
+        if bn:
+            layers.insert(1,nn.BatchNorm2d(planes))
+            layers.insert(4, nn.BatchNorm2d(planes))
 
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion*planes:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion*planes)
+        main=SequentialWithIntermediates(*layers)
+
+        shortcut_layers=[]
+        self.use_shortcut=stride != 1 or in_planes != self.expansion*planes
+        if self.use_shortcut:
+            shortcut_layers=[nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False),]
+            if bn:
+                shortcut_layers.append(nn.BatchNorm2d(self.expansion*planes))
+        shortcut = SequentialWithIntermediates(*shortcut_layers)
+
+        self.add=SequentialWithIntermediates(
+            Add(main,shortcut)
+            , nn.ELU()
             )
 
+
     def forward(self, x):
-        out = self.conv1(x)
-        out = F.relu(self.bn1(out))
-        out = self.conv2(out)
-        out = self.bn2(out)
-        out += self.shortcut(x)
-        out = F.relu(out)
-        return out
+        return self.add(x)
 
     def forward_intermediates(self,x):
-        outputs=[]
-        out=self.conv1(x)
-        outputs.append(out)
-        out = F.relu(self.bn1(out))
-        outputs.append(out)
+        return self.add.forward_intermediates(x)
 
-        out=self.conv2(out)
-        outputs.append(out)
-        out = self.bn2(out)
+    def activation_names(self)->[str]:
+        return self.add.activation_names()
 
-        shortcut=self.shortcut(x)
-        outputs.append(shortcut)
-        out += self.shortcut(x)
-        outputs.append(out)
-        out = F.relu(out)
-        outputs.append(out)
-        return out,outputs
-
-    def activation_names(self):
-        names=["c0","c0act","c1","short","c1+short","act"]
-        return names
-
-
-class Bottleneck(nn.Module,ObservableLayersModel):
+class Bottleneck(ObservableLayersModule):
     expansion = 4
 
-    def __init__(self, in_planes, planes, stride=1):
+    def __init__(self, in_planes, planes, stride=1,bn=False):
         super(Bottleneck, self).__init__()
-        self.conv1 = nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(planes)
-        self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.bn2 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, self.expansion*planes, kernel_size=1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.expansion*planes)
+        self.bn=bn
 
-        self.shortcut = nn.Sequential()
-        if stride != 1 or in_planes != self.expansion*planes:
-            self.shortcut = nn.Sequential(
-                nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False),
-                nn.BatchNorm2d(self.expansion*planes)
-            )
+        conv=[nn.Conv2d(in_planes, planes, kernel_size=1, bias=False)
+              #bn
+              ,nn.ELU()
+              ,nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+              #bn
+            , nn.ELU()
+              ,nn.Conv2d(planes, self.expansion * planes, kernel_size=1, bias=False)
+              ,]
+        conv=SequentialWithIntermediates(*conv)
+        if self.bn:
+            conv.insert(1, nn.BatchNorm2d(planes))
+            conv.insert(4, nn.BatchNorm2d(planes))
+            conv.insert(7, nn.BatchNorm2d(self.expansion*planes))
+
+        shortcut = []
+        self.use_shortcut=stride != 1 or in_planes != self.expansion*planes
+        if self.use_shortcut:
+            shortcut.append(nn.Conv2d(in_planes, self.expansion*planes, kernel_size=1, stride=stride, bias=False))
+            if self.bn:
+                shortcut.append(nn.BatchNorm2d(self.expansion*planes))
+        shortcut=SequentialWithIntermediates(*shortcut)
+        self.add = SequentialWithIntermediates(
+            Add(conv, shortcut)
+            , nn.ELU()
+        )
 
     def forward(self, x):
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = F.relu(self.bn2(self.conv2(out)))
-        out = self.bn3(self.conv3(out))
-        short = self.shortcut(x)
-        out+=short
-        out = F.relu(out)
-
+        out=self.add(x)
         return out
 
     def forward_intermediates(self,x):
-        outputs=[]
-
-        out=self.conv1(x)
-        outputs.append(out)
-        out = F.relu(self.bn1(out))
-        outputs.append(out)
-
-        out=self.conv2(out)
-        outputs.append(out)
-        out = F.relu(self.bn2(out))
-        outputs.append(out)
-
-        out=self.conv3(out)
-        outputs.append(out)
-        out = self.bn3(out)
-
-        short = self.shortcut(x)
-        outputs.append(short)
-        out += short
-        outputs.append(out)
-        out = F.relu(out)
-        outputs.append(out)
+        out,outputs=self.add.forward_intermediates(x)
         return out,outputs
 
-    def activation_names(self):
-        names=["c0","c0act","c1","c1act","c2","short","c2+short","act"]
-        return names
+    def activation_names(self)->[str]:
+        return self.add.activation_names()
+        # conv_names = ["c0", "c0act", "c1", "c1act","c2"]
+        # if self.bn:
+        #     conv_names.insert(1, "bn0")
+        #     conv_names.insert(4, "bn1")
+        #     conv_names.insert(7, "bn2")
+        # short_names=[]
+        # if self.use_shortcut:
+        #     short_names.append( "short_c0")
+        #     if self.bn:
+        #         short_names.append("short_bn1")
+        # last_names=["c1+short", "act"]
+        # return conv_names+short_names+last_names
 
 
-class ResNet(nn.Module,ObservableLayersModel):
-    def __init__(self, block, num_blocks,input_shape,num_classes):
+class ResNet( ObservableLayersModule):
+    def __init__(self, block, num_blocks,input_shape,num_classes,bn=False):
         super(ResNet, self).__init__()
         self.name = self.__class__.__name__
+        self.bn=bn
         self.in_planes = 64
         h,w,c=input_shape
-        self.conv1 = nn.Conv2d(c, 64, kernel_size=3, stride=1, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(64)
-        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
-        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
-        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
-        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.linear = nn.Linear(512*block.expansion, num_classes)
+        layer0=[nn.Conv2d(c, 64, kernel_size=3, stride=1, padding=1, bias=False)
+                #bn
+                ,nn.ELU()]
+        if self.bn:
+            layer0.insert(1,nn.BatchNorm2d(64))
+        layer0=SequentialWithIntermediates(*layer0)
 
-    def _make_layer(self, block, planes, num_blocks, stride):
+        layer1 = self._make_layer(block, 64, num_blocks[0], 1,bn)
+        layer2 = self._make_layer(block, 128, num_blocks[1], 2,bn)
+        layer3 = self._make_layer(block, 256, num_blocks[2], 2,bn)
+        layer4 = self._make_layer(block, 512, num_blocks[3], 2,bn)
+        conv = [layer0, layer1, layer2, layer3, layer4]
+
+        self.conv=SequentialWithIntermediates(*conv)
+
+        self.linear =SequentialWithIntermediates(
+            GlobalAvgPool2d()
+            ,Flatten()
+            ,nn.Linear(512*block.expansion, num_classes)
+            ,nn.LogSoftmax(dim=-1)
+            )
+
+
+
+
+    def _make_layer(self, block, planes, num_blocks, stride,bn):
         strides = [stride] + [1]*(num_blocks-1)
         layers = []
         for stride in strides:
-            layers.append(block(self.in_planes, planes, stride))
+            layers.append(block(self.in_planes, planes, stride,bn))
             self.in_planes = planes * block.expansion
-        return nn.Sequential(*layers)
+        return SequentialWithIntermediates(*layers)
 
     def forward(self, x):
-
-        out = F.relu(self.bn1(self.conv1(x)))
-        out = self.layer1(out)
-        out = self.layer2(out)
-        out = self.layer3(out)
-        out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
-        out = out.view(out.size(0), -1)
-        out = self.linear(out)
-        out = F.log_softmax(out, dim=1)
+        x=self.conv(x)
+        # for layer in self.layers:
+        #     x = layer(x)
+        out = self.linear(x)
         return out
 
     def forward_intermediates(self,x):
-        outputs=[]
-        x = self.conv1(x)
-        outputs.append(x)
-        x = F.relu(self.bn1(x))
-        outputs.append(x)
-        # print(x.shape)
-        x,intermediates = self.layer_intermediates(self.layer1,x)
-        outputs+=intermediates
-        # print(x.shape)
-        x,intermediates = self.layer_intermediates(self.layer2,x)
-        outputs += intermediates
-        # print(x.shape)
-        x, intermediates = self.layer_intermediates(self.layer3,x)
-        outputs += intermediates
-        # print(x.shape)
-        x, intermediates = self.layer_intermediates(self.layer4,x)
-        outputs += intermediates
-        # print(x.shape)
-        x = F.avg_pool2d(x, 4)
-        # print(x.shape)
-        outputs.append(x)
-        x = x.view(x.size(0), -1)
-        # print(x.shape)
-        x = self.linear(x)
-        outputs.append(x)
-        x = F.log_softmax(x, dim=1)
-        outputs.append(x)
+        x,outputs=self.conv.forward_intermediates(x)
+        # outputs=[]
+        # for layer in self.layers:
+        #     x,intermediates = layer.forward_intermediates(x)
+        #     outputs=outputs+intermediates
+        #     # print(x.shape)
+        x,fc_outputs=self.linear.forward_intermediates(x)
+        outputs+=fc_outputs
         return x,outputs
 
-    def layer_intermediates(self,layer,x):
-        outputs=[]
-        for block in layer:
-            x,intermediates=block.forward_intermediates(x)
-            outputs+=intermediates
-        # print(outputs)
-        return x,outputs
+    def activation_names(self)->[str]:
+        return self.conv.activation_names()+self.linear.activation_names()
+        # names=[]
+        # for i,l in enumerate(self.layers):
+        #     for j,block in enumerate(l):
+        #         l_names=[f"l{i}_b{j}_{n}" for n in block.activation_names()]
+        #         names.extend(l_names)
+        #
+        # names+=["avgp","flatten","fc0","sm"]
+        # return names
 
-    def activation_names(self):
-        names=["c0","c0act"]
-        for i,l in enumerate([self.layer1,self.layer2,self.layer3,self.layer4]):
-            for j,block in enumerate(l):
-                l_names=[f"l{i}_b{j}_{n}" for n in block.activation_names()]
-                names.extend(l_names)
-        names+=["avgp","fc0","fc0act"]
-        return names
+
+
+
 
 def ResNet18(input_shape,num_classes):
-    return ResNet(BasicBlock, [2,2,2,2],input_shape,num_classes)
+    return ResNet(Block, [2, 2, 2, 2], input_shape, num_classes)
 
 def ResNet34(input_shape,num_classes):
-    return ResNet(BasicBlock, [3,4,6,3],input_shape,num_classes)
+    return ResNet(Block, [3, 4, 6, 3], input_shape, num_classes)
 
 def ResNet50(input_shape,num_classes):
     return ResNet(Bottleneck, [3,4,6,3],input_shape,num_classes)
@@ -209,8 +191,29 @@ def ResNet101(input_shape,num_classes):
 def ResNet152(input_shape,num_classes):
     return ResNet(Bottleneck, [3,8,36,3],input_shape,num_classes)
 
+def ResNet18BN(input_shape,num_classes):
+    return ResNetBN(Block, [2, 2, 2, 2], input_shape, num_classes)
+
+def ResNet34BN(input_shape,num_classes):
+    return ResNetBN(Block, [3, 4, 6, 3], input_shape, num_classes)
+
+def ResNet50BN(input_shape,num_classes):
+    return ResNetBN(Bottleneck, [3,4,6,3],input_shape,num_classes)
+
+def ResNet101BN(input_shape,num_classes):
+    return ResNetBN(Bottleneck, [3,4,23,3],input_shape,num_classes)
+
+def ResNet152BN(input_shape,num_classes):
+    return ResNetBN(Bottleneck, [3,8,36,3],input_shape,num_classes)
+
 
 def test():
     net = ResNet18((32,32,3),10)
     y = net(torch.randn(1,3,32,32))
     print(y.size())
+
+
+class ResNetBN(ResNet):
+
+    def __init__(self, block, num_blocks, input_shape, num_classes):
+        super(ResNetBN, self).__init__(block, num_blocks, input_shape, num_classes,bn=True)

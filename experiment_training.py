@@ -106,9 +106,11 @@ if __name__ == "__main__":
     def do_train():
         dataset = datasets.get(p.dataset)
         model, optimizer = model_loading.get_model(p.model, dataset, o.use_cuda)
-
-        print("Parameters: ",p)
-        print("Options: ",o)
+        # an="\n".join(model.activation_names())
+        # print("Activation names: "+an)
+        if o.verbose:
+            print("Parameters: ",p)
+            print("Options: ",o)
 
         def generate_epochs_callbacks():
             epochs_callbacks=[]
@@ -148,15 +150,19 @@ if __name__ == "__main__":
 
     converged=False
     restarts=0
-    min_accuracies = {"mnist": .95, "cifar10": .5}
-    min_accuracy = min_accuracies[p.dataset]
 
+    min_accuracy=config.min_accuracy(p.model,p.dataset)
+    test_accuracy=0
+    model,history,scores=None,None,None
     while not converged and restarts<=o.max_restarts:
+        if restarts > 0:
+            message =f"""Model did not converge since it did not reach minimum accuracy ({test_accuracy}<{min_accuracy}). Restarting.. {restarts}/{o.max_restarts}"""
+            print(message)
         model,history,scores=do_train()
+
         test_accuracy = scores["test"][1]
         converged= test_accuracy > min_accuracy
-
-
+        restarts += 1
 
     # SAVING
     if o.save_model:
