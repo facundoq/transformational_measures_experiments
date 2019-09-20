@@ -169,7 +169,7 @@ def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
         factor = 1
 
     if not model.endswith("BN"):
-        factor *= 1.2
+        factor *= 2
 
     return int(epochs[dataset] * factor)
 

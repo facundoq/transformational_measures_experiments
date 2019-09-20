@@ -63,8 +63,8 @@ class Experiment():
 
         if os.path.exists(model_path):
             return
-
-        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -max_restarts 5'
+        savepoints=",".join([str(sp) for sp in p.savepoints])
+        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -max_restarts 5 -savepoints "{savepoints}" '
         runner_utils.run_python(venv_path, python_command)
 
     def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2):
@@ -304,7 +304,6 @@ class CompareConvAgg(Experiment):
         for f in functions:
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
             measures.append(measure)
-
         combinations = itertools.product(
             *[model_names, datasets, config.common_transformations_without_identity(),])
         for (model, dataset, transformation) in combinations:
@@ -339,7 +338,45 @@ class InvarianceWhileTraining(Experiment):
     def description(self):
         return """Analyze the evolution of invariance in models while they are trained."""
     def run(self):
-        pass
+        measures = [tm.NormalizedMeasure(measure_function=tm.MeasureFunction.std,conv_aggregation=tm.ConvAggregation.sum)
+                    ,tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none,alpha=0.99)]
+        dataset_percentages=[0.1,0.5]
+        n_intermediate_models=10
+        step=100//n_intermediate_models
+        savepoints=list(range(0,100,step))+[100]
+
+        mp=zip(measures,dataset_percentages)
+        combinations = itertools.product(
+            model_names, datasets, config.common_transformations_without_identity(),mp)
+        for model, dataset, transformation, (measure,p) in combinations:
+            # train
+            epochs = config.get_epochs(model, dataset, transformation)
+            p_training = training.Parameters(model, dataset, transformation, epochs, savepoints=savepoints)
+            self.experiment_training(p_training)
+            # generate variance params
+            variance_parameters = []
+            model_paths = []
+            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
+            for sp in savepoints:
+                model_path = config.model_path(p_training, savepoint=sp)
+                model_id=p_training.id(savepoint=sp)
+                p_variance = variance.Parameters(model_id, p_dataset, transformation, measure)
+                variance_parameters.append(p_variance)
+                model_paths.append(model_path)
+
+            for p_variance,model_path in zip(variance_parameters,model_paths):
+                self.experiment_variance(p_variance, model_path)
+
+            # plot results
+            experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure}"
+            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            results = config.load_results(config.results_paths(variance_parameters))
+            # TODO implement a heatmap where the x axis is the training time/epoch
+            # and the y axis indicates the layer, and the color indicates the invariance
+            # to see it evolve over time.
+
+            labels = [f"{sp}%" for sp in savepoints]
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 
 class InvarianceAcrossDatasets(Experiment):
@@ -356,7 +393,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
 
 if __name__ == '__main__':
-    experiments=[CompareConvAgg(),CollapseConvBeforeOrAfter(),CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales(),]
+    experiments=[InvarianceWhileTraining(),CompareConvAgg(),CollapseConvBeforeOrAfter(),CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales(),]
 
     for e in experiments:
         e()

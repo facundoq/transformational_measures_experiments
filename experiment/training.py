@@ -39,7 +39,7 @@ class Parameters:
 
 
 
-    def id(self,savepoint=None):
+    def id(self,savepoint:float=None):
 
         result = f"{self.model}_{self.dataset}_{self.transformations.id()}"
 
@@ -48,6 +48,8 @@ class Parameters:
             result+=notransform_message
 
         if not savepoint is None:
+            assert (savepoint <= 100)
+            assert (savepoint >= 0)
             if not self.savepoints.__contains__(savepoint):
                 raise ValueError(f"Invalid savepoint {savepoint}. Options: {', '.join(self.savepoints)}")
             result += f"_savepoint={savepoint}"

@@ -140,6 +140,10 @@ if __name__ == "__main__":
 
         # TRAINING
         import time
+        if 0 in p.savepoints:
+            scores = training.eval_scores(model, dataset, p, o)
+            print(f"Saving model {model.name} at epoch {0} (before training).")
+            training.save_model(p, o, model, scores, config.model_path(p, 0))
 
         t=time.perf_counter()
         scores,history= training.run(p, o, model, optimizer, dataset,epochs_callbacks=epochs_callbacks)
