@@ -10,7 +10,7 @@ def print_results(dataset,loss,accuracy,correct,n):
 def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3,eval_test_every_n_epochs:int=None,epochs_callbacks:{int:Callable}={}):
 
     if eval_test_every_n_epochs == None:
-        eval_test_every_n_epochs= max(epochs//5,1)
+        eval_test_every_n_epochs= max(epochs//10,1)
 
     # torch.multiprocessing.set_start_method("spawn")
     history={"acc":[],"acc_val":[],"loss":[],"loss_val":[]}

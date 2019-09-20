@@ -27,7 +27,7 @@ measures = config.common_measures()
 # dataset_subsets=  [variance.DatasetSubset.train,variance.DatasetSubset.test]
 # dataset_percentages= [0.1, 0.5, 1.0]x
 
-datasets= ["mnist", "cifar10"]
+dataset_names= ["mnist", "cifar10"]
 venv_path=runner_utils.get_venv_path()
 
 measure=tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
@@ -95,7 +95,7 @@ class CompareMeasures(Experiment):
 
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
-        combinations = itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measure_sets.items()])
+        combinations = itertools.product(*[model_names, dataset_names, config.common_transformations_without_identity(), measure_sets.items()])
         for (model,dataset,transformation,measure_set) in combinations:
             # train
             epochs = config.get_epochs(model, dataset, transformation)
@@ -128,7 +128,7 @@ class MeasureVsDatasetSize(Experiment):
 
     def run(self):
         dataset_sizes = [0.01,0.05,0.1,0.5,1.0]
-        combinations = list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
+        combinations = list(itertools.product(*[model_names, dataset_names, config.common_transformations_without_identity(), measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
             epochs = config.get_epochs(model, dataset, transformation)
@@ -153,7 +153,7 @@ class MeasureVsDatasetSubset(Experiment):
     def run(self):
         dataset_sizes=[ (variance.DatasetSubset.test,0.1), (variance.DatasetSubset.train,0.02)]
 
-        combinations=list(itertools.product(*[model_names,datasets,config.common_transformations_without_identity(),measures]))
+        combinations=list(itertools.product(*[model_names, dataset_names, config.common_transformations_without_identity(), measures]))
         for i,(model,dataset,transformation,measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}",end=", ")
             epochs = config.get_epochs(model, dataset, transformation)
@@ -184,7 +184,7 @@ class InvarianceVsTransformationDiversity(Experiment):
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
-        combinations=itertools.product(*[model_names,datasets])
+        combinations=itertools.product(*[model_names, dataset_names])
         for model,dataset in combinations:
             print(model,dataset)
             sets=[config.rotation_transformations(n_transformations),config.translation_transformations(n_transformations),config.scale_transformations(n_transformations)]
@@ -220,7 +220,7 @@ class InvarianceVsTransformationDifferentScales(Experiment):
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
-        combinations=itertools.product(*[model_names,datasets])
+        combinations=itertools.product(*[model_names, dataset_names])
         for model,dataset in combinations:
             print(model,dataset)
             sets=[config.rotation_transformations(n_transformations),config.translation_transformations(n_transformations),config.scale_transformations(n_transformations)]
@@ -265,7 +265,7 @@ class CollapseConvBeforeOrAfter(Experiment):
 
 
         combinations = itertools.product(
-            *[model_names, datasets, config.common_transformations_without_identity()])
+            *[model_names, dataset_names, config.common_transformations_without_identity()])
         for (model, dataset, transformation) in combinations:
             # train
 
@@ -305,7 +305,7 @@ class CompareConvAgg(Experiment):
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
             measures.append(measure)
         combinations = itertools.product(
-            *[model_names, datasets, config.common_transformations_without_identity(),])
+            *[model_names, dataset_names, config.common_transformations_without_identity(), ])
         for (model, dataset, transformation) in combinations:
             p_dataset= variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
             experiment_name=f"{model}_{p_dataset.id()}_{transformation.id()}"
@@ -328,11 +328,58 @@ class CompareBN(Experiment):
     def run(self):
         pass
 
+from experiment import model_loading
+import datasets
+import torch
 class InvarianceForRandomNetworks(Experiment):
     def description(self):
         return """Analyze the invariance of random (untrained) networks."""
     def run(self):
-        pass
+        random_models_folderpath=os.path.join(config.models_folder(),"random")
+        o=training.Options(False,False,False,32,4,torch.cuda.is_available(),False,0)
+        measures = [
+            tm.NormalizedMeasure(measure_function=tm.MeasureFunction.std, conv_aggregation=tm.ConvAggregation.sum)
+            , tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99)]
+        dataset_percentages = [0.1, 0.5]
+        # number of random models to generate
+        random_model_n=30
+
+        mp = zip(measures, dataset_percentages)
+        combinations = itertools.product(
+            model_names, dataset_names, config.common_transformations_without_identity(), mp)
+        for model, dataset_name, transformation, (measure, p) in combinations:
+            # generate `random_model_n` models and save them without training
+            models_paths=[]
+            p_training = training.Parameters(model, dataset_name, transformation, 0)
+            dataset = datasets.get(dataset_name)
+            for i in range(random_model_n):
+                model,optimizer=model_loading.get_model(model,dataset,use_cuda=o.use_cuda)
+                model_path=config.model_path(model,model_folderpath=random_models_folderpath)
+                scores=training.eval_scores(model,dataset,p_training,o)
+                training.save_model(p_training,o,model,scores,model_path)
+                del model
+                models_paths.append(model_path)
+
+
+            # generate variance params
+            variance_parameters = []
+            model_paths = []
+            p_dataset = variance.DatasetParameters(dataset_name, variance.DatasetSubset.test, p)
+            model_id = p_training.id()
+            p_variance = variance.Parameters(model_id, p_dataset, transformation, measure)
+            for model_path in models_paths:
+                model_paths.append(model_path)
+                self.experiment_variance(p_variance, model_path)
+
+
+            # plot results
+            experiment_name = f"{model}_{dataset_name}_{transformation.id()}_{measure}"
+            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            results = config.load_results(config.results_paths(variance_parameters))
+
+
+
+            visualization.plot_collapsing_layers(results, plot_filepath, title=experiment_name,plot_mean=True)
 
 class InvarianceWhileTraining(Experiment):
     def description(self):
@@ -347,7 +394,7 @@ class InvarianceWhileTraining(Experiment):
 
         mp=zip(measures,dataset_percentages)
         combinations = itertools.product(
-            model_names, datasets, config.common_transformations_without_identity(),mp)
+            model_names, dataset_names, config.common_transformations_without_identity(),mp)
         for model, dataset, transformation, (measure,p) in combinations:
             # train
             epochs = config.get_epochs(model, dataset, transformation)
@@ -393,6 +440,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
 
 if __name__ == '__main__':
+    print("TODO add InvarianceForRandomNetworks()\n implement InvarianceAcrossDatasets()\n implement CompareBN()")
     experiments=[InvarianceWhileTraining(),CompareConvAgg(),CollapseConvBeforeOrAfter(),CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales(),]
 
     for e in experiments:

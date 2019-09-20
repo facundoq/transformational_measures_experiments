@@ -85,20 +85,27 @@ def outlier_range(stds,iqr_away):
 from experiment import variance
 
 
-def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, labels=None,title="",linestyles=None):
+def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, labels=None,title="",linestyles=None,plot_mean=False):
     n=len(results)
     if n==2:
         color = np.array([[1,0,0],[0,0,1]])
     else:
         color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
 
-
-    f,ax=plt.subplots(dpi=min(350,max(150,n*15)))
+    f, ax = plt.subplots(dpi=min(350, max(150, n * 15)))
     f.suptitle(title)
+
+    result_layers=[len(r.measure_result.layer_names) for r in results]
+    min_n,max_n = min(result_layers),max(result_layers)
+    if plot_mean:
+        assert(min_n==max_n,"To plot the mean values all results must have the same number of layers.")
+
+    average=np.zeros(max_n)
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
         x= np.arange(n_layers)+1
         y= result.measure_result.per_layer_average()
+        average+=y
         if labels is None:
             label=result.parameters.id()
         else:
@@ -108,11 +115,20 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
         else:
             linestyle=linestyles[i]
         ax.plot(x,y,label=label,linestyle=linestyle,color=color[i,:]*0.7)
-        ax.set_ylabel("Variance")
-        ax.set_xlabel("Layer")
-        # ax.set_ylim(max_measure)
-        if n_layers<25:
-            ax.set_xticks(range(n_layers))
+
+
+    if plot_mean:
+        x = np.arange(max_n) + 1
+        y=average/len(results)
+        label="mean"
+        linestyle="-"
+        ax.plot(x, y, label=label, linestyle=linestyle, color=0)
+
+    ax.set_ylabel("Variance")
+    ax.set_xlabel("Layer")
+    # ax.set_ylim(max_measure)
+    if max_n < 25:
+        ax.set_xticks(range(max_n))
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,

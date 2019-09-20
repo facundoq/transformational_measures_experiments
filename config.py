@@ -8,16 +8,18 @@ def base_path():
 
 from experiment import training
 
-def model_path(p: training.Parameters,savepoint=None):
-    model_folderpath= models_folder()
-    filename=f"{p.id(savepoint=savepoint)}.pt"
-    filepath=os.path.join(model_folderpath,filename)
-    return filepath
 
 def models_folder():
     model_folderpath = os.path.join(base_path(), "models")
     os.makedirs(model_folderpath, exist_ok=True)
     return model_folderpath
+
+def model_path(p: training.Parameters,savepoint=None,model_folderpath= models_folder()):
+    filename=f"{p.id(savepoint=savepoint)}.pt"
+    filepath=os.path.join(model_folderpath,filename)
+    return filepath
+
+
 
 def get_models_filenames():
     files=os.listdir(models_folder())
@@ -150,21 +152,22 @@ model_names=models.names
 
 def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
     if model == models.SimpleConv.__name__ or model == models.SimpleConvBN.__name__:
-        epochs = {'cifar10': 70, 'mnist': 5, 'fashion_mnist': 12}
+        epochs = {'cifar10': 40, 'mnist': 10, 'fashion_mnist': 12}
     elif model == models.AllConvolutional.__name__ or model == models.AllConvolutionalBN.__name__:
-        epochs = {'cifar10': 32, 'mnist': 15, 'fashion_mnist': 12}
+        epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12}
     elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:
-        epochs = {'cifar10': 70, 'mnist': 15, 'fashion_mnist': 12, }
+        epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12, }
     elif model == models.ResNet.__name__:
-        epochs = {'cifar10': 70, 'mnist': 15, 'fashion_mnist': 12}
+        epochs = {'cifar10': 60, 'mnist': 40, 'fashion_mnist': 12}
     elif model == models.FFNet.__name__ or model == models.FFNetBN.__name__:
-        epochs = {'cifar10': 10, 'mnist': 5, 'fashion_mnist': 8}
+        epochs = {'cifar10': 20, 'mnist': 15, 'fashion_mnist': 8}
     else:
         raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(models.names)}")
 
+
     n = len(t)
     if n > np.e:
-        factor = 1.3 * np.log(n)
+        factor = 1.1 * np.log(n)
     else:
         factor = 1
 

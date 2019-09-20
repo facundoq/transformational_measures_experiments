@@ -118,7 +118,8 @@ if __name__ == "__main__":
                 epoch=int(p.epochs*sp/100)
                 def callback(sp=sp,epoch=epoch):
                     scores=training.eval_scores(model,dataset,p,o)
-                    print(f"Saving model {model.name} at epoch {epoch} ({sp}%).")
+                    if o.verbose:
+                        print(f"Saving model {model.name} at epoch {epoch} ({sp}%).")
                     training.save_model(p, o, model, scores, config.model_path(p, sp))
                 epochs_callbacks.append((epoch,callback))
 
