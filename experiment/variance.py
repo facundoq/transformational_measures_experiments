@@ -45,10 +45,11 @@ class Parameters:
         return f"VarianceExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, measure={measure}"
 
 class Options:
-    def __init__(self,verbose:bool,batch_size:int,num_workers:int):
+    def __init__(self,verbose:bool,batch_size:int,num_workers:int,adapt_dataset:bool):
         self.verbose=verbose
         self.batch_size=batch_size
         self.num_workers=num_workers
+        self.adapt_dataset=adapt_dataset
 
 class VarianceExperimentResult:
     def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult):
@@ -105,6 +106,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     parser.add_argument("-dataset", metavar="d", choices=datasets.keys(),required=True)
     parser.add_argument("-measure", metavar="me", choices=measures.keys(),required=True)
     parser.add_argument("-stratified", metavar="stra",type=bool_parser,default=False)
+    parser.add_argument("-adapt_dataset", metavar="adapt", type=bool_parser, default=False)
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
     parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,
                         help=f'Print info about dataset/models/transformations')
@@ -126,7 +128,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
                    datasets[args.dataset],
                    transformations[args.transformation],
                    measures[args.measure],stratified=args.stratified)
-    o = Options(args.verbose,args.batchsize,args.num_workers)
+    o = Options(args.verbose,args.batchsize,args.num_workers,args.adapt_dataset)
     return p,o
 
 

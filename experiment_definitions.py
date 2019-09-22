@@ -67,13 +67,16 @@ class Experiment():
         python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -max_restarts 5 -savepoints "{savepoints}" '
         runner_utils.run_python(venv_path, python_command)
 
-    def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2):
+    def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2,adapt_dataset=False):
 
         results_path = config.results_path(p)
         if os.path.exists(results_path):
             return
 
-        python_command = f'experiment_variance.py -mo "{model_path}" -me "{p.measure.id()}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose False -batchsize {batch_size} -num_workers {num_workers}'
+        python_command = f'experiment_variance.py -mo "{model_path}" -me "{p.measure.id()}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose False -batchsize {batch_size} -num_workers {num_workers} '
+        if adapt_dataset:
+            python_command=f"{python_command} -adapt_dataset True"
+
         runner_utils.run_python(venv_path, python_command)
 
     def experiment_plot_layers(self,variance_parameters:[variance.Parameters], plot_filepath: str, experiment_name:str):
@@ -456,9 +459,42 @@ class CompareBN(Experiment):
             experiment_name = f"{model}_{model_bn}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
             results = config.load_results(config.results_paths(variance_parameters))
-            labels = [m.id() for m in measures]
+            labels = model_pair
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
+
+class TestWithDifferentDataset(Experiment):
+    def description(self):
+        return """Measure invariance with a different dataset than the one used to train the model.."""
+    def run(self):
+        mf, ca = tm.MeasureFunction.std, tm.ConvAggregation.sum
+        measures= [tm.AnovaMeasure(tm.ConvAggregation.none, 0.99), tm.NormalizedMeasure(mf, ca)]
+
+        # model_names=["SimpleConv","VGGLike","AllConvolutional"]
+        # model_names=["ResNet"]
+        combinations = itertools.product(
+            model_names, dataset_names, config.common_transformations_without_identity(),measures)
+        for (model, dataset, transformation, measure) in combinations:
+            # train
+            epochs = config.get_epochs(model, dataset, transformation)
+            p_training = training.Parameters(model, dataset, transformation, epochs)
+            self.experiment_training(p_training)
+
+            variance_parameters=[]
+            for dataset_test in dataset_names:
+                p = 0.5 if measure.__class__ == tm.AnovaMeasure else 0.1
+                p_dataset = variance.DatasetParameters(dataset_test, variance.DatasetSubset.test, p)
+                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                model_path = config.model_path(p_training)
+                self.experiment_variance(p_variance, model_path,adapt_dataset=True)
+                variance_parameters.append(p_variance)
+
+            # plot results
+            experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            results = config.load_results(config.results_paths(variance_parameters))
+            labels = dataset_names
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 class InvarianceAcrossDatasets(Experiment):
     def description(self):
@@ -494,7 +530,8 @@ if __name__ == '__main__':
         MeasureVsDatasetSize(),
         InvarianceVsTransformationDiversity(),
         InvarianceVsTransformationDifferentScales(),
-        CompareBN()
+        CompareBN(),
+        TestWithDifferentDataset(),
     ]
 
     for e in experiments:

@@ -22,6 +22,15 @@ def experiment(p: variance.Parameters, o: variance.Options):
 
     model, training_parameters, training_options, scores = training.load_model(p.model_path, use_cuda)
 
+    if training_parameters.dataset != p.dataset.name:
+        if o.adapt_dataset:
+            if o.verbose:
+                print(f"Adapting dataset {p.dataset.name} to model trained on dataset {training_parameters.dataset} (resizing spatial dims and channels)")
+            # TODO 
+            print("TODO: adapt dataset to target")
+        else:
+            print(f"Error: model trained on dataset {training_parameters.dataset}, but requested to measure on dataset {p.dataset.name}; specify the option '-adapt_dataset True' to adapt the test dataset to the model and test anyway.")
+
     if o.verbose:
         print("### ", model)
         print("### Scores obtained:")
