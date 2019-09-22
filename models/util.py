@@ -32,12 +32,13 @@ class SequentialWithIntermediates(nn.Sequential, ObservableLayersModule):
         if len(submodules) == 0:
             return ["identity"]
         if len(submodules) == 1:
-            module=submodules[0]
+            module = list(submodules)[0]
+
             if isinstance(module, ObservableLayersModule):
                 return ["0_"+name for name in module.activation_names()]
             else:
                 name = module.__class__.__name__
-                return self.abbreviation(name)
+                return [self.abbreviation(name)]
 
         # len(submodules)>1
         outputs = []
@@ -101,6 +102,7 @@ class Add(ObservableLayersModule):
     def activation_names(self):
         left_names=self.left.activation_names()
         right_names = self.right.activation_names()
+
         right_last = right_names[-1]# if right_names else "right"
         left_last = left_names[-1]# if left_names else "left"
         this=[left_last+"+"+right_last]

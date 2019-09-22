@@ -426,7 +426,38 @@ class CompareBN(Experiment):
     def description(self):
         return """Compare invariance of models trained with/without batchnormalization."""
     def run(self):
-        pass
+        mf, ca = tm.MeasureFunction.std, tm.ConvAggregation.sum
+        measures= [tm.AnovaMeasure(tm.ConvAggregation.none, 0.99), tm.NormalizedMeasure(mf, ca)]
+
+        # model_names=["SimpleConv","VGGLike","AllConvolutional"]
+        # model_names=["ResNet"]
+        model_pairs=zip(bn_model_names,model_names)
+        combinations = itertools.product(
+            model_pairs, dataset_names, config.common_transformations_without_identity(),measures)
+        for (model_pair, dataset, transformation, measure) in combinations:
+            # train
+
+            variance_parameters=[]
+            for model in model_pair:
+                epochs = config.get_epochs(model, dataset, transformation)
+                p_training = training.Parameters(model, dataset, transformation, epochs)
+                self.experiment_training(p_training)
+
+                p = 0.5 if measure.__class__ == tm.AnovaMeasure else 0.1
+                p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
+                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                model_path = config.model_path(p_training)
+                self.experiment_variance(p_variance, model_path)
+                variance_parameters.append(p_variance)
+
+            # evaluate variance
+            model,model_bn=model_pair
+            # plot results
+            experiment_name = f"{model}_{model_bn}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            results = config.load_results(config.results_paths(variance_parameters))
+            labels = [m.id() for m in measures]
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 
 class InvarianceAcrossDatasets(Experiment):
@@ -452,7 +483,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
 if __name__ == '__main__':
     todo = [InvarianceForRandomNetworks(),
             InvarianceAcrossDatasets(),
-            CompareBN()]
+            ]
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 
     experiments=[
@@ -463,6 +494,7 @@ if __name__ == '__main__':
         MeasureVsDatasetSize(),
         InvarianceVsTransformationDiversity(),
         InvarianceVsTransformationDifferentScales(),
+        CompareBN()
     ]
 
     for e in experiments:

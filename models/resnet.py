@@ -76,7 +76,7 @@ class Bottleneck(ObservableLayersModule):
         shortcut=SequentialWithIntermediates(*shortcut)
         self.add = SequentialWithIntermediates(
             Add(conv, shortcut)
-            , nn.ELU()
+            ,nn.ELU()
         )
 
     def forward(self, x):
@@ -89,18 +89,6 @@ class Bottleneck(ObservableLayersModule):
 
     def activation_names(self)->[str]:
         return self.add.activation_names()
-        # conv_names = ["c0", "c0act", "c1", "c1act","c2"]
-        # if self.bn:
-        #     conv_names.insert(1, "bn0")
-        #     conv_names.insert(4, "bn1")
-        #     conv_names.insert(7, "bn2")
-        # short_names=[]
-        # if self.use_shortcut:
-        #     short_names.append( "short_c0")
-        #     if self.bn:
-        #         short_names.append("short_bn1")
-        # last_names=["c1+short", "act"]
-        # return conv_names+short_names+last_names
 
 
 class ResNet( ObservableLayersModule):
