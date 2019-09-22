@@ -1,21 +1,26 @@
 from .activations_iterator import ActivationsIterator
 
 import torch
+from torch import nn
 from torch.utils.data import DataLoader
 from .pytorch_image_dataset import ImageDataset
 import numpy as np
 
+from transformation_measure import TransformationSet
 
 class PytorchActivationsIterator(ActivationsIterator):
 
-    def __init__(self, model, dataset, transformations, batch_size=32,num_workers=0):
+    def __init__(self, model:nn.Module, dataset, transformations:TransformationSet, batch_size=32,num_workers=0):
         '''
         models: a pytorch models that implements the forward_intermediate() method
         dataset: a dataset that yields x,y tuples
         transformations: a list of functions that take a numpy
                         sample and return a transformed one
         '''
-        super().__init__(model, dataset, transformations)
+        self.model=model
+        self.dataset=dataset
+        self.transformations=transformations
+
         self.image_dataset=ImageDataset(self.dataset)
         self.batch_size=batch_size
         self.num_workers=num_workers
@@ -114,6 +119,7 @@ class PytorchActivationsIterator(ActivationsIterator):
     '''
     def samples_first(self):
         dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=2, drop_last=True)
+
         with torch.no_grad():
             for x, y_true in dataloader:
                 for i in range(x.shape[0]):

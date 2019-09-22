@@ -14,8 +14,9 @@ class SampleMeasure(Measure):
     def __repr__(self):
         return f"SM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
 
-    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
-        n_layers = len(activations_iterator.activation_names())
+    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
+        layer_names = activations_iterator.activation_names()
+        n_layers = len(layer_names)
         mean_variances_running = [RunningMean() for i in range(n_layers)]
 
         for transformation, transformation_activations in activations_iterator.transformations_first():

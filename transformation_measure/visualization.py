@@ -98,7 +98,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     result_layers=[len(r.measure_result.layer_names) for r in results]
     min_n,max_n = min(result_layers),max(result_layers)
     if plot_mean:
-        assert(min_n==max_n,"To plot the mean values all results must have the same number of layers.")
+        assert min_n==max_n,"To plot the mean values all results must have the same number of layers."
 
     average=np.zeros(max_n)
     for i, result in enumerate(results):

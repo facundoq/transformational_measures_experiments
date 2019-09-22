@@ -8,8 +8,11 @@ from experiment import model_loading, training
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple
-from functools import partial
-def list_parser(s):
+
+def list_parser(s:str):
+    s=s.strip()
+    if s=="":
+        return []
     delim=","
     string_list=s.split(delim)
     return [int(n) for n in string_list]

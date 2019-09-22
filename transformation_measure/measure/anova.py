@@ -21,8 +21,8 @@ class AnovaMeasure(Measure):
     def __repr__(self):
         return f"AnovaMeasure(ca={self.anova_f_measure.conv_aggregation.value})"
 
-    def eval(self, activations_iterator: ActivationsIterator, layer_names: List[str]) -> MeasureResult:
-        f_result=self.anova_f_measure.eval(activations_iterator,layer_names)
+    def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
+        f_result=self.anova_f_measure.eval(activations_iterator)
         d_b=f_result.extra_values["d_b"]
         d_w = f_result.extra_values["d_w"]
         critical_value = scipy.stats.f.ppf(self.alpha,dfn=d_b,dfd=d_w)
@@ -38,17 +38,22 @@ class AnovaFMeasure(Measure):
     def __repr__(self):
         return f"AnovaFMeasure(ca={self.conv_aggregation.value})"
 
-    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
+    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
 
-        means_per_layer_and_transformation,samples_per_transformation=self.eval_means_per_transformation(activations_iterator)
+        # calculate mean(X_t)
+        u_t,n_t=self.eval_means_per_transformation(activations_iterator)
         n_layers=len(activations_iterator.activation_names())
-        global_means=self.eval_global_means(means_per_layer_and_transformation,n_layers)
-        ssdb_per_layer,d_b=self.eval_between_transformations_ssd(means_per_layer_and_transformation,global_means,samples_per_transformation)
-        ssdw_per_layer, d_w=self.eval_within_transformations_ssd(activations_iterator, means_per_layer_and_transformation)
+        # Calculate mean(X)
+        u=self.eval_global_means(u_t,n_layers)
+        # Calculate  mean_t[ (mean(X_t)-mean(X))^2], that is Var( mean(X_t) ). Normalized with T-1
+        ssb, d_b=self.eval_between_transformations_ssd(u_t,u,n_t)
 
-        f_score=self.divide_per_layer(ssdb_per_layer,ssdw_per_layer)
+        # Calculate t: (mean(X_t)-X)², that is Var(X_t). Normalized with N-T
+        ssw, d_w=self.eval_within_transformations_ssd(activations_iterator, u_t)
+        # calculate
+        f_score=self.divide_per_layer(ssb,ssw)
 
-        return MeasureResult(f_score,layer_names,self,extra_values={"d_b":d_b,"d_w":d_w})
+        return MeasureResult(f_score,activations_iterator.activation_names(),self,extra_values={"d_b":d_b,"d_w":d_w})
 
     def divide_per_layer(self,a_per_layer:ActivationsByLayer,b_per_layer:ActivationsByLayer)->(ActivationsByLayer,int):
         return [a/b for (a,b) in zip(a_per_layer,b_per_layer)]
@@ -94,18 +99,32 @@ class AnovaFMeasure(Measure):
             ssdb_per_layer[j]/=degrees_of_freedom
         return ssdb_per_layer,degrees_of_freedom
 
-    def eval_global_means(self, means_per_layer_and_transformation:[[np.ndarray]], n_layers:int)->ActivationsByLayer:
-        n_transformations=len(means_per_layer_and_transformation)
+    def eval_global_means(self, means_per_layer_and_transformation:[ActivationsByLayer], n_layers:int)->ActivationsByLayer:
+        '''
+
+        :param means_per_layer_and_transformation:
+        :param n_layers:
+        :return: The global means for each layer, averaging out the transformations
+        '''
+        n_transformations = len(means_per_layer_and_transformation)
         global_means_running = [RunningMean() for i in range(n_layers)]
-        for means_per_layer in means_per_layer_and_transformation:
-            for i,means in enumerate(means_per_layer):
-                global_means_running[i].update(means)
-        return [rm.mean()/n_transformations for rm in global_means_running]
+        for transformation_means in means_per_layer_and_transformation:
+            # means_per_layer  has the means for a given transformation
+            for i,layer_means in enumerate(transformation_means):
+                global_means_running[i].update(layer_means)
+
+        return [rm.mean() for rm in global_means_running]
 
 
 
 
     def eval_means_per_transformation(self,activations_iterator:ActivationsIterator)->([ActivationsByLayer],[int]):
+        '''
+        For all activations, calculates the mean activation value for each transformation
+        :param activations_iterator:
+        :return: A list of mean activation values for each activation in each layer
+                 The list of samples per transformation
+        '''
         n_layers = len(activations_iterator.activation_names())
         means_per_transformation = []
         samples_per_transformation=[]

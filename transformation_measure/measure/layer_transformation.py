@@ -45,7 +45,7 @@ def apply_aggregation_function(layer:np.ndarray,conv_aggregation_function:ConvAg
 def apply_aggregation_function3D(layer:np.ndarray,conv_aggregation_function:ConvAggregation) -> np.ndarray:
     '''
 
-    :param layer:  a 4D np array
+    :param layer:  a 3D np array
     :param conv_aggregation_function:
     :return:
     '''

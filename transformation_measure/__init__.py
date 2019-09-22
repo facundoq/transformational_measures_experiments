@@ -1,6 +1,8 @@
 from .transformation import TransformationSet,Transformation,IdentityTransformation
 from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationCV
 
+from .iterators.activations_iterator import ActivationsIterator
+
 from .iterators.pytorch_activations_iterator import PytorchActivationsIterator,ObservableLayersModule
 
 from .measure.base import MeasureResult,Measure,MeasureFunction,StratifiedMeasureResult

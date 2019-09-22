@@ -16,8 +16,9 @@ class TransformationMeasure(Measure):
         return f"TM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
 
 
-    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
-        n_intermediates = len(activations_iterator.activation_names())
+    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
+        layer_names=activations_iterator.activation_names()
+        n_intermediates = len(layer_names)
         mean_variances_running= [RunningMean() for i in range(n_intermediates)]
         for activations, x_transformed in activations_iterator.samples_first():
             # activations has the activations for all the transformations

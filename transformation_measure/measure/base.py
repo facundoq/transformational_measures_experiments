@@ -46,7 +46,7 @@ class MeasureResult:
             # if conv average out spatial dims
             if len(layer.shape) == 3:
                 flat_activations=apply_aggregation_function3D(layer,conv_aggregation_function)
-                assert (len(flat_activations.shape) == 1)
+                assert len(flat_activations.shape) == 1,f"After collapsing, the activation shape should have only one dimension. Found vector with shape {flat_activations.shape} instead."
             else:
                 flat_activations = layer.copy()
             results.append(flat_activations)
@@ -78,20 +78,22 @@ class Measure:
         return str(self)
 
     @abc.abstractmethod
-    def eval(self,activations_iterator:ActivationsIterator,layer_names:List[str])->MeasureResult:
+    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         '''
 
         '''
         pass
 
 
-    def eval_stratified(self,classes_iterators:List[ActivationsIterator],layer_names:List[str],class_labels:List[str])-> StratifiedMeasureResult:
+    def eval_stratified(self,classes_iterators:[ActivationsIterator],class_labels:[str])-> StratifiedMeasureResult:
         '''
         Calculate the `variance_measure` for each class separately
         Also calculate the average stratified `variance_measure` over all classes
         '''
-        variance_per_class = [self.eval(iterator,layer_names) for iterator in classes_iterators]
+        variance_per_class = [self.eval(iterator) for iterator in classes_iterators]
         stratified_measure_layers = self.mean_variance_over_classes(variance_per_class)
+        layer_names=classes_iterators[0].activation_names()
+
         return StratifiedMeasureResult(stratified_measure_layers,layer_names,self,variance_per_class,class_labels)
 
 
@@ -114,5 +116,5 @@ class StratifiedMeasure(Measure):
     def id(self):
         return str(self)
 
-    def eval(self,classes_iterators:List[ActivationsIterator],layer_names:List[str],class_labels:List[str]):
-        return self.base_measure.eval_stratified(classes_iterators,layer_names,class_labels)
+    def eval(self,classes_iterators:[ActivationsIterator],class_labels:[str]):
+        return self.base_measure.eval_stratified(classes_iterators,class_labels)

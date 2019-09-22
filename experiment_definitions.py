@@ -18,7 +18,7 @@ bn_model_names = [name for name in models.names if name.endswith("BN")]
 model_names = [name for name in models.names if not name.endswith("BN")]
 
 model_names.sort()
-model_names= [name for name in model_names if not name == "ResNet"]
+#model_names= [name for name in model_names if not name == "ResNet"]
 
 #model_names=["SimpleConv"]
 
@@ -257,7 +257,7 @@ class CollapseConvBeforeOrAfter(Experiment):
     def description(self):
         return """Collapse convolutions spatial dims after/before computing variance."""
     def run(self):
-        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max,tm.ConvAggregation.none]
+        functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max]
         measures=[]
         for f in functions:
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
@@ -322,11 +322,7 @@ class CompareConvAgg(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 
-class CompareBN(Experiment):
-    def description(self):
-        return """Compare invariance of models trained with/without batchnormalization."""
-    def run(self):
-        pass
+
 
 from experiment import model_loading
 import datasets
@@ -426,9 +422,23 @@ class InvarianceWhileTraining(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 
+class CompareBN(Experiment):
+    def description(self):
+        return """Compare invariance of models trained with/without batchnormalization."""
+    def run(self):
+        pass
+
+
 class InvarianceAcrossDatasets(Experiment):
     def description(self):
         return """Analyze the invariance of a model by evaluating on dataset X when the model was trained with dataset Y ."""
+    def run(self):
+        pass
+
+
+class InvarianceVsEpochs(Experiment):
+    def description(self):
+        return """Analyze the number of epochs needed for a model to converge and gain invariance to different types of transformations."""
     def run(self):
         pass
 
@@ -440,8 +450,20 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
 
 if __name__ == '__main__':
-    print("TODO add InvarianceForRandomNetworks()\n implement InvarianceAcrossDatasets()\n implement CompareBN()")
-    experiments=[InvarianceWhileTraining(),CompareConvAgg(),CollapseConvBeforeOrAfter(),CompareMeasures(),MeasureVsDatasetSize(),InvarianceVsTransformationDiversity(),InvarianceVsTransformationDifferentScales(),]
+    todo = [InvarianceForRandomNetworks(),
+            InvarianceAcrossDatasets(),
+            CompareBN()]
+    print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
+
+    experiments=[
+        InvarianceWhileTraining(),
+        CompareConvAgg(),
+        CollapseConvBeforeOrAfter(),
+        CompareMeasures(),
+        MeasureVsDatasetSize(),
+        InvarianceVsTransformationDiversity(),
+        InvarianceVsTransformationDifferentScales(),
+    ]
 
     for e in experiments:
         e()
