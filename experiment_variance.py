@@ -12,6 +12,66 @@ import torch,config
 from experiment import variance, training
 import util
 
+
+import numpy as np
+import cv2
+
+def expand_channels(dataset:datasets.ClassificationDataset,c:int):
+    if dataset.dataformat=="NHWC":
+        axis=3
+    else:
+        axis=1
+
+    dataset.x_train = np.repeat(dataset.x_train,c,axis=axis)
+    dataset.x_test = np.repeat(dataset.x_test, c, axis=axis)
+
+
+def collapse_channels(dataset:datasets.ClassificationDataset):
+    if dataset.dataformat=="NHWC":
+        axis=3
+    else:
+        axis=1
+    dataset.x_train = dataset.x_train.mean(axis=axis)
+    dataset.x_test  = dataset.x_test.mean(axis=axis)
+
+
+def resize(dataset:datasets.ClassificationDataset,h:int,w:int):
+
+    if dataset.dataformat=="NCHW":
+        print(dataset.x_train.shape)
+        dataset.x_train=np.transpose(dataset.x_train,axes=(0,2,3,1))
+        dataset.x_test = np.transpose(dataset.x_test, axes=(0, 2, 3, 1))
+
+    subsets = [dataset.x_train, dataset.x_test]
+    for subset in subsets:
+        for i in range(subset.shape[0]):
+            subset[i, :] = cv2.resize(subset[i, :], dsize=(h, w))
+
+    if dataset.dataformat=="NCHW":
+        dataset.x_train=np.transpose(dataset.x_train,axes=(0,3,1,2))
+        dataset.x_test = np.transpose(dataset.x_test, axes=(0, 3, 1, 2))
+
+
+def adapt_dataset(dataset:datasets.ClassificationDataset, dataset_template:str):
+    dataset_template = datasets.get(dataset_template)
+    h,w,c= dataset_template.input_shape
+    del dataset_template
+    oh,ow,oc=dataset.input_shape
+
+
+    # fix channels
+    if c !=oc and oc==1:
+        expand_channels(dataset,c)
+    if c != oc and c ==1:
+        collapse_channels(dataset)
+
+    #fix size
+    if h!=oh or w!=ow:
+        resize(dataset,h,w)
+
+
+
+
 def experiment(p: variance.Parameters, o: variance.Options):
     assert(len(p.transformations)>1)
     use_cuda = torch.cuda.is_available()
@@ -26,8 +86,11 @@ def experiment(p: variance.Parameters, o: variance.Options):
         if o.adapt_dataset:
             if o.verbose:
                 print(f"Adapting dataset {p.dataset.name} to model trained on dataset {training_parameters.dataset} (resizing spatial dims and channels)")
-            # TODO 
+
+            dataset = adapt_dataset(dataset,training_parameters.dataset)
             print("TODO: adapt dataset to target")
+            if o.verbose:
+                print(dataset.summary())
         else:
             print(f"Error: model trained on dataset {training_parameters.dataset}, but requested to measure on dataset {p.dataset.name}; specify the option '-adapt_dataset True' to adapt the test dataset to the model and test anyway.")
 

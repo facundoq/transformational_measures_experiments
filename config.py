@@ -69,6 +69,7 @@ def load_results(filepaths:[str])-> [variance.VarianceExperimentResult]:
 
 def load_all_results(folderpath:str)-> [variance.VarianceExperimentResult]:
     filepaths=[os.path.join(folderpath, filename) for filename in os.listdir(folderpath)]
+    filepaths= [ f for f in filepaths if os.path.isfile(f)]
     return load_results(filepaths)
 
 
@@ -96,11 +97,10 @@ def all_measures()-> [Measure]:
         measures.append(NormalizedMeasure(MeasureFunction.std, ca))
 
     measures.append(AnovaFMeasure(ConvAggregation.none))
-    measures.append(AnovaMeasure(ConvAggregation.none,alpha=0.05))
-    measures.append(AnovaMeasure(ConvAggregation.none, alpha=0.01))
-    measures.append(AnovaMeasure(ConvAggregation.none, alpha=0.001))
-    measures.append(AnovaMeasure(ConvAggregation.none, alpha=0.1))
-
+    alphas=[0.1,0.001,0.01,0.05]
+    for alpha in alphas:
+        measures.append(AnovaMeasure(ConvAggregation.none, alpha=alpha, bonferroni=True))
+        measures.append(AnovaMeasure(ConvAggregation.none,alpha=alpha,bonferroni=False))
     return measures
 
 

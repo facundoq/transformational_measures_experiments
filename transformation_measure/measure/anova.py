@@ -10,24 +10,35 @@ import scipy.stats
 class AnovaMeasure(Measure):
     # alpha = degree of confidence
     # Typically 0.90, 0.95, 0.99
-    def __init__(self, conv_aggregation: ConvAggregation=ConvAggregation.none,alpha:float=0.99):
+    def __init__(self, conv_aggregation: ConvAggregation=ConvAggregation.none,alpha:float=0.99,bonferroni:bool=False):
         super().__init__()
         self.anova_f_measure=AnovaFMeasure(conv_aggregation)
         assert(alpha>0)
         assert (alpha <1)
         self.alpha=alpha
-
+        self.bonferroni=bonferroni
 
     def __repr__(self):
-        return f"AnovaMeasure(ca={self.anova_f_measure.conv_aggregation.value})"
+        return f"AnovaMeasure(ca={self.anova_f_measure.conv_aggregation.value},alpha={self.alpha},bonferroni={self.bonferroni})"
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
         f_result=self.anova_f_measure.eval(activations_iterator)
         d_b=f_result.extra_values["d_b"]
         d_w = f_result.extra_values["d_w"]
-        critical_value = scipy.stats.f.ppf(self.alpha,dfn=d_b,dfd=d_w)
-        f_result.layers=[ f>critical_value for f in f_result.layers]
-        return f_result
+        n_layers=len(f_result.layer_names)
+        layers=f_result.layers
+        if self.bonferroni:
+            # use adjusted alphas to calculate critical values
+            critical_values = []
+            for layer in layers:
+                adjusted_alpha=self.alpha/layer.size
+                critical_values.append(scipy.stats.f.ppf(adjusted_alpha,dfn=d_b,dfd=d_w))
+        else:
+            critical_values = [scipy.stats.f.ppf(self.alpha,dfn=d_b,dfd=d_w)]*n_layers
+
+        f_critical=zip(layers,critical_values)
+        layers=[ f>critical_value for (f,critical_value) in f_critical]
+        return MeasureResult(layers,f_result.layer_names,self,f_result.extra_values)
 
 class AnovaFMeasure(Measure):
     def __init__(self, conv_aggregation: ConvAggregation):

@@ -463,15 +463,13 @@ class CompareBN(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 
-class TestWithDifferentDataset(Experiment):
+class InvarianceAcrossDatasets(Experiment):
     def description(self):
-        return """Measure invariance with a different dataset than the one used to train the model.."""
+        return """Measure invariance with a different dataset than the one used to train the model."""
     def run(self):
         mf, ca = tm.MeasureFunction.std, tm.ConvAggregation.sum
-        measures= [tm.AnovaMeasure(tm.ConvAggregation.none, 0.99), tm.NormalizedMeasure(mf, ca)]
+        measures= [tm.AnovaMeasure(tm.ConvAggregation.none, 0.01), tm.NormalizedMeasure(mf, ca)]
 
-        # model_names=["SimpleConv","VGGLike","AllConvolutional"]
-        # model_names=["ResNet"]
         combinations = itertools.product(
             model_names, dataset_names, config.common_transformations_without_identity(),measures)
         for (model, dataset, transformation, measure) in combinations:
@@ -496,11 +494,7 @@ class TestWithDifferentDataset(Experiment):
             labels = dataset_names
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
-class InvarianceAcrossDatasets(Experiment):
-    def description(self):
-        return """Analyze the invariance of a model by evaluating on dataset X when the model was trained with dataset Y ."""
-    def run(self):
-        pass
+
 
 
 class InvarianceVsEpochs(Experiment):
@@ -518,7 +512,6 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
 if __name__ == '__main__':
     todo = [InvarianceForRandomNetworks(),
-            InvarianceAcrossDatasets(),
             ]
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 
@@ -531,7 +524,7 @@ if __name__ == '__main__':
         InvarianceVsTransformationDiversity(),
         InvarianceVsTransformationDifferentScales(),
         CompareBN(),
-        TestWithDifferentDataset(),
+        InvarianceAcrossDatasets(),
     ]
 
     for e in experiments:
