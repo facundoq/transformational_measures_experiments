@@ -45,8 +45,8 @@ class Experiment():
         return self.__class__.__name__
 
     def __call__(self, *args, **kwargs):
-        stars="*"*10
-        print(f"{stars} Running  experiment {self.id()} {stars}")
+        stars="*"*15
+        print(f"{stars} Running experiment {self.id()} {stars}")
         self.run()
         print(f"{stars} Finished experiment {self.id()} {stars}")
 
@@ -325,16 +325,16 @@ class CompareConvAgg(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 
-
-
 from experiment import model_loading
 import datasets
 import torch
+
 class InvarianceForRandomNetworks(Experiment):
     def description(self):
         return """Analyze the invariance of random (untrained) networks."""
     def run(self):
         random_models_folderpath=os.path.join(config.models_folder(),"random")
+        os.makedirs(random_models_folderpath,exist_ok=True)
         o=training.Options(False,False,False,32,4,torch.cuda.is_available(),False,0)
         measures = [
             tm.NormalizedMeasure(measure_function=tm.MeasureFunction.std, conv_aggregation=tm.ConvAggregation.sum)
@@ -346,19 +346,25 @@ class InvarianceForRandomNetworks(Experiment):
         mp = zip(measures, dataset_percentages)
         combinations = itertools.product(
             model_names, dataset_names, config.common_transformations_without_identity(), mp)
-        for model, dataset_name, transformation, (measure, p) in combinations:
+        for model_name, dataset_name, transformation, (measure, p) in combinations:
             # generate `random_model_n` models and save them without training
             models_paths=[]
-            p_training = training.Parameters(model, dataset_name, transformation, 0)
+            p_training = training.Parameters(model_name, dataset_name, transformation, 0)
             dataset = datasets.get(dataset_name)
             for i in range(random_model_n):
-                model,optimizer=model_loading.get_model(model,dataset,use_cuda=o.use_cuda)
-                model_path=config.model_path(model,model_folderpath=random_models_folderpath)
-                scores=training.eval_scores(model,dataset,p_training,o)
-                training.save_model(p_training,o,model,scores,model_path)
-                del model
-                models_paths.append(model_path)
 
+                model_path=config.model_path(p_training,model_folderpath=random_models_folderpath)
+
+                # append index to model name
+                name,ext=os.path.splitext(model_path)
+                name+=f"_random{i:03}"
+                model_path=f"{name}{ext}"
+                if not os.path.exists(model_path):
+                    scores = training.eval_scores(model, dataset, p_training, o)
+                    model, optimizer = model_loading.get_model(model_name, dataset, use_cuda=o.use_cuda)
+                    training.save_model(p_training,o,model,scores,model_path)
+                    del model
+                models_paths.append(model_path)
 
             # generate variance params
             variance_parameters = []
@@ -370,13 +376,10 @@ class InvarianceForRandomNetworks(Experiment):
                 model_paths.append(model_path)
                 self.experiment_variance(p_variance, model_path)
 
-
             # plot results
-            experiment_name = f"{model}_{dataset_name}_{transformation.id()}_{measure}"
+            experiment_name = f"{model_name}_{dataset_name}_{transformation.id()}_{measure}"
             plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
             results = config.load_results(config.results_paths(variance_parameters))
-
-
 
             visualization.plot_collapsing_layers(results, plot_filepath, title=experiment_name,plot_mean=True)
 
@@ -511,7 +514,8 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
 
 if __name__ == '__main__':
-    todo = [InvarianceForRandomNetworks(),
+    todo = [InvarianceVsEpochs(),
+            VisualizeInvariantFeatureMaps(),
             ]
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 
@@ -524,7 +528,8 @@ if __name__ == '__main__':
         # InvarianceVsTransformationDiversity(),
         # InvarianceVsTransformationDifferentScales(),
         # CompareBN(),
-        InvarianceAcrossDatasets(),
+        # InvarianceAcrossDatasets(),
+        InvarianceForRandomNetworks(),
     ]
 
     for e in experiments:

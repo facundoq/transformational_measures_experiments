@@ -1,6 +1,6 @@
 * Check wtf is wrong with NM + mnist when not using any conv agg => values are too high!
 * Anova
-    * Bonferroni correction for Anova
+    *DONE:  Bonferroni correction for Anova
     * Holm-Bonferroni correction for Anova (https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method)
 * Define more experiment configurations
     * DONE: Invariance vs epochs trained, ¿for all datasets/models? (how to implement?)

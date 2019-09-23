@@ -15,6 +15,7 @@ def models_folder():
     return model_folderpath
 
 def model_path(p: training.Parameters,savepoint=None,model_folderpath= models_folder()):
+
     filename=f"{p.id(savepoint=savepoint)}.pt"
     filepath=os.path.join(model_folderpath,filename)
     return filepath
