@@ -516,14 +516,14 @@ if __name__ == '__main__':
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 
     experiments=[
-        InvarianceWhileTraining(),
-        CompareConvAgg(),
-        CollapseConvBeforeOrAfter(),
-        CompareMeasures(),
-        MeasureVsDatasetSize(),
-        InvarianceVsTransformationDiversity(),
-        InvarianceVsTransformationDifferentScales(),
-        CompareBN(),
+        # InvarianceWhileTraining(),
+        # CompareConvAgg(),
+        # CollapseConvBeforeOrAfter(),
+        # CompareMeasures(),
+        # MeasureVsDatasetSize(),
+        # InvarianceVsTransformationDiversity(),
+        # InvarianceVsTransformationDifferentScales(),
+        # CompareBN(),
         InvarianceAcrossDatasets(),
     ]
 

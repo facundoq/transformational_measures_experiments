@@ -31,21 +31,29 @@ def collapse_channels(dataset:datasets.ClassificationDataset):
         axis=3
     else:
         axis=1
-    dataset.x_train = dataset.x_train.mean(axis=axis)
-    dataset.x_test  = dataset.x_test.mean(axis=axis)
+    dataset.x_train = dataset.x_train.mean(axis=axis,keepdims=True)
+    dataset.x_test  = dataset.x_test.mean(axis=axis,keepdims=True)
 
 
-def resize(dataset:datasets.ClassificationDataset,h:int,w:int):
+def resize(dataset:datasets.ClassificationDataset,h:int,w:int,c:int):
 
     if dataset.dataformat=="NCHW":
-        print(dataset.x_train.shape)
+
         dataset.x_train=np.transpose(dataset.x_train,axes=(0,2,3,1))
         dataset.x_test = np.transpose(dataset.x_test, axes=(0, 2, 3, 1))
 
     subsets = [dataset.x_train, dataset.x_test]
-    for subset in subsets:
+    new_subsets=[np.zeros((s.shape[0],h,w,c)) for s in subsets]
+
+    for (subset,new_subset) in zip(subsets,new_subsets):
         for i in range(subset.shape[0]):
-            subset[i, :] = cv2.resize(subset[i, :], dsize=(h, w))
+            img=subset[i, :]
+            if c==1:
+                img=img[:,:,0]
+            img= cv2.resize(img, dsize=(h, w))
+            if c==1:
+                img=img[:,:,np.newaxis]
+            new_subset[i,:]=img
 
     if dataset.dataformat=="NCHW":
         dataset.x_train=np.transpose(dataset.x_train,axes=(0,3,1,2))
@@ -62,12 +70,17 @@ def adapt_dataset(dataset:datasets.ClassificationDataset, dataset_template:str):
     # fix channels
     if c !=oc and oc==1:
         expand_channels(dataset,c)
-    if c != oc and c ==1:
+
+    elif c != oc and c ==1:
         collapse_channels(dataset)
+    else:
+        raise ValueError(f"Cannot transform image with {oc} channels into image with {c} channels.")
 
     #fix size
     if h!=oh or w!=ow:
-        resize(dataset,h,w)
+        resize(dataset,h,w,c)
+
+    dataset.input_shape=(h,w,c)
 
 
 
@@ -87,8 +100,7 @@ def experiment(p: variance.Parameters, o: variance.Options):
             if o.verbose:
                 print(f"Adapting dataset {p.dataset.name} to model trained on dataset {training_parameters.dataset} (resizing spatial dims and channels)")
 
-            dataset = adapt_dataset(dataset,training_parameters.dataset)
-            print("TODO: adapt dataset to target")
+            adapt_dataset(dataset,training_parameters.dataset)
             if o.verbose:
                 print(dataset.summary())
         else:
