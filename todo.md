@@ -7,7 +7,7 @@
     * DONE:  Stratified vs none -> mnist/cifar, simple_conv/resnet
     * DONE: Invariance to rotation: train with n rotations, test with more.
     * DONE: Transformation strength vs invariance obtained
-    * Invariance to random networks 
+    * DONE: Invariance to random networks 
     * Which model is more invariant (plot invariance for each model resampling x axis (layer))
     * DONE: Train with dataset x, measure invariance with dataset Y
     * Invariance to X vs epochs needed to train (use results)
@@ -23,6 +23,8 @@
             * Rotation => More rotation angles
             * Rotation => Less rotation angles
         * Train without invariance, then train with invariance to X, then test invariance to Y in both models. Does invariance to one thing helps in invariance to another?
+    * Retraining experiments
+        * Which layers get the invariance now?
         
 
 * Convert cmd arguments from fixed set of choices to separate options. IMPORTANT!!!!
@@ -30,4 +32,5 @@
     * They should also implement a to_cmd() method, that generates the command line string representation, so that the runners can create Parameter objects and then just use to_cmd() to call the other scripts
     * Also centralize somewhere the map from a parameter object to a filename which contains the result.
 
-* Retraining experiments; which layers get the invariance now?
+
+

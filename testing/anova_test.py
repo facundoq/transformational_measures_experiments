@@ -65,11 +65,11 @@ activations_iterator=FakeActivationsIterator()
 #         print(transformed,activations)
 
 m=tm.AnovaFMeasure(conv_aggregation=tm.ConvAggregation.none)
-mr=m.eval(activations_iterator,activations_iterator.activation_names())
+mr=m.eval(activations_iterator)
 assert (mr.layers[0]-8.18)<0.001
 print(mr.layers)
 
 ma=tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none,alpha=0.95)
-mra=ma.eval(activations_iterator,activations_iterator.activation_names())
+mra=ma.eval(activations_iterator)
 assert mra.layers[0]
 print(mra.layers)

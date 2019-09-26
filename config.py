@@ -98,10 +98,10 @@ def all_measures()-> [Measure]:
         measures.append(NormalizedMeasure(MeasureFunction.std, ca))
 
     measures.append(AnovaFMeasure(ConvAggregation.none))
-    alphas=[0.1,0.001,0.01,0.05]
+    alphas=[0.90, 0.95, 0.99, 0.999]
     for alpha in alphas:
-        measures.append(AnovaMeasure(ConvAggregation.none, alpha=alpha, bonferroni=True))
-        measures.append(AnovaMeasure(ConvAggregation.none,alpha=alpha,bonferroni=False))
+        measures.append(AnovaMeasure(ConvAggregation.none, alpha=alpha, bonferroni=True ))
+        measures.append(AnovaMeasure(ConvAggregation.none, alpha=alpha, bonferroni=False))
     return measures
 
 

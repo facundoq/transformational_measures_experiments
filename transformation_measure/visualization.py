@@ -85,18 +85,21 @@ def outlier_range(stds,iqr_away):
 from experiment import variance
 
 
-def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, labels=None,title="",linestyles=None,plot_mean=False):
+def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, labels=None,title="",linestyles=None,plot_mean=False,color=None):
     n=len(results)
-    if n==2:
-        color = np.array([[1,0,0],[0,0,1]])
-    else:
-        color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
+    if n == 0:
+        raise ValueError(f"`results` is an empty list.")
+    if color is None:
+        if n==2:
+            color = np.array([[1,0,0],[0,0,1]])
+        else:
+            color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
 
     f, ax = plt.subplots(dpi=min(350, max(150, n * 15)))
     f.suptitle(title)
 
-    result_layers=[len(r.measure_result.layer_names) for r in results]
-    min_n,max_n = min(result_layers),max(result_layers)
+    result_layers=np.array([len(r.measure_result.layer_names) for r in results])
+    min_n,max_n = result_layers.min(),result_layers.max()
     if plot_mean:
         assert min_n==max_n,"To plot the mean values all results must have the same number of layers."
 
@@ -110,6 +113,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
             label=result.parameters.id()
         else:
             label=labels[i]
+
         if linestyles is None:
             linestyle="-"
         else:
@@ -121,8 +125,8 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
         x = np.arange(max_n) + 1
         y=average/len(results)
         label="mean"
-        linestyle="-"
-        ax.plot(x, y, label=label, linestyle=linestyle, color=0)
+        linestyle="--"
+        ax.plot(x, y, label=label, linewidth=3, linestyle=linestyle, color=(0,0,0))
 
     ax.set_ylabel("Variance")
     ax.set_xlabel("Layer")
