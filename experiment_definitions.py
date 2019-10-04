@@ -560,14 +560,14 @@ if __name__ == '__main__':
 
 
     all_experiments=[
-        CompareMeasures(),
-        InvarianceWhileTraining(),
-        ComparePreConvAgg(),
-        CollapseConvBeforeOrAfter(),
-
-        MeasureVsDatasetSize(),
-        InvarianceVsTransformationDiversity(),
-        InvarianceVsTransformationDifferentScales(),
+        # CompareMeasures(),
+        # InvarianceWhileTraining(),
+        # ComparePreConvAgg(),
+        # CollapseConvBeforeOrAfter(),
+        #
+        # MeasureVsDatasetSize(),
+        # InvarianceVsTransformationDiversity(),
+        # InvarianceVsTransformationDifferentScales(),
         CompareBN(),
         InvarianceAcrossDatasets(),
         InvarianceForRandomNetworks(),
