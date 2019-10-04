@@ -290,7 +290,7 @@ class CollapseConvBeforeOrAfter(Experiment):
             self.experiment_variance(no_aggregation_parameters, model_path)
 
             post_result_sets={"all":pre_functions,"mean":post_functions}
-            for set,functions in post_result_sets:
+            for set,functions in post_result_sets.items():
                 post_results= config.load_results(config.results_paths([no_aggregation_parameters]*len(functions)))
                 for f,r in zip(functions,post_results):
                     r.measure_result=r.measure_result.collapse_convolutions(f)

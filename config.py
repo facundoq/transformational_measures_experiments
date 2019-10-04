@@ -110,7 +110,8 @@ def common_measures()-> [Measure]:
              ,TransformationMeasure(MeasureFunction.std, ConvAggregation.sum)
      ,NormalizedMeasure(MeasureFunction.std, ConvAggregation.sum)
         ,AnovaFMeasure(ConvAggregation.none)
-        ,AnovaMeasure(ConvAggregation.none,alpha=0.05)
+        ,AnovaMeasure(ConvAggregation.none,alpha=0.95)
+        ,AnovaMeasure(ConvAggregation.none, alpha=0.95,bonferroni=True)
 
     ]
     return measures
