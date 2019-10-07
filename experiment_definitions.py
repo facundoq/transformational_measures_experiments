@@ -469,7 +469,10 @@ class CompareBN(Experiment):
                 p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
                 p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                 model_path = config.model_path(p_training)
-                self.experiment_variance(p_variance, model_path)
+                batch_size=64
+                if model.startswith("ResNet"):
+                    batch_size=32
+                self.experiment_variance(p_variance, model_path,batch_size=batch_size)
                 variance_parameters.append(p_variance)
 
             # evaluate variance

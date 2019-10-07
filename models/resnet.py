@@ -61,11 +61,12 @@ class Bottleneck(ObservableLayersModule):
             , nn.ELU()
               ,nn.Conv2d(planes, self.expansion * planes, kernel_size=1, bias=False)
               ,]
-        conv=SequentialWithIntermediates(*conv)
+
         if self.bn:
             conv.insert(1, nn.BatchNorm2d(planes))
             conv.insert(4, nn.BatchNorm2d(planes))
             conv.insert(7, nn.BatchNorm2d(self.expansion*planes))
+        conv = SequentialWithIntermediates(*conv)
 
         shortcut = []
         self.use_shortcut=stride != 1 or in_planes != self.expansion*planes

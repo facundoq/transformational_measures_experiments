@@ -159,7 +159,7 @@ def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
         epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12}
     elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:
         epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12, }
-    elif model == models.ResNet.__name__:
+    elif model == models.ResNet.__name__ or model == models.ResNetBN.__name__:
         epochs = {'cifar10': 60, 'mnist': 40, 'fashion_mnist': 12}
     elif model == models.FFNet.__name__ or model == models.FFNetBN.__name__:
         epochs = {'cifar10': 20, 'mnist': 15, 'fashion_mnist': 8}
