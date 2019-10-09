@@ -18,7 +18,7 @@ bn_model_names = [name for name in models.names if name.endswith("BN")]
 model_names = [name for name in models.names if not name.endswith("BN")]
 
 model_names.sort()
-model_names= [name for name in model_names if not name == "ResNet"]
+#model_names= [name for name in model_names if not name == "ResNet"]
 
 #model_names=["SimpleConv"]
 
@@ -62,7 +62,15 @@ class Experiment():
         model_path=config.model_path(p)
 
         if os.path.exists(model_path):
-            return
+            if p.savepoints==[]:
+                return
+            else:
+                savepoint_missing=[sp for sp in p.savepoints if not os.path.exists(config.model_path(p,sp))]
+                if savepoint_missing:
+                    print(f"Savepoints {savepoint_missing} missing; rerunning training...")
+                else:
+                    return
+
         savepoints=",".join([str(sp) for sp in p.savepoints])
         python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -max_restarts 5 -savepoints "{savepoints}" '
         runner_utils.run_python(venv_path, python_command)
@@ -563,14 +571,14 @@ if __name__ == '__main__':
 
 
     all_experiments=[
-        # CompareMeasures(),
-        # InvarianceWhileTraining(),
-        # ComparePreConvAgg(),
-        # CollapseConvBeforeOrAfter(),
-        #
-        # MeasureVsDatasetSize(),
-        # InvarianceVsTransformationDiversity(),
-        # InvarianceVsTransformationDifferentScales(),
+        InvarianceWhileTraining(),
+        CompareMeasures(),
+        ComparePreConvAgg(),
+        CollapseConvBeforeOrAfter(),
+
+        MeasureVsDatasetSize(),
+        InvarianceVsTransformationDiversity(),
+        InvarianceVsTransformationDifferentScales(),
         CompareBN(),
         InvarianceAcrossDatasets(),
         InvarianceForRandomNetworks(),
