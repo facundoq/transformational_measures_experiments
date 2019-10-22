@@ -34,3 +34,13 @@
 
 
 
+* Implement goodfellow's method
+    * Approximate percentile https://www.cse.wustl.edu/~jain/papers/ftp/psqr.pdf
+    * 
+* Implement equivalence testing
+    * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC5856600/
+    * https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4533933/
+    * https://stats.stackexchange.com/questions/430575/anova-like-equivalence-testing-to-measure-invariance
+    * https://en.wikipedia.org/wiki/Uniformly_most_powerful_test
+        
+      

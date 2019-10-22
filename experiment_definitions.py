@@ -571,15 +571,16 @@ if __name__ == '__main__':
 
 
     all_experiments=[
-        InvarianceWhileTraining(),
-        CompareMeasures(),
-        ComparePreConvAgg(),
-        CollapseConvBeforeOrAfter(),
 
-        MeasureVsDatasetSize(),
-        InvarianceVsTransformationDiversity(),
-        InvarianceVsTransformationDifferentScales(),
-        CompareBN(),
+        # InvarianceWhileTraining(), # run this first or you'll need to retrain some models
+        # CompareMeasures(),
+        # ComparePreConvAgg(),
+        # CollapseConvBeforeOrAfter(),
+        #
+        # MeasureVsDatasetSize(),
+        # InvarianceVsTransformationDiversity(),
+        # InvarianceVsTransformationDifferentScales(),
+        # CompareBN(),
         InvarianceAcrossDatasets(),
         InvarianceForRandomNetworks(),
     ]
