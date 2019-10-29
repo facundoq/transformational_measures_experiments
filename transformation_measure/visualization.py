@@ -148,3 +148,5 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     plt.close()
 
 
+def plot_invariant_feature_maps(model,result,max_features=10):
+    pass

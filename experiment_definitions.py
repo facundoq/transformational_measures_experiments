@@ -537,7 +537,25 @@ class VisualizeInvariantFeatureMaps(Experiment):
     def description(self):
         return """Visualize the output of invariant feature maps, to analyze qualitatively if they are indeed invariant."""
     def run(self):
-        pass
+
+
+
+        model_filepaths = config.get_models_filepaths()
+        for model_filepath in model_filepaths:
+            model,p,o,scores=training.load_model(model_filepath,use_cuda=torch.cuda.is_available())
+            results_filepaths = config.results_filepaths_for_model(p)
+
+
+            for result_filepath in results_filepaths:
+                if "random" in result_filepath:
+                    continue
+                print(p.id(),result_filepath)
+                # result=config.load_result(result_filepath)
+                # visualization.plot_invariant_feature_maps(model,result,max_features=10)
+
+
+
+
 
 
 import argparse, argcomplete
@@ -547,12 +565,13 @@ def parse_args(experiments:[Experiment])->[Experiment]:
     parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
 
     experiment_names=[e.id() for e in experiments]
+
     experiment_dict=dict(zip(experiment_names,experiments))
 
     parser.add_argument('-experiment', metavar='e'
                         , help=f'Choose an experiment to run'
                         , type=str,
-                        choices=experiment_names,default=None)
+                        choices=experiment_names)
 
     argcomplete.autocomplete(parser)
 
@@ -565,7 +584,6 @@ def parse_args(experiments:[Experiment])->[Experiment]:
 
 if __name__ == '__main__':
     todo = [InvarianceVsEpochs(),
-            VisualizeInvariantFeatureMaps(),
             ]
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 
@@ -581,8 +599,10 @@ if __name__ == '__main__':
         # InvarianceVsTransformationDiversity(),
         # InvarianceVsTransformationDifferentScales(),
         # CompareBN(),
-        InvarianceAcrossDatasets(),
-        InvarianceForRandomNetworks(),
+        VisualizeInvariantFeatureMaps(),
+        # InvarianceAcrossDatasets(),
+        # InvarianceForRandomNetworks(),
+
     ]
 
     experiments = parse_args(all_experiments)

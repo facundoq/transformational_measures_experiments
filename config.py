@@ -74,6 +74,16 @@ def load_all_results(folderpath:str)-> [variance.VarianceExperimentResult]:
     return load_results(filepaths)
 
 
+def results_filepaths_for_model(training_parameters)->[variance.VarianceExperimentResult]:
+    model_id = training_parameters.id()
+    results_folderpath = variance_results_folder()
+    all_results_filenames = os.listdir(results_folderpath)
+
+    results_filenames = [f for f in all_results_filenames if f.startswith(model_id)]
+    results_filepaths = [os.path.join(results_folderpath, f) for f in results_filenames]
+    return results_filepaths
+
+
 def plots_base_folder():
     return os.path.join(base_path(), "plots")
 
