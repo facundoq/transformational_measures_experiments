@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
-
+from pathlib import Path
 import transformation_measure as tm
 from experiment import variance, training
 import numpy as np
@@ -533,25 +533,57 @@ class InvarianceVsEpochs(Experiment):
     def run(self):
         pass
 
+
 class VisualizeInvariantFeatureMaps(Experiment):
     def description(self):
         return """Visualize the output of invariant feature maps, to analyze qualitatively if they are indeed invariant."""
     def run(self):
 
+        dmean,dmax, =  tm.DistanceAggregation.mean,tm.DistanceAggregation.max
+        mf, ca_sum,ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.sum,tm.ConvAggregation.mean
+
+        measures = [tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99,bonferroni=True),
+                    #tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.mean, alpha=0.99,bonferroni=True),
+                    tm.NormalizedMeasure(mf, ca_sum),
+                    tm.DistanceMeasure(mf,dmean),
+                    tm.DistanceMeasure(mf, dmax),
+                    tm.NormalizedMeasure(mf, ca_mean),
+                    ]
+        conv_model_names = [m for m in model_names if (not "FFNet" in m)]
+        conv_model_names = [models.SimpleConv.__name__]
+        combinations = itertools.product(
+            conv_model_names, dataset_names, config.common_transformations_without_identity(), measures)
+        for (model_name, dataset_name, transformation_set, measure) in combinations:
+
+            experiment_name = f"{model_name}_{dataset_name}_{transformation_set.id()}_{measure.id()}"
+            print(experiment_name)
+            plot_folderpath = os.path.join(self.plot_folderpath, experiment_name)
+            finished = Path(plot_folderpath) / "finished"
+            if finished.exists():
+                continue
+            # train
+            epochs = config.get_epochs(model_name, dataset_name, transformation_set)
+            p_training = training.Parameters(model_name, dataset_name, transformation_set, epochs)
+            self.experiment_training(p_training)
+            p = 0.5 if measure.__class__ == tm.AnovaMeasure else 0.1
+            p_dataset = variance.DatasetParameters(dataset_name, variance.DatasetSubset.test, p)
+            p_variance = variance.Parameters(p_training.id(), p_dataset, transformation_set, measure)
+            model_path = config.model_path(p_training)
+            self.experiment_variance(p_variance, model_path)
+
+            model_filepath=config.model_path(p_training)
+            model, p_model, o, scores = training.load_model(model_filepath, use_cuda=torch.cuda.is_available())
+            result_filepath= config.results_path(p_variance)
+            result = config.load_result(result_filepath)
+            dataset = datasets.get(dataset_name)
+            print(os.path.basename(model_filepath), os.path.basename(result_filepath))
 
 
-        model_filepaths = config.get_models_filepaths()
-        for model_filepath in model_filepaths:
-            model,p,o,scores=training.load_model(model_filepath,use_cuda=torch.cuda.is_available())
-            results_filepaths = config.results_filepaths_for_model(p)
+            os.makedirs(plot_folderpath,exist_ok=True)
+            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath,model,dataset,transformation_set,result,images=8,features_per_layer=8,conv_aggregation=tm.ConvAggregation.mean)
+            (finished).touch()
 
 
-            for result_filepath in results_filepaths:
-                if "random" in result_filepath:
-                    continue
-                print(p.id(),result_filepath)
-                # result=config.load_result(result_filepath)
-                # visualization.plot_invariant_feature_maps(model,result,max_features=10)
 
 
 

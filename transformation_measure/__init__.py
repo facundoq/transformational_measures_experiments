@@ -7,7 +7,9 @@ from .iterators.pytorch_activations_iterator import PytorchActivationsIterator,O
 
 from .measure.base import MeasureResult,Measure,MeasureFunction,StratifiedMeasureResult
 from .measure.layer_transformation import ConvAggregation
-from .measure.normalized import NormalizedMeasure
+from .measure.normalized import NormalizedMeasure,QuotientMeasure
 from .measure.samples import SampleMeasure
 from .measure.transformations import TransformationMeasure
 from .measure.anova import AnovaMeasure,AnovaFMeasure
+
+from .measure.distance import DistanceMeasure,DistanceSampleMeasure,DistanceTransformationMeasure,DistanceAggregation

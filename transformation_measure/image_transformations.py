@@ -31,10 +31,15 @@ class AffineTransformation(Transformation):
 
     def __str__(self):
         return f"Transformation {self.parameters}"
+
 class AffineTransformationCV(Transformation):
     def __init__(self,parameters):
         self.parameters=parameters
         self.transform=self.generate_transformation(parameters)
+
+    def __eq__(self, other):
+
+        return self.parameters == other.parameters
 
     def generate_transformation(self,transformation_parameters):
         rotation, translation, scale = transformation_parameters
@@ -50,7 +55,7 @@ class AffineTransformationCV(Transformation):
 
     def __call__(self,image:np.ndarray)->np.ndarray:
         # print(image.min(), image.max(), image.dtype, image.shape)
-        image=image.transpose(1,2,0)
+        image=image.transpose((1,2,0))
         h, w, c= image.shape
         # print(image.min(),image.max(),image.dtype,image.shape)
         transformation= self.center_transformation(self.transform, np.array((h, w)))
@@ -109,6 +114,9 @@ class SimpleAffineTransformationGenerator(TransformationSet):
 
     def __repr__(self):
         return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations})"
+    def __eq__(self, other):
+        if isinstance(other,self.__class__):
+            return self.n_rotations==other.n_rotations and self.n_scales==other.n_scales and self.n_translations == other.n_translations
 
     def id(self):
         return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations})"

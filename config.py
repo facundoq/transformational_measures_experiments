@@ -1,6 +1,6 @@
 import os,pickle
 from experiment import variance
-
+import itertools
 
 def base_path():
     return os.path.expanduser("~/variance/")
@@ -101,17 +101,25 @@ from transformation_measure import *
 
 def all_measures()-> [Measure]:
     cas=[ConvAggregation.max,ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.min,ConvAggregation.none]
+    das = [tm.DistanceAggregation.mean,tm.DistanceAggregation.max]
+    measure_functions = [MeasureFunction.std]
     measures=[]
-    for ca in cas:
-        measures.append(SampleMeasure(MeasureFunction.std,ca))
-        measures.append(TransformationMeasure(MeasureFunction.std, ca))
-        measures.append(NormalizedMeasure(MeasureFunction.std, ca))
+
+    for (ca,mf) in itertools.product(cas,measure_functions):
+        measures.append(SampleMeasure(mf,ca))
+        measures.append(TransformationMeasure(mf, ca))
+        measures.append(NormalizedMeasure(mf, ca))
+
+    for (da,mf) in itertools.product(das,measure_functions):
+        measures.append(DistanceSampleMeasure(mf,da))
+        measures.append(DistanceTransformationMeasure(mf, da))
+        measures.append(DistanceMeasure(mf, da))
 
     measures.append(AnovaFMeasure(ConvAggregation.none))
     alphas=[0.90, 0.95, 0.99, 0.999]
-    for alpha in alphas:
-        measures.append(AnovaMeasure(ConvAggregation.none, alpha=alpha, bonferroni=True ))
-        measures.append(AnovaMeasure(ConvAggregation.none, alpha=alpha, bonferroni=False))
+    for (alpha,ca) in itertools.product(alphas,cas):
+            measures.append(AnovaMeasure(ca, alpha=alpha, bonferroni=True ))
+            measures.append(AnovaMeasure(ca, alpha=alpha, bonferroni=False))
     return measures
 
 

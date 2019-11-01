@@ -7,62 +7,52 @@ class ConvAggregation(Enum):
     min = "min"
     sum = "sum"
     none = "none"
+    def functions(self):
+        return {ConvAggregation.mean: np.nanmean
+        , ConvAggregation.sum: np.nansum
+        , ConvAggregation.min: np.nanmin
+        , ConvAggregation.max: np.nanmax
+        }
+
+    def apply(self, layer:np.ndarray) -> np.ndarray:
+        '''
+
+        :param layer:  a 4D np array
+        :param conv_aggregation_function:
+        :return:
+        '''
 
 
+        if self == ConvAggregation.none:
+            return layer
 
-functions={ConvAggregation.mean : np.nanmean
-               ,ConvAggregation.sum : np.nansum
-               ,ConvAggregation.min : np.nanmin
-               ,ConvAggregation.max : np.nanmax
-               }
+        if not self in list(ConvAggregation):
+            raise ValueError(
+                f"Invalid aggregation function: {self}. Options: {list(ConvAggregation)}")
 
-def apply_aggregation_function(layer:np.ndarray,conv_aggregation_function:ConvAggregation) -> np.ndarray:
-    '''
+        function = self.functions()[self]
+        n, c, h, w = layer.shape
+        flat_activations = np.zeros((n, c))
+        for i in range(n):
+            flat_activations[i, :] = function(layer[i, :, :, :], axis=(1,2))
 
-    :param layer:  a 4D np array
-    :param conv_aggregation_function:
-    :return:
-    '''
-    if conv_aggregation_function == ConvAggregation.none:
-        return layer
-
-    if not conv_aggregation_function in functions.keys():
-        raise ValueError(
-            f"Invalid aggregation function: {conv_aggregation_function}. Options: {list(ConvAggregation)}")
-    function = functions[conv_aggregation_function]
-
-    n, c, h, w = layer.shape
-    flat_activations = np.zeros((n, c))
-
-    #TODO flat_activations =  function(layer, axis=(2,3))
-
-    for i in range(n):
-        flat_activations[i, :] = function(layer[i, :, :, :], axis=(1,2))
-
-    return flat_activations
+        return flat_activations
 
 
-def apply_aggregation_function3D(layer:np.ndarray,conv_aggregation_function:ConvAggregation) -> np.ndarray:
-    '''
+    def apply3D(self,layer:np.ndarray,) -> np.ndarray:
+        '''
 
-    :param layer:  a 3D np array
-    :param conv_aggregation_function:
-    :return:
-    '''
-    if conv_aggregation_function == ConvAggregation.none:
-        return layer
+        :param layer:  a 3D np array
+        :param conv_aggregation_function:
+        :return:
+        '''
+        if self == ConvAggregation.none:
+            return layer
 
-    if not conv_aggregation_function in functions.keys():
-        raise ValueError(
-            f"Invalid aggregation function: {conv_aggregation_function}. Options: {list(ConvAggregation)}")
-    function = functions[conv_aggregation_function]
+        if not self in list(ConvAggregation):
+            raise ValueError(
+                f"Invalid aggregation function: {self}. Options: {list(ConvAggregation)}")
+        function = self.functions()[self]
+        flat_activations = function(layer,axis=(1,2))
 
-    # c, h, w = layer.shape
-    # flat_activations = np.zeros(c)
-    #
-    # for i in range(c):
-    #     flat_activations[i] = function(layer[i, :, :])
-
-    flat_activations = function(layer,axis=(1,2))
-
-    return flat_activations
+        return flat_activations

@@ -2,7 +2,7 @@ from .base import Measure,MeasureFunction,MeasureResult,ActivationsByLayer
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
 from transformation_measure.measure.running_stats import RunningMeanAndVariance,RunningMean
-from .layer_transformation import ConvAggregation,apply_aggregation_function
+from .layer_transformation import ConvAggregation
 from typing import List
 from .transformations import TransformationMeasure
 import scipy.stats
@@ -155,7 +155,7 @@ class AnovaFMeasure(Measure):
 
     def preprocess_activations(self, layer_activations):
         if len(layer_activations.shape) == 4:
-            return apply_aggregation_function(layer_activations, self.conv_aggregation)
+            return self.conv_aggregation.apply(layer_activations)
         else:
             return layer_activations
 

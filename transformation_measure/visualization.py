@@ -2,9 +2,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from typing import List
-
+from pytorch.numpy_dataset import NumpyDataset
 from transformation_measure.measure.base import MeasureResult
 import transformation_measure as tm
+
 def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
 
     m=m.collapse_convolutions(tm.ConvAggregation.sum)
@@ -147,6 +148,148 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     plt.savefig(filepath, bbox_inches="tight")
     plt.close()
 
+import datasets
+import torch
 
-def plot_invariant_feature_maps(model,result,max_features=10):
-    pass
+import typing
+
+
+from pathlib import Path
+
+def plot_activations(features:np.ndarray, feature_indices:[int], variance_scores:[float], x_transformed:np.ndarray, transformations:tm.TransformationSet, filepath:Path):
+    x_transformed= x_transformed.transpose((0, 2, 3, 1))
+    n,c = features.shape
+    nt,ht,wt,ct = x_transformed.shape
+
+    dpi = int(np.sqrt(n) * 9) + 100
+    f, axis = plt.subplots(c+1,n+1,dpi=dpi)
+    axis[0, 0].set_title("Inputs")
+    axis[0, 0].axis("off")
+
+    for i in range(c):
+        axis[i+1, 0].set_title(f"FM {feature_indices[i]} \n, score:{variance_scores[i]:0.2f} ",fontsize=5)
+        axis[i+1, 0].axis("off")
+
+    for j in range(n):
+        transformed_image= x_transformed[j, :]
+        transformed_image-=transformed_image.min()
+        transformed_image/= transformed_image.max()
+        if ct ==1:
+            transformed_image=transformed_image[:,:,0]
+        axis[0,j+1].imshow(transformed_image)
+        axis[0,j+1].axis("off")
+
+    for i in range(c):
+        mi, ma = features[:,i].min(), features[:,i].max()
+        for j in range(n):
+            image = features[j, i].reshape((1,1))
+            axis[i+1,j+1].imshow(image, vmin=mi, vmax=ma)
+            axis[i+1, j+1].axis("off")
+
+    plt.savefig(filepath)
+    plt.close("all")
+
+def plot_feature_maps(feature_maps:np.ndarray, feature_indices:[int], variance_scores:[float], x_transformed:np.ndarray, transformations:tm.TransformationSet, filepath:str):
+    feature_maps = feature_maps.transpose((0,2,3,1))
+    x_transformed= x_transformed.transpose((0, 2, 3, 1))
+    n,h,w,c = feature_maps.shape
+    nt,ht,wt,ct = x_transformed.shape
+    if ct == 1:
+        x_transformed = x_transformed[:,:, :, 0]
+
+    dpi = int(np.sqrt(n) * 9) + 100
+    f, axis = plt.subplots(c+1,n+3,dpi=dpi)
+    axis[0, 0].set_title("Inputs")
+    axis[0, 0].axis("off")
+    for i in range(c):
+        axis[i+1, 0].set_title(f"FM {feature_indices[i]} \n, score:{variance_scores[i]:0.2f} ",fontsize=5)
+        axis[i+1, 0].axis("off")
+
+    for j in range(n):
+        transformed_image  = x_transformed[j, :]
+        transformed_image -= transformed_image.min()
+        transformed_image /= transformed_image.max()
+
+        axis[0,j+1].imshow(transformed_image)
+        axis[0,j+1].axis("off")
+
+    for i in range(c):
+        mi, ma = feature_maps[:,:,:,i].min(), feature_maps[:,:,:,i].max()
+        for j in range(n):
+            axis[i+1,j+1].imshow(feature_maps[j,:,:,i],vmin=mi,vmax=ma)
+            axis[i+1, j+1].axis("off")
+    # mean and std of feature maps columns
+    for i in range(c):
+        mean_feature_map = np.mean(feature_maps[:,:,:,i],axis=0)
+        std_feature_map = np.std(feature_maps[:, :, :, i], axis=0)
+
+        axis[i + 1, -2].imshow(mean_feature_map)
+        axis[i + 1, -2].axis("off")
+
+        axis[i + 1, -1].imshow(std_feature_map)
+        axis[i + 1, -1].axis("off")
+
+    # mean and std of images columns
+    axis[0, -2].imshow(x_transformed.mean(axis=0))
+    axis[0, -2].axis("off")
+
+    axis[0, -1].imshow(x_transformed.std(axis=0))
+    axis[0, -1].axis("off")
+
+    plt.savefig(filepath)
+    plt.close("all")
+
+def indices_of_smallest_k(a,k):
+    ind = np.argpartition(a, k)[:k]
+    ind.sort()
+    return ind
+
+def most_invariant_feature_maps(measure_result:tm.MeasureResult, features_per_layer:int):
+    feature_indices_per_layer=[]
+    feature_scores_per_layer = []
+    values=measure_result.layers
+    layer_names=measure_result.layer_names
+    for value,name in zip(values,layer_names):
+        if len(value.shape) != 1:
+            raise ValueError("Feature maps should be collapsed before calling this function")
+        indices=indices_of_smallest_k(value,features_per_layer)
+        feature_indices_per_layer.append(indices)
+        feature_scores_per_layer.append(value[indices])
+
+
+    return feature_indices_per_layer,feature_scores_per_layer
+
+'''
+    Plots the activation of the invariant feature maps determined by :param result
+    Plots the best :param features_per_layer feature maps, ie the most invariant
+    Creates a plot for each sample image/transformation pair
+    '''
+
+def plot_invariant_feature_maps(plot_folderpath:str,activations_iterator:tm.ActivationsIterator,result:variance.VarianceExperimentResult,conv_aggregation:tm.ConvAggregation,features_per_layer:int):
+    measure_result=result.measure_result.collapse_convolutions(conv_aggregation)
+
+    feature_indices_per_layer,invariance_scores_per_layer=most_invariant_feature_maps(measure_result,features_per_layer)
+    transformations=activations_iterator.get_transformations()
+
+    for i_image,(layers_activations, x_transformed) in enumerate(activations_iterator.samples_first()):
+        for i_layer,layer_activations in enumerate(layers_activations):
+            layer_name=result.measure_result.layer_names[i_layer]
+            filepath = os.path.join(plot_folderpath, f"image{i_image}_layer{i_layer}_{layer_name}.png")
+            feature_indices=feature_indices_per_layer[i_layer]
+            invariance_scores=invariance_scores_per_layer[i_layer]
+            #only plot conv layer activations
+            if len(layer_activations.shape)==4:
+                feature_maps=layer_activations[:,feature_indices,:,:]
+                plot_feature_maps(feature_maps,feature_indices,invariance_scores,x_transformed,transformations,filepath)
+            elif len(layer_activations.shape)==2:
+                features = layer_activations[:, feature_indices]
+                plot_activations(features, feature_indices, invariance_scores, x_transformed, transformations,filepath)
+
+
+
+def plot_invariant_feature_maps_pytorch(plot_folderpath:str,model:torch.nn.Module,dataset:datasets.ClassificationDataset,transformations:tm.TransformationSet,result:variance.VarianceExperimentResult,images=8,features_per_layer=8,conv_aggregation=tm.ConvAggregation.mean):
+    numpy_dataset = NumpyDataset(dataset.x_test[:images,:],dataset.y_test[:images])
+    iterator = tm.PytorchActivationsIterator(model,numpy_dataset, transformations, batch_size=images)
+    plot_invariant_feature_maps(plot_folderpath,iterator,result,conv_aggregation,features_per_layer)
+
+

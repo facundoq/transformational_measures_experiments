@@ -26,6 +26,8 @@ class PytorchActivationsIterator(ActivationsIterator):
         self.num_workers=num_workers
         self.use_cuda=torch.cuda.is_available()
 
+    def get_transformations(self):
+        return self.transformations
     def activation_names(self):
         return self.model.activation_names()
 

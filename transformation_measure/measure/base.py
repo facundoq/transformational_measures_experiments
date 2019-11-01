@@ -3,7 +3,7 @@ from transformation_measure.iterators.activations_iterator import ActivationsIte
 import numpy as np
 from typing import Dict, List, Tuple
 from .running_stats import RunningMean
-from .layer_transformation import ConvAggregation,apply_aggregation_function3D
+from .layer_transformation import ConvAggregation
 
 ActivationsByLayer = [np.ndarray]
 
@@ -45,7 +45,7 @@ class MeasureResult:
         for layer in self.layers:
             # if conv average out spatial dims
             if len(layer.shape) == 3:
-                flat_activations=apply_aggregation_function3D(layer,conv_aggregation_function)
+                flat_activations=conv_aggregation_function.apply3D(layer)
                 assert len(flat_activations.shape) == 1,f"After collapsing, the activation shape should have only one dimension. Found vector with shape {flat_activations.shape} instead."
             else:
                 flat_activations = layer.copy()
@@ -62,13 +62,23 @@ class StratifiedMeasureResult(MeasureResult):
 
     def __repr__(self):
         return f"StratifiedMeasureResult {self.measure}"
-
 from enum import Enum
 class MeasureFunction(Enum):
     var = "var"
     std = "std"
     meanabs = "meanabs"
     mean = "mean"
+
+
+    def apply(self, activations):
+        functions = {
+            MeasureFunction.var: lambda x: np.var(x, axis=0)
+            , MeasureFunction.std: lambda x: np.std(x, axis=0)
+            , MeasureFunction.mean: lambda x: np.mean(x, axis=0)
+            , MeasureFunction.meanabs: lambda x: np.mean(np.abs(x), axis=0)
+        }
+        function = functions[self]
+        return function(activations)
 
 
 class Measure:
