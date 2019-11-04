@@ -13,3 +13,4 @@ from .measure.transformations import TransformationMeasure
 from .measure.anova import AnovaMeasure,AnovaFMeasure
 
 from .measure.distance import DistanceMeasure,DistanceSampleMeasure,DistanceTransformationMeasure,DistanceAggregation
+from .measure.distance_equivariance import DistanceSameEquivarianceMeasure

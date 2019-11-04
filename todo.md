@@ -3,16 +3,9 @@
     *DONE:  Bonferroni correction for Anova
     * Holm-Bonferroni correction for Anova (https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method)
 * Define more experiment configurations
-    * DONE: Invariance vs epochs trained, ¿for all datasets/models? (how to implement?)
-    * DONE:  Stratified vs none -> mnist/cifar, simple_conv/resnet
-    * DONE: Invariance to rotation: train with n rotations, test with more.
-    * DONE: Transformation strength vs invariance obtained
-    * DONE: Invariance to random networks 
     * Which model is more invariant (plot invariance for each model resampling x axis (layer))
-    * DONE: Train with dataset x, measure invariance with dataset Y
     * Invariance to X vs epochs needed to train (use results)
     * Train invariance to X in cifar with 5 classes, then test with other 5 classes. Is the invariance still there?
-        
     * After refactoring model parser  
         * Invariance vs number of layers
         * Different activation functions (ELU vs ReLU vs pReLU vs TanH)
@@ -33,7 +26,7 @@
     * Also centralize somewhere the map from a parameter object to a filename which contains the result.
 
 
-
+* Test auto-equivariance
 * Implement goodfellow's method
     * Approximate percentile https://www.cse.wustl.edu/~jain/papers/ftp/psqr.pdf
     * 
@@ -44,3 +37,22 @@
     * https://en.wikipedia.org/wiki/Uniformly_most_powerful_test
         
       
+* Spatial Transformers 
+    * https://pytorch.org/tutorials/intermediate/spatial_transformer_tutorial.html
+* Ti POOLING: rotar img, evaluar, luego pooling sobre feature maps finales antes de fc1
+    * implementar en pytorch
+    * https://github.com/dlaptev/TI-pooling/blob/master/torch/rot_mnist12K_model.lua
+    * https://github.com/dlaptev/TI-pooling
+    
+* GrouPy
+    * https://github.com/adambielski/pytorch-gconv-experiments
+
+* DREN:Deep Rotation Equivirant Network
+    * https://github.com/ZJULearning/DREN
+* Polar transformer
+    * https://github.com/daniilidis-group/polar-transformer-networks/blob/master/arch.py
+
+
+* deform conv
+    * https://github.com/4uiiurz1/pytorch-deform-conv-v2
+    * https://github.com/chengdazhi/Deformable-Convolution-V2-PyTorch

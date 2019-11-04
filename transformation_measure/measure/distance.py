@@ -49,6 +49,8 @@ class DistanceAggregation(Enum):
             raise ValueError(f"Unknown distance aggregation {self}")
 
 
+
+
 class DistanceTransformationMeasure(Measure):
     def __init__(self, measure_function:MeasureFunction, distance_aggregation:DistanceAggregation):
         super().__init__()
@@ -72,7 +74,6 @@ class DistanceTransformationMeasure(Measure):
         # calculate the final mean over all samples (and layers)
         mean_variances = [b.mean() for b in mean_variances_running]
         return MeasureResult(mean_variances,layer_names,self)
-
 
 
 
@@ -115,6 +116,6 @@ class DistanceMeasure(QuotientMeasure):
 
 
     def __repr__(self):
-        return f"DTM(f={self.measure_function.value},da={self.distance_aggregation.value})"
+        return f"DM(f={self.measure_function.value},da={self.distance_aggregation.value})"
 
 

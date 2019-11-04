@@ -11,6 +11,9 @@ import runner_utils
 import models
 import itertools
 from transformation_measure import visualization
+
+from pathlib import Path
+
 all_model_names= config.model_names
 
 bn_model_names = [name for name in models.names if name.endswith("BN")]
@@ -36,7 +39,7 @@ import abc
 
 class Experiment():
     def __init__(self):
-        self.plot_folderpath = os.path.join(config.plots_base_folder(),self.id())
+        self.plot_folderpath = config.plots_base_folder() / self.id()
         os.makedirs(self.plot_folderpath, exist_ok=True)
         with open(os.path.join(self.plot_folderpath,"description.txt"),"w") as f:
             f.write(self.description())
@@ -99,13 +102,17 @@ class CompareMeasures(Experiment):
         return """Test different measures for a given dataset/model/transformation combination to evaluate their differences."""
     def run(self):
         mf,ca=tm.MeasureFunction.std,tm.ConvAggregation.sum
+        dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
         measure_sets={"LowLevel":[tm.SampleMeasure(mf,ca)
                   ,tm.TransformationMeasure(mf,ca)],
                       "HighLevel":[tm.AnovaMeasure(tm.ConvAggregation.none,0.95)
                                    ,tm.AnovaMeasure(tm.ConvAggregation.none,0.95,bonferroni=True)
                                    ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99)
                                     ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99,bonferroni=True)
-                  ,tm.NormalizedMeasure(mf,ca)]}
+                  ,tm.NormalizedMeasure(mf,ca)
+                  , tm.DistanceMeasure(mf, dmean)
+                  , tm.DistanceSameEquivarianceMeasure(mf, dmean)
+                                   ]}
 
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
@@ -198,8 +205,9 @@ class InvarianceVsTransformationDiversity(Experiment):
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
-        combinations=itertools.product(*[model_names, dataset_names])
-        for model,dataset in combinations:
+        measures=[measure]
+        combinations=itertools.product(*[model_names, dataset_names,measures])
+        for model,dataset,measure in combinations:
             print(model,dataset)
             sets=[config.rotation_transformations(n_transformations),config.translation_transformations(n_transformations),config.scale_transformations(n_transformations)]
             names=["rotation","translation","scale"]
@@ -354,9 +362,15 @@ class InvarianceForRandomNetworks(Experiment):
         random_models_folderpath=os.path.join(config.models_folder(),"random")
         os.makedirs(random_models_folderpath,exist_ok=True)
         o=training.Options(False,False,False,32,4,torch.cuda.is_available(),False,0)
+        dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
+        mf, ca_sum, ca_none= tm.MeasureFunction.std, tm.ConvAggregation.sum, tm.ConvAggregation.none
         measures = [
-            tm.NormalizedMeasure(measure_function=tm.MeasureFunction.std, conv_aggregation=tm.ConvAggregation.sum)
-            , tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99)]
+            tm.NormalizedMeasure(mf,ca_none)
+            , tm.AnovaMeasure(ca_none, alpha=0.99,bonferroni=True)
+            , tm.DistanceMeasure(mf, dmean)
+            , tm.DistanceSameEquivarianceMeasure(mf, dmean)
+
+            ]
         dataset_percentages = [0.1, 0.5]
         # number of random models to generate
         random_model_n=30
@@ -411,8 +425,14 @@ class InvarianceWhileTraining(Experiment):
     def description(self):
         return """Analyze the evolution of invariance in models while they are trained."""
     def run(self):
-        measures = [tm.NormalizedMeasure(measure_function=tm.MeasureFunction.std,conv_aggregation=tm.ConvAggregation.sum)
-                    ,tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none,alpha=0.99)]
+        dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
+        mf, ca_sum, ca_none = tm.MeasureFunction.std, tm.ConvAggregation.sum, tm.ConvAggregation.none
+
+        measures = [tm.NormalizedMeasure(mf,ca_sum)
+                    ,tm.AnovaMeasure(ca_none,alpha=0.99,bonferroni=True)
+            , tm.DistanceMeasure(mf, dmean)
+            , tm.DistanceSameEquivarianceMeasure(mf, dmean)
+                    ]
         dataset_percentages=[0.1,0.5]
         n_intermediate_models=10
         step=100//n_intermediate_models
@@ -457,7 +477,11 @@ class CompareBN(Experiment):
         return """Compare invariance of models trained with/without batchnormalization."""
     def run(self):
         mf, ca = tm.MeasureFunction.std, tm.ConvAggregation.sum
-        measures= [tm.AnovaMeasure(tm.ConvAggregation.none, 0.99), tm.NormalizedMeasure(mf, ca)]
+        dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
+        measures= [tm.AnovaMeasure(tm.ConvAggregation.none, 0.99), tm.NormalizedMeasure(mf, ca)
+        , tm.DistanceMeasure(mf, dmean)
+        , tm.DistanceSameEquivarianceMeasure(mf, dmean)
+        ]
 
         # model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
@@ -545,9 +569,16 @@ class VisualizeInvariantFeatureMaps(Experiment):
         measures = [tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99,bonferroni=True),
                     #tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.mean, alpha=0.99,bonferroni=True),
                     tm.NormalizedMeasure(mf, ca_sum),
+                    tm.NormalizedMeasure(mf, ca_mean),
+                    tm.TransformationMeasure(mf, tm.ConvAggregation.none),
+                    tm.TransformationMeasure(mf, ca_sum),
+                    tm.DistanceTransformationMeasure(mf, dmean),
+                    tm.DistanceTransformationMeasure(mf, dmax),
                     tm.DistanceMeasure(mf,dmean),
                     tm.DistanceMeasure(mf, dmax),
-                    tm.NormalizedMeasure(mf, ca_mean),
+                    tm.DistanceSameEquivarianceMeasure(mf, dmax),
+                    tm.DistanceSameEquivarianceMeasure(mf, dmean),
+
                     ]
         conv_model_names = [m for m in model_names if (not "FFNet" in m)]
         conv_model_names = [models.SimpleConv.__name__]
@@ -557,7 +588,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
             experiment_name = f"{model_name}_{dataset_name}_{transformation_set.id()}_{measure.id()}"
             print(experiment_name)
-            plot_folderpath = os.path.join(self.plot_folderpath, experiment_name)
+            plot_folderpath = self.plot_folderpath / experiment_name
             finished = Path(plot_folderpath) / "finished"
             if finished.exists():
                 continue
@@ -578,9 +609,9 @@ class VisualizeInvariantFeatureMaps(Experiment):
             dataset = datasets.get(dataset_name)
             print(os.path.basename(model_filepath), os.path.basename(result_filepath))
 
+            plot_folderpath.mkdir(parents=True,exist_ok=True)
 
-            os.makedirs(plot_folderpath,exist_ok=True)
-            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath,model,dataset,transformation_set,result,images=8,features_per_layer=8,conv_aggregation=tm.ConvAggregation.mean)
+            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath,model,dataset,transformation_set,result,images=8,most_invariant_k=4,least_invariant_k=4,conv_aggregation=tm.ConvAggregation.mean)
             (finished).touch()
 
 
@@ -622,16 +653,16 @@ if __name__ == '__main__':
 
     all_experiments=[
 
-        # InvarianceWhileTraining(), # run this first or you'll need to retrain some models
-        # CompareMeasures(),
-        # ComparePreConvAgg(),
+        InvarianceWhileTraining(), # run this first or you'll need to retrain some models
+        CompareMeasures(),
+        ComparePreConvAgg(),
         # CollapseConvBeforeOrAfter(),
         #
-        # MeasureVsDatasetSize(),
+        MeasureVsDatasetSize(),
         # InvarianceVsTransformationDiversity(),
         # InvarianceVsTransformationDifferentScales(),
         # CompareBN(),
-        VisualizeInvariantFeatureMaps(),
+        #VisualizeInvariantFeatureMaps(),
         # InvarianceAcrossDatasets(),
         # InvarianceForRandomNetworks(),
 

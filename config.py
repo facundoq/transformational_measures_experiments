@@ -1,9 +1,10 @@
 import os,pickle
 from experiment import variance
 import itertools
+from pathlib import Path
 
 def base_path():
-    return os.path.expanduser("~/variance/")
+    return Path(os.path.expanduser("~/variance/"))
 
 
 from experiment import training
@@ -85,7 +86,7 @@ def results_filepaths_for_model(training_parameters)->[variance.VarianceExperime
 
 
 def plots_base_folder():
-    return os.path.join(base_path(), "plots")
+    return base_path() /"plots"
 
 # def plots_folder(r:VarianceExperimentResult):
 #     folderpath = os.path.join(plots_base_folder(), f"{r.id()}")
@@ -114,6 +115,7 @@ def all_measures()-> [Measure]:
         measures.append(DistanceSampleMeasure(mf,da))
         measures.append(DistanceTransformationMeasure(mf, da))
         measures.append(DistanceMeasure(mf, da))
+        measures.append(DistanceSameEquivarianceMeasure(mf, da))
 
     measures.append(AnovaFMeasure(ConvAggregation.none))
     alphas=[0.90, 0.95, 0.99, 0.999]
@@ -124,12 +126,16 @@ def all_measures()-> [Measure]:
 
 
 def common_measures()-> [Measure]:
-    measures=[ SampleMeasure(MeasureFunction.std, ConvAggregation.sum)
-             ,TransformationMeasure(MeasureFunction.std, ConvAggregation.sum)
-     ,NormalizedMeasure(MeasureFunction.std, ConvAggregation.sum)
+    dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
+    mf, ca_sum, ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.sum, tm.ConvAggregation.mean
+    measures=[ SampleMeasure(mf,ca_sum)
+             ,TransformationMeasure(mf,ca_sum)
+     ,NormalizedMeasure(mf,ca_sum)
         ,AnovaFMeasure(ConvAggregation.none)
         ,AnovaMeasure(ConvAggregation.none,alpha=0.95)
         ,AnovaMeasure(ConvAggregation.none, alpha=0.95,bonferroni=True)
+        ,tm.DistanceMeasure(mf,dmean)
+        ,tm.DistanceSameEquivarianceMeasure(mf, dmean)
 
     ]
     return measures

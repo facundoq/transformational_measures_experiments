@@ -67,6 +67,16 @@ class AffineTransformationCV(Transformation):
         image = image.transpose(2,0,1)
         return image
 
+    def inverse(self):
+        rotation, translation, scale = self.parameters
+        rotation=-rotation
+        tx,ty=translation
+        translation= (-tx,-ty)
+        sx,sy=scale
+        scale=(1/sx,1/sy)
+        parameters = (rotation,translation,scale)
+        return AffineTransformationCV(parameters)
+
     def __str__(self):
         return f"Transformation {self.parameters}"
 
