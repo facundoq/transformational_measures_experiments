@@ -130,10 +130,10 @@ def common_measures()-> [Measure]:
     mf, ca_sum, ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.sum, tm.ConvAggregation.mean
     measures=[ SampleMeasure(mf,ca_sum)
              ,TransformationMeasure(mf,ca_sum)
-     ,NormalizedMeasure(mf,ca_sum)
+        ,NormalizedMeasure(mf,ca_sum)
         ,AnovaFMeasure(ConvAggregation.none)
-        ,AnovaMeasure(ConvAggregation.none,alpha=0.95)
-        ,AnovaMeasure(ConvAggregation.none, alpha=0.95,bonferroni=True)
+        ,AnovaMeasure(ConvAggregation.none,alpha=0.99)
+        ,AnovaMeasure(ConvAggregation.none, alpha=0.99,bonferroni=True)
         ,tm.DistanceMeasure(mf,dmean)
         ,tm.DistanceSameEquivarianceMeasure(mf, dmean)
 
@@ -169,12 +169,11 @@ def common_dataset_sizes()->[float]:
 
 
 
-import models
 import transformation_measure as tm
 import numpy as np
+from experiment import model_loading
 
-
-model_names=models.names
+model_names=model_loading.model_names
 
 def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
     if model == models.SimpleConv.__name__ or model == models.SimpleConvBN.__name__:
@@ -188,7 +187,7 @@ def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
     elif model == models.FFNet.__name__ or model == models.FFNetBN.__name__:
         epochs = {'cifar10': 20, 'mnist': 15, 'fashion_mnist': 8}
     else:
-        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(models.names)}")
+        raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(model_names)}")
 
 
     n = len(t)

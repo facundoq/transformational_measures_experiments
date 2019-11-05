@@ -213,13 +213,15 @@ def plot_feature_maps(feature_maps:np.ndarray, feature_indices:[int], variance_s
         axis[0,j+1].imshow(transformed_image)
         axis[0,j+1].axis("off")
 
+    colorbar_images=[]
     for i in range(c):
         mi, ma = feature_maps[:,:,:,i].min(), feature_maps[:,:,:,i].max()
         for j in range(n):
             im=axis[i+1,j+1].imshow(feature_maps[j,:,:,i],vmin=mi,vmax=ma,cmap="gray")
             axis[i+1, j+1].axis("off")
             if j+1 == n:
-                plt.colorbar(im,ax=axis[i + 1, n])
+                colorbar_images.append(im)
+
     # mean and std of feature maps columns
     for i in range(c):
         mean_feature_map = np.mean(feature_maps[:,:,:,i],axis=0)
@@ -230,6 +232,7 @@ def plot_feature_maps(feature_maps:np.ndarray, feature_indices:[int], variance_s
 
         axis[i + 1, -1].imshow(std_feature_map,cmap="gray")
         axis[i + 1, -1].axis("off")
+        plt.colorbar(colorbar_images[i], ax=axis[i + 1, -1])
 
     # mean and std of images columns
     axis[0, -2].imshow(x_transformed.mean(axis=0),cmap="gray")

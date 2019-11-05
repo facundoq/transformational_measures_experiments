@@ -7,10 +7,11 @@ from enum import Enum
 
 from sklearn.metrics.pairwise import euclidean_distances
 import sklearn
-
+import matplotlib.pyplot as plt
 from .distance import DistanceAggregation
-
+from pathlib import Path
 import transformation_measure as tm
+from time import gmtime, strftime
 
 class DistanceSameEquivarianceMeasure(Measure):
     def __init__(self, measure_function:MeasureFunction, distance_aggregation:DistanceAggregation):
@@ -24,14 +25,13 @@ class DistanceSameEquivarianceMeasure(Measure):
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         layer_names=activations_iterator.activation_names()
-        n_intermediates = len(layer_names)
-        transformations= activations_iterator.get_transformations()
-        mean_variances_running= [RunningMean() for i in range(n_intermediates)]
+        n_layers = len(layer_names)
+        transformations = activations_iterator.get_transformations()
+        mean_variances_running = [RunningMean() for i in range(n_layers)]
         for activations, x_transformed in activations_iterator.samples_first():
             # activations has the activations for all the transformations
-
+            self.inverse_trasform_feature_maps(activations, transformations)
             for j, layer_activations in enumerate(activations):
-                self.inverse_trasform_feature_maps(layer_activations,transformations)
                 layer_measure= self.measure_function.apply(layer_activations)
                 # update the mean over all transformation
                 mean_variances_running[j].update(layer_measure)
@@ -39,11 +39,28 @@ class DistanceSameEquivarianceMeasure(Measure):
         mean_variances = [b.mean() for b in mean_variances_running]
         return MeasureResult(mean_variances,layer_names,self)
 
-    def inverse_trasform_feature_maps(self,layer_activations:[np.ndarray],transformations:tm.TransformationSet)->[np.ndarray]:
+    def inverse_trasform_feature_maps(self,activations:[np.ndarray],transformations:tm.TransformationSet)->[np.ndarray]:
         transformations = list(transformations)
         inverses = [t.inverse() for t in transformations]
-        for layer in layer_activations:
+
+        for j,layer in enumerate(activations):
             if len(layer.shape)==4:
+                # n,c,h,w=layer.shape
+                # f,ax=plt.subplots(2,n)
                 for i,inverse in enumerate(inverses):
-                    layer[i,:]= inverse(layer[i,:])
+                    # ax[0, i].imshow(layer[i,0,:,:],cmap="gray")
+                    # ax[0, i].axis("off")
+                    layer[i,:] = inverse(layer[i,:])
+                    # ax[1, i].imshow(layer[i,0,:,:],cmap="gray")
+                    # ax[1, i].axis("off")
+
+
+                # path = Path("testing/dsem/")
+                # path.mkdir(parents=True,exist_ok=True)
+                # now=strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                # filepath=path / (f"{now}_{j}.png")
+                # plt.savefig(filepath)
+                # plt.close(f)
+
+
 

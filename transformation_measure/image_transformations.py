@@ -4,6 +4,8 @@ import cv2
 import itertools
 from typing import List,Tuple,Iterator
 from .transformation import Transformation,TransformationSet
+import torch.nn.functional as F
+import torch
 
 class AffineTransformation(Transformation):
     def __init__(self,parameters):
@@ -32,6 +34,8 @@ class AffineTransformation(Transformation):
     def __str__(self):
         return f"Transformation {self.parameters}"
 
+
+
 class AffineTransformationCV(Transformation):
     def __init__(self,parameters):
         self.parameters=parameters
@@ -47,7 +51,7 @@ class AffineTransformationCV(Transformation):
                                                            translation=translation)
         return transformation
 
-    def center_transformation(self,transformation,image_size):
+    def center_transformation(self,transformation:skimage_transform.AffineTransform,image_size):
         shift_y, shift_x = (image_size - 1) / 2.
         shift = skimage_transform.AffineTransform(translation=[-shift_x, -shift_y])
         shift_inv = skimage_transform.AffineTransform(translation=[shift_x, shift_y])
@@ -76,6 +80,16 @@ class AffineTransformationCV(Transformation):
         scale=(1/sx,1/sy)
         parameters = (rotation,translation,scale)
         return AffineTransformationCV(parameters)
+
+    def apply_pytorch(self,x,use_cuda=torch.cuda.is_available()):
+        c,h,w=x.shape
+        transformation = self.center_transformation(self.transform, np.array((h, w)))
+        transformation_matrix = torch.from_numpy(transformation.params)
+        if use_cuda:
+            transformation_matrix.cuda()
+        grid = F.affine_grid(transformation_matrix , x.size)
+        x = F.grid_sample(x, grid)
+        return x
 
     def __str__(self):
         return f"Transformation {self.parameters}"
@@ -135,9 +149,9 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         return self.affine_transformation_generator.__iter__()
 
 
-    def infinite_binary_progression(self):
-        yield 1.0
-        values=[ (0,1.0)]
+    def infinite_binary_progression(self,low=0,high=1):
+        yield high
+        values=[ (low,high)]
         while True:
             new_values=[]
             for (l,u) in values:
@@ -161,15 +175,15 @@ class SimpleAffineTransformationGenerator(TransformationSet):
     def generate_transformation_values(self):
         rotations = list(np.linspace(-np.pi, np.pi, self.n_rotations, endpoint=False))
 
-        scales=[(1.0,1.0)]
-        scale_series=self.infinite_geometric_series(0.5)
+        scales = [(1.0,1.0)]
+        scale_series = self.infinite_geometric_series(0.5)
         for s in itertools.islice(scale_series,self.n_scales):
             r=1.0 - s
             scales.append( (r,r) )
 
         translations=[(0,0)]
         for t in range(self.n_translations):
-            d=t+1
+            d=(t+1)**2
             translations.append( (0,d) )
             translations.append((0, -d))
             translations.append((d, 0))

@@ -17,17 +17,12 @@
             * Rotation => Less rotation angles
         * Train without invariance, then train with invariance to X, then test invariance to Y in both models. Does invariance to one thing helps in invariance to another?
     * Retraining experiments
-        * Which layers get the invariance now?
-        
-
-* Convert cmd arguments from fixed set of choices to separate options. IMPORTANT!!!!
-    * Make each parameters object implement a get_parser() to get the ArgParser for the parameter, so that they can be reused in different scripts.
-    * They should also implement a to_cmd() method, that generates the command line string representation, so that the runners can create Parameter objects and then just use to_cmd() to call the other scripts
-    * Also centralize somewhere the map from a parameter object to a filename which contains the result.
-
-
+        * Which layers get the invariance now?       
+* Refactor model_loading code
+    
 * Test auto-equivariance
 * Implement goodfellow's method
+    * https://ai.stanford.edu/~ang/papers/nips09-MeasuringInvariancesDeepNetworks.pdf
     * Approximate percentile https://www.cse.wustl.edu/~jain/papers/ftp/psqr.pdf
     * 
 * Implement equivalence testing
@@ -51,8 +46,28 @@
     * https://github.com/ZJULearning/DREN
 * Polar transformer
     * https://github.com/daniilidis-group/polar-transformer-networks/blob/master/arch.py
+    
 
 
 * deform conv
     * https://github.com/4uiiurz1/pytorch-deform-conv-v2
     * https://github.com/chengdazhi/Deformable-Convolution-V2-PyTorch
+    
+* ORN
+    * https://github.com/ZhouYanzhao/ORN
+    * torch    
+* Gabor convolutional networks
+    * https://github.com/bczhangbczhang/Gabor-Convolutional-Networks
+    * torch
+    
+* Convert cmd arguments from fixed set of choices to separate options. IMPORTANT!!!!
+    * Make each parameters object implement a get_parser() to get the ArgParser for the parameter, so that they can be reused in different scripts.
+    * They should also implement a to_cmd() method, that generates the command line string representation, so that the runners can create Parameter objects and then just use to_cmd() to call the other scripts
+    * Also centralize somewhere the map from a parameter object to a filename which contains the result.
+
+
+* Rotation equivariant vector field networks
+    * https://arxiv.org/abs/1612.09346
+*   Learning Steerable Filters for Rotation Equivariant CNNs
+    * https://zpascal.net/cvpr2018/Weiler_Learning_Steerable_Filters_CVPR_2018_paper.pdf
+    

@@ -15,10 +15,11 @@ from transformation_measure import visualization
 from pathlib import Path
 
 all_model_names= config.model_names
+all_model_names = [name for name in all_model_names if name.startswith("SimpleConv")]
 
-bn_model_names = [name for name in models.names if name.endswith("BN")]
+bn_model_names = [name for name in all_model_names if name.endswith("BN")]
 
-model_names = [name for name in models.names if not name.endswith("BN")]
+model_names = [name for name in all_model_names if not name.endswith("BN")]
 
 model_names.sort()
 #model_names= [name for name in model_names if not name == "ResNet"]
@@ -103,16 +104,22 @@ class CompareMeasures(Experiment):
     def run(self):
         mf,ca=tm.MeasureFunction.std,tm.ConvAggregation.sum
         dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
-        measure_sets={"LowLevel":[tm.SampleMeasure(mf,ca)
-                  ,tm.TransformationMeasure(mf,ca)],
-                      "HighLevel":[tm.AnovaMeasure(tm.ConvAggregation.none,0.95)
-                                   ,tm.AnovaMeasure(tm.ConvAggregation.none,0.95,bonferroni=True)
-                                   ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99)
-                                    ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99,bonferroni=True)
-                  ,tm.NormalizedMeasure(mf,ca)
-                  , tm.DistanceMeasure(mf, dmean)
-                  , tm.DistanceSameEquivarianceMeasure(mf, dmean)
-                                   ]}
+        measure_sets={"LowLevel":[
+                                tm.SampleMeasure(mf,ca)
+                                ,tm.TransformationMeasure(mf,ca)
+                                 ],
+                      "HighLevel":[
+                                  tm.AnovaMeasure(tm.ConvAggregation.none,0.95)
+                                  ,tm.AnovaMeasure(tm.ConvAggregation.none,0.95,bonferroni=True)
+                                  ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99)
+                                  ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99,bonferroni=True)
+                                  ,tm.NormalizedMeasure(mf,ca)
+                                  ,tm.DistanceMeasure(mf, dmean)
+                                   ],
+                "Equivariance":[
+                            tm.DistanceSameEquivarianceMeasure(mf, dmean),
+                            ]
+                      }
 
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
@@ -558,6 +565,25 @@ class InvarianceVsEpochs(Experiment):
         pass
 
 
+class CompareModelsForInvariance(Experiment):
+    def description(self):
+        return """Determine which model is more invariant. Plots invariance of models as layers progress"""
+    def run(self):
+        pass
+
+
+class InvarianceVsKernelSize(Experiment):
+    def description(self):
+        return """Determine which model is more invariant. Plots invariance of models as layers progress"""
+    def run(self):
+        pass
+
+class InvarianceVsMaxPooling(Experiment):
+    def description(self):
+        return """Determine which model is more invariant. Plots invariance of models as layers progress"""
+    def run(self):
+        pass
+
 class VisualizeInvariantFeatureMaps(Experiment):
     def description(self):
         return """Visualize the output of invariant feature maps, to analyze qualitatively if they are indeed invariant."""
@@ -565,18 +591,19 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
         dmean,dmax, =  tm.DistanceAggregation.mean,tm.DistanceAggregation.max
         mf, ca_sum,ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.sum,tm.ConvAggregation.mean
-
-        measures = [tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99,bonferroni=True),
-                    #tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.mean, alpha=0.99,bonferroni=True),
-                    tm.NormalizedMeasure(mf, ca_sum),
-                    tm.NormalizedMeasure(mf, ca_mean),
-                    tm.TransformationMeasure(mf, tm.ConvAggregation.none),
-                    tm.TransformationMeasure(mf, ca_sum),
-                    tm.DistanceTransformationMeasure(mf, dmean),
-                    tm.DistanceTransformationMeasure(mf, dmax),
-                    tm.DistanceMeasure(mf,dmean),
-                    tm.DistanceMeasure(mf, dmax),
-                    tm.DistanceSameEquivarianceMeasure(mf, dmax),
+        ca_none = tm.ConvAggregation.none
+        measures = [
+                    # tm.AnovaMeasure(ca_none, alpha=0.99,bonferroni=True),
+                    # #tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.mean, alpha=0.99,bonferroni=True),
+                    # tm.NormalizedMeasure(mf, ca_sum),
+                    # tm.NormalizedMeasure(mf, ca_mean),
+                    # tm.TransformationMeasure(mf, tm.ConvAggregation.none),
+                    # tm.TransformationMeasure(mf, ca_sum),
+                    # tm.DistanceTransformationMeasure(mf, dmean),
+                    # tm.DistanceTransformationMeasure(mf, dmax),
+                    # tm.DistanceMeasure(mf,dmean),
+                    # tm.DistanceMeasure(mf, dmax),
+                    # tm.DistanceSameEquivarianceMeasure(mf, dmax),
                     tm.DistanceSameEquivarianceMeasure(mf, dmean),
 
                     ]
@@ -587,7 +614,6 @@ class VisualizeInvariantFeatureMaps(Experiment):
         for (model_name, dataset_name, transformation_set, measure) in combinations:
 
             experiment_name = f"{model_name}_{dataset_name}_{transformation_set.id()}_{measure.id()}"
-            print(experiment_name)
             plot_folderpath = self.plot_folderpath / experiment_name
             finished = Path(plot_folderpath) / "finished"
             if finished.exists():
@@ -607,7 +633,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
             result_filepath= config.results_path(p_variance)
             result = config.load_result(result_filepath)
             dataset = datasets.get(dataset_name)
-            print(os.path.basename(model_filepath), os.path.basename(result_filepath))
+
 
             plot_folderpath.mkdir(parents=True,exist_ok=True)
 
@@ -647,6 +673,7 @@ def parse_args(experiments:[Experiment])->[Experiment]:
 
 if __name__ == '__main__':
     todo = [InvarianceVsEpochs(),
+            InvarianceVsEpochs(),
             ]
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 
@@ -655,14 +682,14 @@ if __name__ == '__main__':
 
         InvarianceWhileTraining(), # run this first or you'll need to retrain some models
         CompareMeasures(),
-        ComparePreConvAgg(),
+        # ComparePreConvAgg(),
         # CollapseConvBeforeOrAfter(),
-        #
+        # # #
         MeasureVsDatasetSize(),
         # InvarianceVsTransformationDiversity(),
         # InvarianceVsTransformationDifferentScales(),
         # CompareBN(),
-        #VisualizeInvariantFeatureMaps(),
+        VisualizeInvariantFeatureMaps(),
         # InvarianceAcrossDatasets(),
         # InvarianceForRandomNetworks(),
 

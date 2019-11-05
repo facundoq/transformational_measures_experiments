@@ -24,7 +24,7 @@ def apply_transformation(t:tm.Transformation, image_name):
     skimage.io.imsave(filepath, (image*255).astype("uint8"))
 
 
-transformations=tm.SimpleAffineTransformationGenerator(n_rotations=8,n_scales=2)
+transformations=tm.SimpleAffineTransformationGenerator(n_scales=2)
 
 for t in transformations:
     apply_transformation(t,str(t))
