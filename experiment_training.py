@@ -76,8 +76,8 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
                         , default=True)
 
     parser.add_argument('-model', metavar='m',
-                        help=f'Model to train/use. Allowed values: {", ".join(model_loading.get_model_names())}'
-                        ,choices=model_loading.get_model_names()
+                        help=f'Model to train/use. Allowed values: {", ".join(model_loading.model_names)}'
+                        ,choices=model_loading.model_names
                         ,required=True)
 
     parser.add_argument('-usecuda', metavar='c'

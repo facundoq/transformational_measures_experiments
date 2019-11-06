@@ -102,22 +102,20 @@ class CompareMeasures(Experiment):
     def description(self):
         return """Test different measures for a given dataset/model/transformation combination to evaluate their differences."""
     def run(self):
-        mf,ca=tm.MeasureFunction.std,tm.ConvAggregation.sum
+        mf,ca_none=tm.MeasureFunction.std,tm.ConvAggregation.none
         dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
         measure_sets={"LowLevel":[
-                                tm.SampleMeasure(mf,ca)
-                                ,tm.TransformationMeasure(mf,ca)
+                                tm.SampleMeasure(mf,ca_none)
+                                ,tm.TransformationMeasure(mf,ca_none)
                                  ],
                       "HighLevel":[
-                                  tm.AnovaMeasure(tm.ConvAggregation.none,0.95)
-                                  ,tm.AnovaMeasure(tm.ConvAggregation.none,0.95,bonferroni=True)
-                                  ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99)
-                                  ,tm.AnovaMeasure(tm.ConvAggregation.none,0.99,bonferroni=True)
-                                  ,tm.NormalizedMeasure(mf,ca)
+                                  tm.AnovaMeasure(ca_none,0.99,bonferroni=True)
+                                  ,tm.NormalizedMeasure(mf,ca_none)
                                   ,tm.DistanceMeasure(mf, dmean)
                                    ],
                 "Equivariance":[
                             tm.DistanceSameEquivarianceMeasure(mf, dmean),
+                            tm.DistanceMeasure(mf, dmean),
                             ]
                       }
 
@@ -210,9 +208,10 @@ class InvarianceVsTransformationDiversity(Experiment):
 
     def run(self):
         n_transformations=5
-        measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
+        measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.none
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
-        measures=[measure]
+        distance_measure = tm.DistanceMeasure(measure_function,tm.DistanceAggregation.mean)
+        measures=[measure,distance_measure]
         combinations=itertools.product(*[model_names, dataset_names,measures])
         for model,dataset,measure in combinations:
             print(model,dataset)
@@ -247,7 +246,7 @@ class InvarianceVsTransformationDifferentScales(Experiment):
 
     def run(self):
         n_transformations=5
-        measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.sum
+        measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.none
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
         combinations=itertools.product(*[model_names, dataset_names])
         for model,dataset in combinations:
@@ -291,6 +290,7 @@ class CollapseConvBeforeOrAfter(Experiment):
         measures=[]
         for f in pre_functions:
             measure=tm.NormalizedMeasure(tm.MeasureFunction.std,f)
+
             measures.append(measure)
         post_functions=[tm.ConvAggregation.mean]
 
@@ -571,6 +571,11 @@ class CompareModelsForInvariance(Experiment):
     def run(self):
         pass
 
+class CompareAnovaMeasures(Experiment):
+    def description(self):
+        return """Determine which Anova measure is more appropriate"""
+    def run(self):
+        pass
 
 class InvarianceVsKernelSize(Experiment):
     def description(self):
@@ -673,7 +678,10 @@ def parse_args(experiments:[Experiment])->[Experiment]:
 
 if __name__ == '__main__':
     todo = [InvarianceVsEpochs(),
-            InvarianceVsEpochs(),
+            InvarianceVsMaxPooling(),
+            InvarianceVsKernelSize,
+            CompareModelsForInvariance,
+            CompareModelsForInvariance,
             ]
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 

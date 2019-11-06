@@ -128,12 +128,12 @@ def all_measures()-> [Measure]:
 def common_measures()-> [Measure]:
     dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
     mf, ca_sum, ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.sum, tm.ConvAggregation.mean
-    measures=[ SampleMeasure(mf,ca_sum)
-             ,TransformationMeasure(mf,ca_sum)
-        ,NormalizedMeasure(mf,ca_sum)
-        ,AnovaFMeasure(ConvAggregation.none)
-        ,AnovaMeasure(ConvAggregation.none,alpha=0.99)
-        ,AnovaMeasure(ConvAggregation.none, alpha=0.99,bonferroni=True)
+    ca_none = ConvAggregation.none
+    measures=[ SampleMeasure(mf,ca_none)
+             ,TransformationMeasure(mf,ca_none)
+        ,NormalizedMeasure(mf,ca_none)
+        ,AnovaFMeasure(ca_none )
+        ,AnovaMeasure(ca_none , alpha=0.99,bonferroni=True)
         ,tm.DistanceMeasure(mf,dmean)
         ,tm.DistanceSameEquivarianceMeasure(mf, dmean)
 
@@ -176,7 +176,7 @@ from experiment import model_loading
 model_names=model_loading.model_names
 
 def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
-    if model == models.SimpleConv.__name__ or model == models.SimpleConvBN.__name__:
+    if model.startswith('SimpleConv'):
         epochs = {'cifar10': 40, 'mnist': 10, 'fashion_mnist': 12}
     elif model == models.AllConvolutional.__name__ or model == models.AllConvolutionalBN.__name__:
         epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12}

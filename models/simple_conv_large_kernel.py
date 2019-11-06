@@ -10,14 +10,10 @@ from models.util import Flatten
 class SimpleConvLargeKernel(ObservableLayersModule):
     def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128,bn=False,kernel_size=3):
         super(SimpleConvLargeKernel, self).__init__()
-        self.name = f"{self.__class__.__name__}(k={kernel_size})"
+        self.name = f"{self.__class__.__name__}(k={kernel_size},bn={bn})"
         assert kernel_size % 2 ==1
-        padding = (kernel_size-1)/2
-        kernel_size2= (kernel_size//2)
-        if kernel_size2 % 2 ==0:
-            kernel_size2 += 1
+        padding = ((kernel_size-1)//2,(kernel_size-1)//2)
 
-        padding2=(kernel_size2-1)/2
         h, w, channels = input_shape
         self.bn=bn
         conv_filters2=conv_filters*2
@@ -33,11 +29,11 @@ class SimpleConvLargeKernel(ObservableLayersModule):
         # bn
         nn.ELU(),
 
-        nn.Conv2d(conv_filters2, conv_filters2, kernel_size2, padding=padding2),
+        nn.Conv2d(conv_filters2, conv_filters2, kernel_size, padding=padding),
         # bn
         nn.ELU(),
         nn.MaxPool2d(stride=2, kernel_size=2),
-        nn.Conv2d(conv_filters2, conv_filters4, kernel_size2, padding=padding2 ),
+        nn.Conv2d(conv_filters2, conv_filters4, kernel_size, padding=padding),
         # bn
         nn.ELU(),]
 
