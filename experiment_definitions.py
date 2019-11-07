@@ -14,8 +14,8 @@ from transformation_measure import visualization
 
 from pathlib import Path
 
-all_model_names= config.model_names
-all_model_names = [name for name in all_model_names if name.startswith("SimpleConv")]
+all_model_names = config.model_names
+all_model_names = [name for name in all_model_names if name=="SimpleConv"]
 
 bn_model_names = [name for name in all_model_names if name.endswith("BN")]
 
@@ -23,7 +23,6 @@ model_names = [name for name in all_model_names if not name.endswith("BN")]
 
 model_names.sort()
 #model_names= [name for name in model_names if not name == "ResNet"]
-
 #model_names=["SimpleConv"]
 
 measures = config.common_measures()
@@ -62,9 +61,10 @@ class Experiment():
     def description(self)->str:
         pass
 
-    def experiment_training(self,p: training.Parameters):
+    def experiment_training(self,p: training.Parameters,min_accuracy=None):
         model_path=config.model_path(p)
-
+        if not min_accuracy:
+            min_accuracy = config.min_accuracy(p.model, p.dataset)
         if os.path.exists(model_path):
             if p.savepoints==[]:
                 return
@@ -76,7 +76,7 @@ class Experiment():
                     return
 
         savepoints=",".join([str(sp) for sp in p.savepoints])
-        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -max_restarts 5 -savepoints "{savepoints}" '
+        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -min_accuracy {min_accuracy} -max_restarts 5 -savepoints "{savepoints}" '
         runner_utils.run_python(venv_path, python_command)
 
     def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2,adapt_dataset=False):

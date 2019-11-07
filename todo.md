@@ -1,6 +1,8 @@
 * Check wtf is wrong with NM + mnist when not using any conv agg => values are too high!
+* Check wtf is wrong with kernel 7x7 not learning mnist r16
+    * It seems with r8 it learns slowly, and its normal for r2/r0
+
 * Anova
-    *DONE:  Bonferroni correction for Anova
     * Holm-Bonferroni correction for Anova (https://en.wikipedia.org/wiki/Holm%E2%80%93Bonferroni_method)
 * Define more experiment configurations
     * Which model is more invariant (plot invariance for each model resampling x axis (layer))

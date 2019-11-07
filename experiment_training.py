@@ -17,7 +17,7 @@ def list_parser(s:str):
     string_list=s.split(delim)
     return [int(n) for n in string_list]
 
-def parse_args()->Tuple[training.Parameters, training.Options]:
+def parse_args()->Tuple[training.Parameters, training.Options,float]:
 
     bool_parser=lambda x: (str(x).lower() in ['true','1', 'yes'])
 
@@ -39,6 +39,10 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
                         , help=f'Maximum number of restarts to train the model until a minimum accuracy is reached'
                         , type=int
                         , default=4)
+    parser.add_argument('-min_accuracy', metavar='macc'
+                        , help=f'minimum accuracy required'
+                        , type=float
+                        , default=0.0)
 
     parser.add_argument('-batchsize', metavar='b'
                         , help=f'batchsize to use during training'
@@ -102,10 +106,11 @@ def parse_args()->Tuple[training.Parameters, training.Options]:
 
     p= training.Parameters(args.model, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints)
     o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
-    return p,o
+    min_accuracy = args.min_accuracy
+    return p,o,min_accuracy
 
 if __name__ == "__main__":
-    p,o = parse_args()
+    p,o,min_accuracy = parse_args()
     def do_train():
         dataset = datasets.get(p.dataset)
         model, optimizer = model_loading.get_model(p.model, dataset, o.use_cuda)
@@ -114,6 +119,7 @@ if __name__ == "__main__":
         if o.verbose:
             print("Parameters: ",p)
             print("Options: ",o)
+            print("Min accuracy: ",min_accuracy)
 
         def generate_epochs_callbacks():
             epochs_callbacks=[]
@@ -159,7 +165,7 @@ if __name__ == "__main__":
     converged=False
     restarts=0
 
-    min_accuracy=config.min_accuracy(p.model,p.dataset)
+
     test_accuracy=0
     model,history,scores=None,None,None
     while not converged and restarts<=o.max_restarts:

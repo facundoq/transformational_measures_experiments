@@ -13,6 +13,8 @@ class SimpleConvLargeKernel(ObservableLayersModule):
         self.name = f"{self.__class__.__name__}(k={kernel_size},bn={bn})"
         assert kernel_size % 2 ==1
         padding = ((kernel_size-1)//2,(kernel_size-1)//2)
+        kernel_size2=kernel_size-2
+        padding2=((kernel_size2-1)//2,(kernel_size2-1)//2)
 
         h, w, channels = input_shape
         self.bn=bn
@@ -33,7 +35,7 @@ class SimpleConvLargeKernel(ObservableLayersModule):
         # bn
         nn.ELU(),
         nn.MaxPool2d(stride=2, kernel_size=2),
-        nn.Conv2d(conv_filters2, conv_filters4, kernel_size, padding=padding),
+        nn.Conv2d(conv_filters2, conv_filters4, kernel_size2, padding=padding2),
         # bn
         nn.ELU(),]
 
