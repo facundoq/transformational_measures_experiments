@@ -98,18 +98,21 @@ class CompareMeasures(Experiment):
     def run(self):
         mf,ca_none=tm.MeasureFunction.std,tm.ConvAggregation.none
         dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
-        measure_sets={"LowLevel":[
-                                tm.SampleMeasure(mf,ca_none)
-                                ,tm.TransformationMeasure(mf,ca_none)
-                                , tm.TransformationVarianceMultithreaded(mf, ca_none)
-                                , tm.SampleVarianceMultithreaded(mf, ca_none)
-
+        measure_sets={"Variance":[
+                                # tm.SampleMeasure(mf,ca_none)
+                                # tm.TransformationMeasure(mf,ca_none),
+                                tm.TransformationVarianceMeasure(mf, ca_none),
+                                tm.SampleVarianceMeasure(mf, ca_none),
                                  ],
+                      "Distance":[
+                          tm.DistanceTransformationMeasure(dmean),
+                          tm.DistanceSampleMeasure(dmean),
+                      ],
                       "HighLevel":[
-                                  tm.AnovaMeasure(ca_none,0.99,bonferroni=True)
-                                  ,tm.NormalizedMeasure(mf,ca_none)
-                                  , tm.NormalizedVarianceMultithreaded(mf, ca_none)
-                                  ,tm.DistanceMeasure(dmean)
+                                  tm.AnovaMeasure(ca_none,0.99,bonferroni=True),
+                                  tm.NormalizedMeasure(mf,ca_none),
+                                  tm.NormalizedVarianceMeasure(mf, ca_none),
+                                  tm.DistanceMeasure(dmean),
                                    ],
                 "Equivariance":[
                             tm.DistanceSameEquivarianceMeasure(dmean),
@@ -332,9 +335,9 @@ class ComparePreConvAgg(Experiment):
         return """Test different Convolutional Aggregation (sum,mean,max) functions to evaluate their differences. Convolutional aggregation collapses all the spatial dimensions of feature maps so that a single variance value for the feature map can be obtained."""
     def run(self):
         functions=[tm.ConvAggregation.sum,tm.ConvAggregation.mean,tm.ConvAggregation.max,tm.ConvAggregation.none]
-        measure_sets_constructors={"nm":tm.NormalizedMeasure
-                      ,"sm":tm.SampleMeasure
-                      ,"tm":tm.TransformationMeasure}
+        measure_sets_constructors={"nm":tm.NormalizedVarianceMeasure
+                      ,"sm":tm.SampleVarianceMeasure
+                      ,"tm":tm.TransformationVarianceMeasure}
         measure_sets = []
         for set_name,measure_constructor in measure_sets_constructors.items():
             measure_objects=[measure_constructor(tm.MeasureFunction.std,f) for f in functions]
@@ -690,17 +693,17 @@ if __name__ == '__main__':
 
     all_experiments=[
 
-        # InvarianceWhileTraining(), # run this first or you'll need to retrain some models
+        InvarianceWhileTraining(), # run this first or you'll need to retrain some models
         CompareMeasures(),
         # ComparePreConvAgg(),
         # CollapseConvBeforeOrAfter(),
         # # #
-        # MeasureVsDatasetSize(),
-        # InvarianceVsTransformationDiversity(),
-        # InvarianceVsTransformationDifferentScales(),
-        # CompareBN(),
-        # VisualizeInvariantFeatureMaps(),
-        # InvarianceAcrossDatasets(),
+        MeasureVsDatasetSize(),
+        InvarianceVsTransformationDiversity(),
+        InvarianceVsTransformationDifferentScales(),
+        CompareBN(),
+        VisualizeInvariantFeatureMaps(),
+        InvarianceAcrossDatasets(),
         # InvarianceForRandomNetworks(),
 
     ]
@@ -709,5 +712,6 @@ if __name__ == '__main__':
 
     for e in experiments:
         e()
+
 
 

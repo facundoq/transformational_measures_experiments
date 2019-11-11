@@ -52,7 +52,8 @@ class DistanceSameEquivarianceMeasure(Measure):
                     layer[i,:] = inverse(layer[i,:])
                     # ax[1, i].imshow(layer[i,0,:,:],cmap="gray")
                     # ax[1, i].axis("off")
-
+            else:
+                layer[:]=0
 
                 # path = Path("testing/dsem/")
                 # path.mkdir(parents=True,exist_ok=True)

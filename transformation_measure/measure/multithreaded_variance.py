@@ -30,7 +30,7 @@ class VarianceLayerMeasure(LayerMeasure):
     def get_final_result(self):
         return self.m.mean()
 
-class VarianceMultithreaded(PerLayerMeasure):
+class VarianceMeasure(PerLayerMeasure):
     def __init__(self,order:ActivationsOrder,measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
         super().__init__(order)
         self.measure_function = measure_function
@@ -39,24 +39,24 @@ class VarianceMultithreaded(PerLayerMeasure):
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
         return VarianceLayerMeasure(i,name,self.measure_function,self.conv_aggregation)
 
-class TransformationVarianceMultithreaded(VarianceMultithreaded):
+class TransformationVarianceMeasure(VarianceMeasure):
     def __init__(self,measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
         super().__init__(ActivationsOrder.SamplesFirst,measure_function,conv_aggregation)
     def __repr__(self):
-        return f"TVMulti(f={self.measure_function.value},ca={self.conv_aggregation.value})"
+        return f"TVM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
 
-class SampleVarianceMultithreaded(VarianceMultithreaded):
+class SampleVarianceMeasure(VarianceMeasure):
     def __init__(self,measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
         super().__init__(ActivationsOrder.TransformationsFirst,measure_function,conv_aggregation)
 
     def __repr__(self):
-        return f"SVMulti(f={self.measure_function.value},ca={self.conv_aggregation.value})"
+        return f"SVM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
 
-class NormalizedVarianceMultithreaded(tm.QuotientMeasure):
+class NormalizedVarianceMeasure(tm.QuotientMeasure):
 
     def __init__(self,measure_function: MeasureFunction, conv_aggregation:ConvAggregation):
-        sm = SampleVarianceMultithreaded(measure_function,conv_aggregation)
-        ttm = TransformationVarianceMultithreaded(measure_function,conv_aggregation)
+        sm = SampleVarianceMeasure(measure_function, conv_aggregation)
+        ttm = TransformationVarianceMeasure(measure_function, conv_aggregation)
         super().__init__(ttm,sm)
         self.numerator_measure = ttm
         self.denominator_measure = sm
@@ -64,4 +64,4 @@ class NormalizedVarianceMultithreaded(tm.QuotientMeasure):
         self.conv_aggregation = conv_aggregation
 
     def __repr__(self):
-        return f"NVMulti(f={self.measure_function.value},ca={self.conv_aggregation.value})"
+        return f"NVM(f={self.measure_function.value},ca={self.conv_aggregation.value})"

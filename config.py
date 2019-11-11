@@ -108,9 +108,9 @@ def all_measures()-> [Measure]:
         measures.append(SampleMeasure(mf,ca))
         measures.append(TransformationMeasure(mf, ca))
         measures.append(NormalizedMeasure(mf, ca))
-        measures.append(SampleVarianceMultithreaded(mf,ca))
-        measures.append(TransformationVarianceMultithreaded(mf, ca))
-        measures.append(NormalizedVarianceMultithreaded(mf, ca))
+        measures.append(SampleVarianceMeasure(mf, ca))
+        measures.append(TransformationVarianceMeasure(mf, ca))
+        measures.append(NormalizedVarianceMeasure(mf, ca))
 
     for (da,mf) in itertools.product(das,measure_functions):
         measures.append(DistanceSampleMeasure(da))
@@ -130,11 +130,12 @@ def common_measures()-> [Measure]:
     dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
     mf, ca_sum, ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.sum, tm.ConvAggregation.mean
     ca_none = ConvAggregation.none
-    measures=[ SampleMeasure(mf,ca_none)
-             ,TransformationMeasure(mf,ca_none)
-        ,NormalizedMeasure(mf,ca_none)
-        ,AnovaFMeasure(ca_none )
-        ,AnovaMeasure(ca_none , alpha=0.99,bonferroni=True)
+    measures=[
+        SampleVarianceMeasure(mf,ca_none)
+        ,TransformationVarianceMeasure(mf,ca_none)
+        ,NormalizedVarianceMeasure(mf,ca_none)
+        ,AnovaFMeasure(ca_none)
+        ,AnovaMeasure(ca_none, alpha=0.99,bonferroni=True)
         ,tm.DistanceMeasure(dmean)
         ,tm.DistanceSameEquivarianceMeasure(dmean)
 
