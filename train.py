@@ -4,7 +4,7 @@
 import config
 import torch
 import datasets
-from experiment import model_loading, training
+from run import model_loading, training
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple

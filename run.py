@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
-from pathlib import Path
 import transformation_measure as tm
-from experiment import variance, training
+from experiment import variance, training, model_loading, utils_runner
 import numpy as np
 import config
 import os
-import runner_utils
 import models
 import itertools
 from transformation_measure import visualization
@@ -31,7 +29,7 @@ measures = config.common_measures()
 # dataset_percentages= [0.1, 0.5, 1.0]x
 
 dataset_names= ["mnist", "cifar10"]
-venv_path=runner_utils.get_venv_path()
+venv_path= utils_runner.get_venv_path()
 
 measure=tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
 import abc
@@ -76,8 +74,8 @@ class Experiment():
                     return
 
         savepoints=",".join([str(sp) for sp in p.savepoints])
-        python_command = f'experiment_training.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -min_accuracy {min_accuracy} -max_restarts 5 -savepoints "{savepoints}" '
-        runner_utils.run_python(venv_path, python_command)
+        python_command = f'train.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs} -verbose False -train_verbose False -num_workers 4 -min_accuracy {min_accuracy} -max_restarts 5 -savepoints "{savepoints}" '
+        utils_runner.run_python(venv_path, python_command)
 
     def experiment_variance(self,p: variance.Parameters,model_path:str,batch_size:int=64,num_workers:int=2,adapt_dataset=False):
 
@@ -85,17 +83,13 @@ class Experiment():
         if os.path.exists(results_path):
             return
 
-        python_command = f'experiment_variance.py -mo "{model_path}" -me "{p.measure.id()}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose False -batchsize {batch_size} -num_workers {num_workers} '
+        python_command = f'measure.py -mo "{model_path}" -me "{p.measure.id()}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose False -batchsize {batch_size} -num_workers {num_workers} '
         if adapt_dataset:
             python_command=f"{python_command} -adapt_dataset True"
 
-        runner_utils.run_python(venv_path, python_command)
+        utils_runner.run_python(venv_path, python_command)
 
-    def experiment_plot_layers(self,variance_parameters:[variance.Parameters], plot_filepath: str, experiment_name:str):
-        variance_paths= [f'"{config.results_path(p)}"' for p in variance_parameters]
-        variance_paths_str= " ".join(variance_paths)
-        python_command = f'experiment_plot_layers.py -name "{experiment_name}" -out "{plot_filepath}" {variance_paths_str}'
-        runner_utils.run_python(venv_path, python_command)
+
 
 
 class CompareMeasures(Experiment):
@@ -107,21 +101,27 @@ class CompareMeasures(Experiment):
         measure_sets={"LowLevel":[
                                 tm.SampleMeasure(mf,ca_none)
                                 ,tm.TransformationMeasure(mf,ca_none)
+                                , tm.TransformationVarianceMultithreaded(mf, ca_none)
+                                , tm.SampleVarianceMultithreaded(mf, ca_none)
+
                                  ],
                       "HighLevel":[
                                   tm.AnovaMeasure(ca_none,0.99,bonferroni=True)
                                   ,tm.NormalizedMeasure(mf,ca_none)
-                                  ,tm.DistanceMeasure(mf, dmean)
+                                  , tm.NormalizedVarianceMultithreaded(mf, ca_none)
+                                  ,tm.DistanceMeasure(dmean)
                                    ],
                 "Equivariance":[
-                            tm.DistanceSameEquivarianceMeasure(mf, dmean),
-                            tm.DistanceMeasure(mf, dmean),
+                            tm.DistanceSameEquivarianceMeasure(dmean),
+                            tm.DistanceMeasure(dmean),
                             ]
                       }
 
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
-        combinations = itertools.product(*[model_names, dataset_names, config.common_transformations_without_identity(), measure_sets.items()])
+        transformations = config.common_transformations_without_identity()
+        #transformations = [ tm.SimpleAffineTransformationGenerator(n_rotations=16)]
+        combinations = itertools.product(*[model_names, dataset_names, transformations, measure_sets.items()])
         for (model,dataset,transformation,measure_set) in combinations:
             # train
             epochs = config.get_epochs(model, dataset, transformation)
@@ -210,7 +210,7 @@ class InvarianceVsTransformationDiversity(Experiment):
         n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.none
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
-        distance_measure = tm.DistanceMeasure(measure_function,tm.DistanceAggregation.mean)
+        distance_measure = tm.DistanceMeasure(tm.DistanceAggregation.mean)
         measures=[measure,distance_measure]
         combinations=itertools.product(*[model_names, dataset_names,measures])
         for model,dataset,measure in combinations:
@@ -223,7 +223,7 @@ class InvarianceVsTransformationDiversity(Experiment):
                 experiment_name = f"{model}_{dataset}_{measure.id()}"
                 plot_filepath = os.path.join(transformation_plot_folderpath, f"{experiment_name}.png")
                 variance_parameters=[]
-                print(f"    {name}, experiments:{len(transformation_set)}")
+                print(f"    {name}, experiment:{len(transformation_set)}")
                 for i,transformation in enumerate(transformation_set):
                     print(f"{i}, ",end="")
                     epochs = config.get_epochs(model, dataset, transformation)
@@ -255,7 +255,7 @@ class InvarianceVsTransformationDifferentScales(Experiment):
             names=["rotation","translation","scale"]
             for i,(transformation_set,name) in enumerate(zip(sets,names)):
                 n_experiments=(len(transformation_set)+1)*len(transformation_set)
-                print(f"    {name}, experiments:{n_experiments}")
+                print(f"    {name}, experiment:{n_experiments}")
                 for j,train_transformation in enumerate(transformation_set+[tm.SimpleAffineTransformationGenerator()]):
                     transformation_plot_folderpath = os.path.join(self.plot_folderpath, name)
                     os.makedirs(transformation_plot_folderpath, exist_ok=True)
@@ -358,7 +358,7 @@ class ComparePreConvAgg(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
 
 
-from experiment import model_loading
+
 import datasets
 import torch
 
@@ -374,8 +374,8 @@ class InvarianceForRandomNetworks(Experiment):
         measures = [
             tm.NormalizedMeasure(mf,ca_none)
             , tm.AnovaMeasure(ca_none, alpha=0.99,bonferroni=True)
-            , tm.DistanceMeasure(mf, dmean)
-            , tm.DistanceSameEquivarianceMeasure(mf, dmean)
+            , tm.DistanceMeasure( dmean)
+            , tm.DistanceSameEquivarianceMeasure(dmean)
 
             ]
         dataset_percentages = [0.1, 0.5]
@@ -437,8 +437,8 @@ class InvarianceWhileTraining(Experiment):
 
         measures = [tm.NormalizedMeasure(mf,ca_sum)
                     ,tm.AnovaMeasure(ca_none,alpha=0.99,bonferroni=True)
-            , tm.DistanceMeasure(mf, dmean)
-            , tm.DistanceSameEquivarianceMeasure(mf, dmean)
+            , tm.DistanceMeasure(dmean)
+            , tm.DistanceSameEquivarianceMeasure( dmean)
                     ]
         dataset_percentages=[0.1,0.5]
         n_intermediate_models=10
@@ -486,8 +486,8 @@ class CompareBN(Experiment):
         mf, ca = tm.MeasureFunction.std, tm.ConvAggregation.sum
         dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
         measures= [tm.AnovaMeasure(tm.ConvAggregation.none, 0.99), tm.NormalizedMeasure(mf, ca)
-        , tm.DistanceMeasure(mf, dmean)
-        , tm.DistanceSameEquivarianceMeasure(mf, dmean)
+        , tm.DistanceMeasure(dmean)
+        , tm.DistanceSameEquivarianceMeasure(dmean)
         ]
 
         # model_names=["SimpleConv","VGGLike","AllConvolutional"]
@@ -609,7 +609,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
                     # tm.DistanceMeasure(mf,dmean),
                     # tm.DistanceMeasure(mf, dmax),
                     # tm.DistanceSameEquivarianceMeasure(mf, dmax),
-                    tm.DistanceSameEquivarianceMeasure(mf, dmean),
+                    tm.DistanceSameEquivarianceMeasure(dmean),
 
                     ]
         conv_model_names = [m for m in model_names if (not "FFNet" in m)]
@@ -652,22 +652,24 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
 
 
-import argparse, argcomplete
+import argparse
+
+
 def parse_args(experiments:[Experiment])->[Experiment]:
 
 
-    parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
+    parser = argparse.ArgumentParser(description="Run experiments with transformation measures.")
 
     experiment_names=[e.id() for e in experiments]
-
     experiment_dict=dict(zip(experiment_names,experiments))
 
-    parser.add_argument('-experiment', metavar='e'
-                        , help=f'Choose an experiment to run'
-                        , type=str,
-                        choices=experiment_names)
-
-    argcomplete.autocomplete(parser)
+    parser.add_argument('-experiment',
+                        help=f'Choose an experiment to run',
+                        type=str,
+                        default=None,
+                        required=False,
+                        choices=experiment_names,)
+    #argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
     if args.experiment is None:
@@ -679,25 +681,25 @@ def parse_args(experiments:[Experiment])->[Experiment]:
 if __name__ == '__main__':
     todo = [InvarianceVsEpochs(),
             InvarianceVsMaxPooling(),
-            InvarianceVsKernelSize,
-            CompareModelsForInvariance,
-            CompareModelsForInvariance,
+            InvarianceVsKernelSize(),
+            CompareModelsForInvariance(),
+            CompareModelsForInvariance(),
             ]
     print("TODO implement ",",".join([e.__class__.__name__ for e in todo]))
 
 
     all_experiments=[
 
-        InvarianceWhileTraining(), # run this first or you'll need to retrain some models
+        # InvarianceWhileTraining(), # run this first or you'll need to retrain some models
         CompareMeasures(),
         # ComparePreConvAgg(),
         # CollapseConvBeforeOrAfter(),
         # # #
-        MeasureVsDatasetSize(),
+        # MeasureVsDatasetSize(),
         # InvarianceVsTransformationDiversity(),
         # InvarianceVsTransformationDifferentScales(),
         # CompareBN(),
-        VisualizeInvariantFeatureMaps(),
+        # VisualizeInvariantFeatureMaps(),
         # InvarianceAcrossDatasets(),
         # InvarianceForRandomNetworks(),
 
@@ -707,4 +709,5 @@ if __name__ == '__main__':
 
     for e in experiments:
         e()
+
 

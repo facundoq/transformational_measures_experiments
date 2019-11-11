@@ -1,7 +1,7 @@
-from .base import Measure,MeasureFunction,MeasureResult
+from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
-from transformation_measure.measure.running_stats import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
 from typing import List
 from enum import Enum
 
@@ -14,13 +14,12 @@ import transformation_measure as tm
 from time import gmtime, strftime
 
 class DistanceSameEquivarianceMeasure(Measure):
-    def __init__(self, measure_function:MeasureFunction, distance_aggregation:DistanceAggregation):
+    def __init__(self, distance_aggregation:DistanceAggregation):
         super().__init__()
-        self.measure_function=measure_function
         self.distance_aggregation=distance_aggregation
 
     def __repr__(self):
-        return f"DSEM(f={self.measure_function.value},da={self.distance_aggregation.value})"
+        return f"DSEM(da={self.distance_aggregation.value})"
 
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
@@ -32,7 +31,7 @@ class DistanceSameEquivarianceMeasure(Measure):
             # activations has the activations for all the transformations
             self.inverse_trasform_feature_maps(activations, transformations)
             for j, layer_activations in enumerate(activations):
-                layer_measure= self.measure_function.apply(layer_activations)
+                layer_measure= self.distance_aggregation.apply(layer_activations)
                 # update the mean over all transformation
                 mean_variances_running[j].update(layer_measure)
         # calculate the final mean over all samples (and layers)

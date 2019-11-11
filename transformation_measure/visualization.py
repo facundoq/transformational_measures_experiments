@@ -6,6 +6,8 @@ from pytorch.numpy_dataset import NumpyDataset
 from transformation_measure.measure.base import MeasureResult
 import transformation_measure as tm
 
+from experiment import variance
+
 def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
 
     m=m.collapse_convolutions(tm.ConvAggregation.sum)
@@ -83,7 +85,7 @@ def outlier_range(stds,iqr_away):
 
 
 
-from experiment import variance
+
 
 
 def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, labels=None,title="",linestyles=None,plot_mean=False,color=None):

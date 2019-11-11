@@ -1,16 +1,25 @@
+# ORDER MATTERS IN THIS FILE
+# IMPORT BASIC STUFF FIRST
 from .transformation import TransformationSet,Transformation,IdentityTransformation
-from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationCV
+
+from .measure.base import MeasureResult,Measure,StratifiedMeasureResult
+from .measure.functions import MeasureFunction
+from .measure.layer_transformation import ConvAggregation
+from .measure.quotient import QuotientMeasure
+
 
 from .iterators.activations_iterator import ActivationsIterator
-
 from .iterators.pytorch_activations_iterator import PytorchActivationsIterator,ObservableLayersModule
 
-from .measure.base import MeasureResult,Measure,MeasureFunction,StratifiedMeasureResult
-from .measure.layer_transformation import ConvAggregation
-from .measure.normalized import NormalizedMeasure,QuotientMeasure
-from .measure.samples import SampleMeasure
-from .measure.transformations import TransformationMeasure
-from .measure.anova import AnovaMeasure,AnovaFMeasure
+from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationCV
 
+from .measure.multithreaded_layer_measure import PerLayerMeasure,LayerMeasure,SamplesFirstPerLayerMeasure,TransformationsFirstPerLayerMeasure
+
+from .measure.multithreaded_variance import TransformationVarianceMultithreaded,SampleVarianceMultithreaded,NormalizedVarianceMultithreaded
+from .measure.normalized import NormalizedMeasure,SampleMeasure,TransformationMeasure
+from .measure.anova import AnovaMeasure,AnovaFMeasure
 from .measure.distance import DistanceMeasure,DistanceSampleMeasure,DistanceTransformationMeasure,DistanceAggregation
 from .measure.distance_equivariance import DistanceSameEquivarianceMeasure
+
+
+

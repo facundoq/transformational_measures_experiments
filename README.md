@@ -8,16 +8,31 @@ This repository contains the code necessary to obtain the experimental results p
 
 ## What can you do with this code
 
-You can train a model on the [MNIST](http://yann.lecun.com/exdb/mnist/) or [CIFAR10](https://www.cs.toronto.edu/~kriz/cifar.html) datasets. One model will be trained with a vanilla version of the dataset. Then, for each set of transformations desired, an additional model will be trained. For example, for rotations a *rotated* model is trained, for which the dataset's samples were randomly rotated.
+You can train a model on the datasets:
+* [MNIST](http://yann.lecun.com/exdb/mnist/) 
+* [CIFAR10](https://www.cs.toronto.edu/~kriz/cifar.html) 
 
-The available models are [Resnet](), [VGG16](), [AllConvolutional network](https://arxiv.org/abs/1412.6806) and a [simple Convolutional Network](https://github.com/facundoq/rotational_invariance_data_augmentation/blob/master/pytorch/model/simple_conv.py)  
+You can choose a set of transformations as data augmentation. Currently supported:
+* Affine Transformations
+    * Rotation
+    * Translation
+    * Scaling
+    * ... and combinations
 
-Afterwards, you can measure the (in)variance of each activation of the networks for the different transformations, and visualize them as heatmaps or plots. 
+Afterwards, you can also calculate various measures of invariance/equivariance for those models, and produce several plots/visualizations.
+
+The available models are 
+* [Resnet](https://arxiv.org/abs/1512.03385)
+* [VGG16](https://arxiv.org/abs/1409.1556)
+* [AllConvolutional network](https://arxiv.org/abs/1412.6806)
+* [simple Convolutional Network](https://github.com/facundoq/rotational_invariance_data_augmentation/blob/master/pytorch/model/simple_conv.py)  
+
+ 
 
 
 ## How to run
 
-These instructions have been tested on a modern ubuntu-based distro with python version>=3.5.  
+These instructions have been tested on a modern ubuntu-based (18.10/19.10) distro with python version>=3.5. All experiments are based on models defined and trained with PyTorch.  
 
 * Clone the repository and cd to it:
     * `git clone https://github.com/facundoq/variance_measure.git`
@@ -30,10 +45,9 @@ These instructions have been tested on a modern ubuntu-based distro with python 
 * Install libraries 
     * `pip install -r requirements.txt`
     
-* Run the experiments with `python experiment> <model> <dataset>`
-    * `experiment_train.py` trains models with the dataset: one with the vanilla version, the other with a data-augmented version via the desired transformations.
-    * `experiment_variance.py`  calculates the variance of the activations of the model for the model/dataset combinations, with vanilla and transformed versions. Results are saved by default to `~/variance_results/`
-    * `plot_variances_models.py` generates plots of the variances for each/model dataset combination found in `~/variance_results/`. Both stratified/non-stratified versions of the measure are included in the plots. 
-    
-* The folder `plots` contains the results for any given model/dataset combination
+* Run the experiments:
+    * `train.py` trains individual models with a given dataset, and set of transformation as data augmentation. Models are stored by default in `~/variance/models` and a plot of their loss/accuracy history while training can be found in `~/variance/training_plots`
+    * `measure.py`  calculates an invariance/equivariance measure for a given model /dataset/transformation/measure combination. Results are saved by default to `~/variance/results/`
+    * `run.py` uses the previous scripts to generate the plots and analysis found in the paper. Classes that subclass `Experiment` can be run independently or as a group when executing `experiment.py`. Results are stored by default in `~/variance/plots/`. Each `Experiment` subclass contains a plaintext `description` field with a briefly summary of its goal and methods.
+   
 

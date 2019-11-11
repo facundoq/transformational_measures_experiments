@@ -2,7 +2,7 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import os
-from experiment import variance, training
+from run import variance, training
 import texttable
 import config
 import transformation_measure as tm

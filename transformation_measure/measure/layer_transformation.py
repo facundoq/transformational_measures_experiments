@@ -16,19 +16,17 @@ class ConvAggregation(Enum):
 
     def apply(self, layer:np.ndarray) -> np.ndarray:
         '''
-
-        :param layer:  a 4D np array
-        :param conv_aggregation_function:
+        :param layer:  a 4D np array (else apply no aggregation)
         :return:
         '''
 
-
+        # none does no aggregation
         if self == ConvAggregation.none:
             return layer
 
-        if not self in list(ConvAggregation):
-            raise ValueError(
-                f"Invalid aggregation function: {self}. Options: {list(ConvAggregation)}")
+        # only aggregate conv layers (n,c,h,w)
+        if len(layer.shape) != 4:
+            return layer
 
         function = self.functions()[self]
         n, c, h, w = layer.shape
@@ -42,16 +40,16 @@ class ConvAggregation(Enum):
     def apply3D(self,layer:np.ndarray,) -> np.ndarray:
         '''
 
-        :param layer:  a 3D np array
-        :param conv_aggregation_function:
+        :param layer:  a 3D np array (else apply no aggregation)
         :return:
         '''
         if self == ConvAggregation.none:
             return layer
 
-        if not self in list(ConvAggregation):
-            raise ValueError(
-                f"Invalid aggregation function: {self}. Options: {list(ConvAggregation)}")
+        # only aggregate conv layers (c,h,w)
+        if len(layer.shape) != 3:
+            return layer
+
         function = self.functions()[self]
         flat_activations = function(layer,axis=(1,2))
 

@@ -1,10 +1,7 @@
-from .base import Measure,MeasureFunction,MeasureResult,ActivationsByLayer
+from .base import Measure,MeasureResult,ActivationsByLayer
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-import numpy as np
-from transformation_measure.measure.running_stats import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
 from .layer_transformation import ConvAggregation
-from typing import List
-from .transformations import TransformationMeasure
 import scipy.stats
 
 class AnovaMeasure(Measure):
@@ -82,7 +79,7 @@ class AnovaFMeasure(Measure):
                     n_samples += x.shape[0]
                     for j, layer_activations in enumerate(batch_activations):
                         for i in range(layer_activations.shape[0]):
-                            layer_activations = self.preprocess_activations(layer_activations)
+                            layer_activations = self.conv_aggregation.apply(layer_activations)
                             d=(layer_activations[i,]-means_per_layer[j])**2
                             ssdw_per_layer[j]=ssdw_per_layer[j]+d
                 samples_per_transformation.append(n_samples)
@@ -147,15 +144,11 @@ class AnovaFMeasure(Measure):
                 n_samples+=x.shape[0]
                 for j, layer_activations in enumerate(batch_activations):
                     for i in range(layer_activations.shape[0]):
-                        layer_activations = self.preprocess_activations(layer_activations)
+                        layer_activations = self.conv_aggregation.apply(layer_activations)
                         samples_variances_running[j].update(layer_activations[i,])
             samples_per_transformation.append(n_samples)
             means_per_transformation.append([rm.mean() for rm in samples_variances_running])
         return means_per_transformation,samples_per_transformation
 
-    def preprocess_activations(self, layer_activations):
-        if len(layer_activations.shape) == 4:
-            return self.conv_aggregation.apply(layer_activations)
-        else:
-            return layer_activations
+
 

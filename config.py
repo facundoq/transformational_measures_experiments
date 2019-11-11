@@ -1,13 +1,11 @@
 import os,pickle
-from experiment import variance
+from experiment import variance,training,model_loading
 import itertools
 from pathlib import Path
+import models
 
 def base_path():
     return Path(os.path.expanduser("~/variance/"))
-
-
-from experiment import training
 
 
 def models_folder():
@@ -110,12 +108,15 @@ def all_measures()-> [Measure]:
         measures.append(SampleMeasure(mf,ca))
         measures.append(TransformationMeasure(mf, ca))
         measures.append(NormalizedMeasure(mf, ca))
+        measures.append(SampleVarianceMultithreaded(mf,ca))
+        measures.append(TransformationVarianceMultithreaded(mf, ca))
+        measures.append(NormalizedVarianceMultithreaded(mf, ca))
 
     for (da,mf) in itertools.product(das,measure_functions):
-        measures.append(DistanceSampleMeasure(mf,da))
-        measures.append(DistanceTransformationMeasure(mf, da))
-        measures.append(DistanceMeasure(mf, da))
-        measures.append(DistanceSameEquivarianceMeasure(mf, da))
+        measures.append(DistanceSampleMeasure(da))
+        measures.append(DistanceTransformationMeasure(da))
+        measures.append(DistanceMeasure( da))
+        measures.append(DistanceSameEquivarianceMeasure(da))
 
     measures.append(AnovaFMeasure(ConvAggregation.none))
     alphas=[0.90, 0.95, 0.99, 0.999]
@@ -134,8 +135,8 @@ def common_measures()-> [Measure]:
         ,NormalizedMeasure(mf,ca_none)
         ,AnovaFMeasure(ca_none )
         ,AnovaMeasure(ca_none , alpha=0.99,bonferroni=True)
-        ,tm.DistanceMeasure(mf,dmean)
-        ,tm.DistanceSameEquivarianceMeasure(mf, dmean)
+        ,tm.DistanceMeasure(dmean)
+        ,tm.DistanceSameEquivarianceMeasure(dmean)
 
     ]
     return measures
@@ -171,7 +172,6 @@ def common_dataset_sizes()->[float]:
 
 import transformation_measure as tm
 import numpy as np
-from experiment import model_loading
 
 model_names=model_loading.model_names
 
@@ -201,7 +201,7 @@ def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
 
     return int(epochs[dataset] * factor)
 
-import models
+
 def min_accuracy(model:str,dataset:str)-> float:
     min_accuracies = {"mnist": .95, "cifar10": .5}
     min_accuracy = min_accuracies[dataset]

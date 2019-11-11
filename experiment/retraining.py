@@ -4,7 +4,7 @@ from collections import namedtuple
 import numpy as np
 
 from pytorch.training import test,train,eval_scores
-from experiment.training import get_data_generator
+from run.training import get_data_generator
 
 def retraining_accuracy_barchart(model, dataset, unrotated_accuracies,rotated_accuracies,labels,savefig=True):
     import os

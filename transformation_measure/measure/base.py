@@ -1,8 +1,9 @@
+
 import abc
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
 from typing import Dict, List, Tuple
-from .running_stats import RunningMean
+from .stats_running import RunningMean, RunningMeanAndVariance
 from .layer_transformation import ConvAggregation
 
 ActivationsByLayer = [np.ndarray]
@@ -62,24 +63,10 @@ class StratifiedMeasureResult(MeasureResult):
 
     def __repr__(self):
         return f"StratifiedMeasureResult {self.measure}"
-from enum import Enum
-class MeasureFunction(Enum):
-    var = "var"
-    std = "std"
-    meanabs = "meanabs"
-    mean = "mean"
 
 
-    def apply(self, activations):
-        functions = {
-            MeasureFunction.var: lambda x: np.var(x, axis=0)
-            , MeasureFunction.std: lambda x: np.std(x, axis=0)
-            , MeasureFunction.mean: lambda x: np.mean(x, axis=0)
-            , MeasureFunction.meanabs: lambda x: np.mean(np.abs(x), axis=0)
-        }
-        function = functions[self]
-        return function(activations)
-
+# TODO use abc.ABC as base class
+import abc
 
 class Measure:
     def __repr__(self):
@@ -117,14 +104,3 @@ class Measure:
         layer_vars=[ sum(layer_values)/len(layer_values) for layer_values in layer_class_vars]
         return layer_vars
 
-
-class StratifiedMeasure(Measure):
-    def __init__(self,base_measure:Measure):
-        self.base_measure=base_measure
-    def __repr__(self):
-        return f"Stratified({self.base_measure})"
-    def id(self):
-        return str(self)
-
-    def eval(self,classes_iterators:[ActivationsIterator],class_labels:[str]):
-        return self.base_measure.eval_stratified(classes_iterators,class_labels)

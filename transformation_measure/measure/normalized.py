@@ -1,47 +1,66 @@
-from .base import Measure,MeasureResult,ActivationsByLayer,MeasureFunction
+from transformation_measure import ConvAggregation
+from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-import numpy as np
-from typing import List
-from .layer_transformation import ConvAggregation
-from .samples import SampleMeasure
-from .transformations import TransformationMeasure
+from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
+from transformation_measure import MeasureFunction,QuotientMeasure
 
-class QuotientMeasure(Measure):
-    def __init__(self, numerator_measure:Measure,denominator_measure:Measure):
+
+class TransformationMeasure(Measure):
+    def __init__(self, measure_function:MeasureFunction,conv_aggregation:ConvAggregation):
         super().__init__()
-        self.numerator_measure=numerator_measure
-        self.denominator_measure=denominator_measure
+        self.measure_function=measure_function
+        self.conv_aggregation=conv_aggregation
 
     def __repr__(self):
-        return f"NM({self.numerator_measure}_DIV_{self.denominator_measure})"
+        return f"TM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
+
+    def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
+        layer_names=activations_iterator.activation_names()
+        n_intermediates = len(layer_names)
+        mean_running= [RunningMean() for i in range(n_intermediates)]
+        for activations, x_transformed in activations_iterator.samples_first():
+
+            # activations has the activations for all the transformations
+            for j, layer_activations in enumerate(activations):
+                layer_activations = self.conv_aggregation.apply(layer_activations)
+                layer_measure = self.measure_function.apply(layer_activations)
+                # update the mean over all transformation
+                mean_running[j].update(layer_measure)
+
+        # calculate the final mean over all samples (and layers)
+        mean_variances = [b.mean() for b in mean_running]
+        return MeasureResult(mean_variances,layer_names,self)
+
+class SampleMeasure(Measure):
+    def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
+        super().__init__()
+        self.measure_function = measure_function
+        self.conv_aggregation = conv_aggregation
+
+    def __repr__(self):
+        return f"SM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         layer_names = activations_iterator.activation_names()
-        v_samples=self.denominator_measure.eval(activations_iterator)
+        n_layers = len(layer_names)
+        mean_variances_running = [RunningMean() for i in range(n_layers)]
 
-        v_transformations=self.numerator_measure.eval(activations_iterator)
+        for transformation, transformation_activations in activations_iterator.transformations_first():
+            samples_variances_running = [RunningMeanAndVariance() for i in range(n_layers)]
+            # calculate the variance of all samples for this transformation
+            for x, batch_activations in transformation_activations:
+                for j, layer_activations in enumerate(batch_activations):
+                    layer_activations = self.conv_aggregation.apply(layer_activations)
+                    for i in range(layer_activations.shape[0]):
+                        samples_variances_running[j].update(layer_activations[i,])
+            # update the mean over all transformation (and layers)
+            for layer_mean_variances_running, layer_samples_variance_running in zip(mean_variances_running,samples_variances_running):
+                samples_variance=self.measure_function.apply_running(layer_samples_variance_running)
+                layer_mean_variances_running.update(samples_variance)
 
-        v=self.eval_v_normalized(v_transformations.layers,v_samples.layers)
-        return MeasureResult(v,layer_names,self)
-
-    def eval_v_normalized(self,v_transformations,v_samples)->ActivationsByLayer:
-        eps = 0
-        measures = []  # coefficient of variations
-
-        for layer_v_transformations,layer_v_samples in zip(v_transformations,v_samples):
-            # print(layer_baseline.shape, layer_measure.shape)
-            normalized_measure = layer_v_transformations.copy()
-            normalized_measure[layer_v_samples  > eps] /= layer_v_samples [layer_v_samples  > eps]
-            both_below_eps = np.logical_and(layer_v_samples  <= eps,
-                                            layer_v_transformations <= eps)
-            normalized_measure[both_below_eps] = 1
-            only_baseline_below_eps = np.logical_and(
-                layer_v_samples  <= eps,
-                layer_v_transformations > eps)
-            normalized_measure[only_baseline_below_eps] = np.inf
-            measures.append(normalized_measure)
-        return measures
-
+        # calculate the final mean over all transformations (and layers)
+        mean_variances = [b.mean() for b in mean_variances_running]
+        return MeasureResult(mean_variances,layer_names,self)
 
 
 class NormalizedMeasure(QuotientMeasure):
