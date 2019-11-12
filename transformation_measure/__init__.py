@@ -5,7 +5,7 @@ from .transformation import TransformationSet,Transformation,IdentityTransformat
 from .measure.base import MeasureResult,Measure,StratifiedMeasureResult
 from .measure.functions import MeasureFunction
 from .measure.layer_transformation import ConvAggregation
-from .measure.quotient import QuotientMeasure
+from .measure.quotient import QuotientMeasure,divide_activations
 
 
 from .iterators.activations_iterator import ActivationsIterator

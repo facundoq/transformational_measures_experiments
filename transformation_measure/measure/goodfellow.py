@@ -25,7 +25,7 @@ class GlobalVariance(LayerMeasure):
         return self.m.mean()
 
 
-class GlobalFiringRate(PerLayerMeasure):
+class GlobalFiringRateMeasure(PerLayerMeasure):
     def __init__(self):
         super().__init__(ActivationsOrder.TransformationsFirst)
     def __repr__(self):
@@ -34,7 +34,7 @@ class GlobalFiringRate(PerLayerMeasure):
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
         return GlobalVariance(i, name)
 
-class LocalFiringRate(PerLayerMeasure):
+class LocalFiringRateMeasure(PerLayerMeasure):
     def __init__(self):
         super().__init__(ActivationsOrder.SamplesFirst)
     def __repr__(self):
@@ -43,14 +43,11 @@ class LocalFiringRate(PerLayerMeasure):
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
         return GlobalVariance(i, name)
 
-class Goodfellow(tm.QuotientMeasure):
+class Goodfellow():
 
     def __init__(self,):
-        sm = GlobalFiringRate()
-        ttm = LocalFiringRate()
-        super().__init__(ttm,sm)
-        self.numerator_measure = ttm
-        self.denominator_measure = sm
+        sm = GlobalFiringRateMeasure()
+        ttm = LocalFiringRateMeasure()
 
     def __repr__(self):
         return f"Goodfellow()"
