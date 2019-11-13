@@ -70,7 +70,7 @@ dataset_names=["mnist","cifar10"]
 import config
 
 def possible_experiment_parameters()->[]:
-    transformations = config.all_transformations(10)
+    transformations = config.all_transformations()
     measures= config.all_measures()
 
     dataset_percentages = config.common_dataset_sizes()

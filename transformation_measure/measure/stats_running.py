@@ -55,28 +55,28 @@ class RunningMean:
 
     def clear(self):
         self.n = 0
-        self.mean = 0
+        self.mu = 0
 
     def update(self, x):
         self.n += 1
 
         if self.n == 1:
-            self.mean = x
+            self.mu = x
         else:
-            self.mean = self.mean + (x - self.mean) / self.n
+            self.mu = self.mu + (x - self.mu) / self.n
 
     def update_all(self,x:np.ndarray):
         k=x.shape[0]
         if self.n == 0:
-            self.mean = x.mean(axis=0)
+            self.mu = x.mean(axis=0)
             self.n = k
         else:
             self.n += k
             x_sum=x.sum(axis=0)
-            self.mean = self.mean + (x_sum - self.mean * k) / self.n
+            self.mu = self.mu + (x_sum - self.mu * k) / self.n
 
     def mean(self):
-        return self.mean if self.n>0 else 0.0
+        return self.mu if self.n > 0 else 0.0
 
 
 class RunningMeanAndVariance:

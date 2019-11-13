@@ -1,10 +1,10 @@
-#!/usr/bin/env python3
-# PYTHON_ARGCOMPLETE_OK
+
+
 
 import config
 import torch
 import datasets
-from run import model_loading, training
+from experiment import model_loading, training
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple
@@ -21,7 +21,7 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
 
     bool_parser=lambda x: (str(x).lower() in ['true','1', 'yes'])
 
-    transformations=config.all_transformations(10)
+    transformations=config.all_transformations()
     transformations={t.id():t for t in transformations}
 
     parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
@@ -99,7 +99,7 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
                         , choices=transformations.keys()
                         ,default=tm.SimpleAffineTransformationGenerator())
 
-    argcomplete.autocomplete(parser)
+    #argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
     transformation=transformations[args.transformation]
@@ -108,6 +108,8 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
     o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
     min_accuracy = args.min_accuracy
     return p,o,min_accuracy
+
+import sys
 
 if __name__ == "__main__":
     p,o,min_accuracy = parse_args()

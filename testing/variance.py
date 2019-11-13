@@ -12,7 +12,7 @@ print(f"### Loading dataset {dataset_name} and model {model_name}....")
 use_cuda=torch.cuda.is_available()
 dataset = datasets.get(dataset_name)
 
-from run import model_loading
+from experiment import model_loading
 
 model,rotated_model,scores,config= model_loading.get_model(model_name, dataset,use_cuda)
 

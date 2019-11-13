@@ -7,10 +7,12 @@ import models
 def base_path():
     return Path(os.path.expanduser("~/variance/"))
 
+def testing_folder():
+    return base_path() / "testing"
 
 def models_folder():
-    model_folderpath = os.path.join(base_path(), "models")
-    os.makedirs(model_folderpath, exist_ok=True)
+    model_folderpath = base_path() / "models"
+    model_folderpath.mkdir(parents=True, exist_ok=True)
     return model_folderpath
 
 def model_path(p: training.Parameters,savepoint=None,model_folderpath= models_folder()):
@@ -147,23 +149,23 @@ def common_transformations() -> [TransformationSet]:
     return transformations+common_transformations_without_identity()
 
 def common_transformations_without_identity()-> [TransformationSet]:
-    transformations = [SimpleAffineTransformationGenerator(n_rotations=16)
-        , SimpleAffineTransformationGenerator(n_translations=2)
-        , SimpleAffineTransformationGenerator(n_scales=2)]
+    transformations = [SimpleAffineTransformationGenerator(r=360),
+                       SimpleAffineTransformationGenerator(t=5),
+                       SimpleAffineTransformationGenerator(s=5),
+                       SimpleAffineTransformationGenerator(r=360, s=4, t=3), ]
     return transformations
 
 def rotation_transformations(n:int):
-    return [SimpleAffineTransformationGenerator(n_rotations=2**r) for r in range(1,n+1)]
+    return [SimpleAffineTransformationGenerator(r=i * 360 // n) for i in range(0, n)]
 
 def scale_transformations(n:int):
-    return [SimpleAffineTransformationGenerator(n_scales=2**r) for r in range(n)]
+    return [SimpleAffineTransformationGenerator(s=i) for i in range(n)]
 
 def translation_transformations(n:int):
-    return [SimpleAffineTransformationGenerator(n_translations=r) for r in range(1,n+1)]
+    return [SimpleAffineTransformationGenerator(t=i) for i in range(n)]
 
-def all_transformations(n:int):
-    return common_transformations()+rotation_transformations(n)+scale_transformations(n)+translation_transformations(n)
-
+def all_transformations():
+    return common_transformations()+rotation_transformations(5)+scale_transformations(5)+translation_transformations(4)
 
 
 def common_dataset_sizes()->[float]:

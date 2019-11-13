@@ -4,7 +4,7 @@ import torch
 from experiment import util
 from testing import utils
 from pytorch.numpy_dataset import NumpyDataset
-from run import model_loading
+from experiment import model_loading
 import os
 import transformation_measure as tm
 import matplotlib
@@ -25,7 +25,7 @@ model, optimizer = model_loading.get_model(model_name, dataset, use_cuda)
 p= util.Profiler()
 p.event("start")
 
-transformations=tm.SimpleAffineTransformationGenerator(n_rotations=8,n_scales=2,n_translations=2)
+transformations=tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3)
 
 iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=64,num_workers=8)
 

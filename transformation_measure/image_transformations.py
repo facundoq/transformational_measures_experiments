@@ -92,7 +92,8 @@ class AffineTransformationCV(Transformation):
         return x
 
     def __str__(self):
-        return f"Transformation {self.parameters}"
+        r, t, s = self.parameters
+        return f"Transformation(r={r},t={t},s={s}"
 
 TranslationParameter=Tuple[int,int]
 ScaleParameter=Tuple[float,float]
@@ -105,7 +106,7 @@ class AffineTransformationGenerator(TransformationSet):
         if scales is None or not scales:
             scales = [(1.0, 1.0)]
         if translations is None or not translations:
-            translations = [(1, 1)]
+            translations = [(0, 0)]
 
         self.rotations:List[float]=rotations
         self.scales:List[ScaleParameter]=scales
@@ -123,27 +124,27 @@ class AffineTransformationGenerator(TransformationSet):
 
 class SimpleAffineTransformationGenerator(TransformationSet):
 
-    def __init__(self,n_rotations:int=None,n_scales:int=None,n_translations:int=None):
-        if n_rotations is None:
-            n_rotations = 0
-        if n_scales is None:
-            n_scales = 0
-        if n_translations is None:
-            n_translations = 0
-        self.n_rotations=n_rotations
-        self.n_translations=n_translations
-        self.n_scales=n_scales
+    def __init__(self, r:int=None, s:int=None, t:int=None):
+        if r is None:
+            r = 0
+        if s is None:
+            s = 0
+        if t is None:
+            t = 0
+        self.rotation_intensity=r
+        self.translation_intensity=t
+        self.scale_intensity=s
         rotations, translations, scales = self.generate_transformation_values()
         self.affine_transformation_generator=AffineTransformationGenerator(rotations=rotations, scales=scales, translations=translations)
 
     def __repr__(self):
-        return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations})"
+        return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity})"
     def __eq__(self, other):
         if isinstance(other,self.__class__):
-            return self.n_rotations==other.n_rotations and self.n_scales==other.n_scales and self.n_translations == other.n_translations
+            return self.rotation_intensity == other.rotation_intensity and self.scale_intensity == other.scale_intensity and self.translation_intensity == other.translation_intensity
 
     def id(self):
-        return f"Affine(r={self.n_rotations},s={self.n_scales},t={self.n_translations})"
+        return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity})"
 
     def __iter__(self)->Iterator[Transformation]:
         return self.affine_transformation_generator.__iter__()
@@ -171,19 +172,34 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         while True:
             yield pow(base,n)
 
-    import itertools
     def generate_transformation_values(self):
-        rotations = list(np.linspace(-np.pi, np.pi, self.n_rotations, endpoint=False))
+
+        if self.rotation_intensity>0:
+            range_rotations= np.pi*(self.rotation_intensity / (360.0 * 2.0))
+            n_rotations= max(self.rotation_intensity*16//360,1)
+            rotations = list(np.linspace(-range_rotations, range_rotations, n_rotations, endpoint=False))
+        else:
+            rotations = [0.0]
+
 
         scales = [(1.0,1.0)]
-        scale_series = self.infinite_geometric_series(0.5)
-        for s in itertools.islice(scale_series,self.n_scales):
-            r=1.0 - s
-            scales.append( (r,r) )
+        #scale_series = self.infinite_geometric_series(0.5)
+
+        # for s in itertools.islice(scale_series,self.n_scales):
+        #     r=1.0 - s
+        #     scales.append( (r,r) )
+        r=1.0
+        for i in range(self.scale_intensity):
+            r_upsample = r + i * 0.05
+            r_downsample = r - i * 0.10
+            scales.append( (r_upsample,r_upsample) )
+            scales.append((r_downsample,r_downsample))
+
+
 
         translations=[(0,0)]
-        for t in range(self.n_translations):
-            d=(t+1)**2
+        for t in range(self.translation_intensity):
+            d= 2**(t)
             translations.append( (0,d) )
             translations.append((0, -d))
             translations.append((d, 0))

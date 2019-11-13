@@ -3,10 +3,13 @@ import transformation_measure as tm
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import config
 
-results_path="testing/affine_inverse/"
-os.makedirs(results_path,exist_ok=True)
-source_path="testing/mnist.png"
+
+results_path = config.testing_folder()/"affine_inverse"
+results_path.mkdir(parents=True,exist_ok=True)
+
+source_path="testing/samples/mnist.png"
 
 def apply_transformation_inverse(p, image_name):
     a=tm.AffineTransformationCV(p)
@@ -16,7 +19,7 @@ def apply_transformation_inverse(p, image_name):
     image= image.transpose(2, 0, 1)
     image= a(image)
     image= image.transpose(1 , 2, 0)
-    filepath = os.path.join(results_path,f"{image_name}.png")
+    filepath = results_path / f"{image_name}.png"
     skimage.io.imsave( filepath, image)
 
 p=(0, (0, 0) , (1, 1))

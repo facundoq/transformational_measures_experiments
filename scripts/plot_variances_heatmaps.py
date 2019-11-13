@@ -10,7 +10,7 @@ plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
 from transformation_measure import visualization
 import typing
-from run import variance
+from experiment import variance
 import os,sys
 import argparse,argcomplete
 

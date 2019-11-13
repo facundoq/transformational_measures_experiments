@@ -13,15 +13,12 @@ from transformation_measure import visualization
 from pathlib import Path
 
 all_model_names = config.model_names
-all_model_names = [name for name in all_model_names if name=="SimpleConv"]
-
 bn_model_names = [name for name in all_model_names if name.endswith("BN")]
-
 model_names = [name for name in all_model_names if not name.endswith("BN")]
 
 model_names.sort()
-#model_names= [name for name in model_names if not name == "ResNet"]
-#model_names=["SimpleConv"]
+model_names= [name for name in model_names if not name.startswith("ResNet")]
+model_names=["SimpleConv"]
 
 measures = config.common_measures()
 
@@ -123,7 +120,7 @@ class CompareMeasures(Experiment):
         #model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
         transformations = config.common_transformations_without_identity()
-        #transformations = [ tm.SimpleAffineTransformationGenerator(n_rotations=16)]
+
         combinations = itertools.product(*[model_names, dataset_names, transformations, measure_sets.items()])
         for (model,dataset,transformation,measure_set) in combinations:
             # train
@@ -207,18 +204,18 @@ class MeasureVsDatasetSubset(Experiment):
 class InvarianceVsTransformationDiversity(Experiment):
 
     def description(self):
-        return '''Vary the scale of transformation both when training a computing the measure, and see how it affects the invariance. For example, train with 2 rotations, then measure the invariance with 2 rotations. Train with 4 rotations, measure with 4 rotations, and so on. '''
+        return '''Vary the type of transformation both when training and computing the measure, and see how it affects the invariance. For example, train with rotations, then measure with translations. Train with translations. measure with scales, and so on. '''
 
     def run(self):
-        n_transformations=5
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.none
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
         distance_measure = tm.DistanceMeasure(tm.DistanceAggregation.mean)
         measures=[measure,distance_measure]
         combinations=itertools.product(*[model_names, dataset_names,measures])
+
         for model,dataset,measure in combinations:
             print(model,dataset)
-            sets=[config.rotation_transformations(n_transformations),config.translation_transformations(n_transformations),config.scale_transformations(n_transformations)]
+            sets=[config.rotation_transformations(360),config.translation_transformations(3),config.scale_transformations(5)]
             names=["rotation","translation","scale"]
             for i,(transformation_set,name) in enumerate(zip(sets,names)):
                 transformation_plot_folderpath=os.path.join(self.plot_folderpath,name)
@@ -252,13 +249,15 @@ class InvarianceVsTransformationDifferentScales(Experiment):
         measure_function,conv_agg=tm.MeasureFunction.std,tm.ConvAggregation.none
         measure=tm.NormalizedMeasure(measure_function,conv_agg)
         combinations=itertools.product(*[model_names, dataset_names])
+        names = ["rotation", "translation", "scale"]
+        sets = [config.rotation_transformations(360), config.translation_transformations(4),
+                config.scale_transformations(5)]
         for model,dataset in combinations:
             print(model,dataset)
-            sets=[config.rotation_transformations(n_transformations),config.translation_transformations(n_transformations),config.scale_transformations(n_transformations)]
-            names=["rotation","translation","scale"]
+
             for i,(transformation_set,name) in enumerate(zip(sets,names)):
                 n_experiments=(len(transformation_set)+1)*len(transformation_set)
-                print(f"    {name}, experiment:{n_experiments}")
+                print(f"    {name}, #experiments:{n_experiments}")
                 for j,train_transformation in enumerate(transformation_set+[tm.SimpleAffineTransformationGenerator()]):
                     transformation_plot_folderpath = os.path.join(self.plot_folderpath, name)
                     os.makedirs(transformation_plot_folderpath, exist_ok=True)
@@ -532,7 +531,7 @@ class InvarianceAcrossDatasets(Experiment):
         return """Measure invariance with a different dataset than the one used to train the model."""
     def run(self):
         mf, ca = tm.MeasureFunction.std, tm.ConvAggregation.sum
-        measures= [tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99), tm.NormalizedMeasure(mf, ca)]
+        measures= [tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99), tm.NormalizedMeasure(mf, ca), tm.DistanceMeasure(tm.DistanceAggregation.mean)]
 
         combinations = itertools.product(
             model_names, dataset_names, config.common_transformations_without_identity(),measures)
