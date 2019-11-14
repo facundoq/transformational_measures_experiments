@@ -120,6 +120,10 @@ def all_measures()-> [Measure]:
         measures.append(DistanceMeasure( da))
         measures.append(DistanceSameEquivarianceMeasure(da))
 
+    for percentage in [0.01,0.001,0.1]:
+        measures.append(GoodfellowMeasure(activations_percentage=percentage))
+        measures.append(GoodfellowNormalMeasure(alpha=1-percentage))
+
     measures.append(AnovaFMeasure(ConvAggregation.none))
     alphas=[0.90, 0.95, 0.99, 0.999]
     for (alpha,ca) in itertools.product(alphas,cas):
@@ -152,7 +156,8 @@ def common_transformations_without_identity()-> [TransformationSet]:
     transformations = [SimpleAffineTransformationGenerator(r=360),
                        SimpleAffineTransformationGenerator(t=5),
                        SimpleAffineTransformationGenerator(s=5),
-                       SimpleAffineTransformationGenerator(r=360, s=4, t=3), ]
+                       # SimpleAffineTransformationGenerator(r=360, s=4, t=3),
+                       ]
     return transformations
 
 def rotation_transformations(n:int):

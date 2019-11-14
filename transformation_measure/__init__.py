@@ -22,4 +22,6 @@ from .measure.distance import DistanceMeasure,DistanceSampleMeasure,DistanceTran
 from .measure.distance_equivariance import DistanceSameEquivarianceMeasure
 
 
+from .measure.goodfellow import GoodfellowMeasure
+from .measure.goodfellow_prob import GoodfellowNormalMeasure
 

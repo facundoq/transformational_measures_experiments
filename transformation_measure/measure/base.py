@@ -68,9 +68,11 @@ class StratifiedMeasureResult(MeasureResult):
 # TODO use abc.ABC as base class
 import abc
 
-class Measure:
+class Measure():
+
     def __repr__(self):
         return f"{self.__class__.__name__}"
+
     def id(self):
         return str(self)
 

@@ -33,8 +33,10 @@ class Parameters:
         base,filename_ext=os.path.split(self.model_path)
         filename,ext=os.path.splitext(filename_ext)
         return filename
+
     def id(self):
         measure=self.measure.id()
+
         if self.stratified:
             measure=f"Stratified({measure})"
         return f"{self.model_name()}_{self.dataset}_{self.transformations.id()}_{measure}"

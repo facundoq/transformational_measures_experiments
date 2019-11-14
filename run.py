@@ -9,6 +9,7 @@ import os
 import models
 import itertools
 from transformation_measure import visualization
+import argcomplete
 
 from pathlib import Path
 
@@ -26,13 +27,12 @@ measures = config.common_measures()
 # dataset_percentages= [0.1, 0.5, 1.0]x
 
 dataset_names= ["mnist", "cifar10"]
-venv_path= utils_runner.get_venv_path()
+venv_path=""
 
 measure=tm.TransformationMeasure(tm.MeasureFunction.std,tm.ConvAggregation.sum)
+
 import abc
-
-
-class Experiment():
+class Experiment(abc.ABC):
     def __init__(self):
         self.plot_folderpath = config.plots_base_folder() / self.id()
         os.makedirs(self.plot_folderpath, exist_ok=True)
@@ -110,6 +110,8 @@ class CompareMeasures(Experiment):
                                   tm.NormalizedMeasure(mf,ca_none),
                                   tm.NormalizedVarianceMeasure(mf, ca_none),
                                   tm.DistanceMeasure(dmean),
+                                  # tm.GoodfellowMeasure()
+                                  tm.GoodfellowNormalMeasure(alpha=0.99)
                                    ],
                 "Equivariance":[
                             tm.DistanceSameEquivarianceMeasure(dmean),
@@ -647,13 +649,6 @@ class VisualizeInvariantFeatureMaps(Experiment):
             visualization.plot_invariant_feature_maps_pytorch(plot_folderpath,model,dataset,transformation_set,result,images=8,most_invariant_k=4,least_invariant_k=4,conv_aggregation=tm.ConvAggregation.mean)
             (finished).touch()
 
-
-
-
-
-
-
-
 import argparse
 
 
@@ -671,13 +666,17 @@ def parse_args(experiments:[Experiment])->[Experiment]:
                         default=None,
                         required=False,
                         choices=experiment_names,)
-    #argcomplete.autocomplete(parser)
-
+    argcomplete.autocomplete(parser)
+    parser.add_argument("-venv",
+                        help="Path to virtual environment to run experiments on",
+                        type=str,
+                        default=os.path.expanduser("~/dev/env/vm"),
+                        )
     args = parser.parse_args()
-    if args.experiment is None:
-        return experiments
-    else:
-        return [experiment_dict[args.experiment]]
+
+    if not args.experiment is None:
+        experiments = [experiment_dict[args.experiment]]
+    return experiments,args.venv
 
 
 if __name__ == '__main__':
@@ -707,7 +706,8 @@ if __name__ == '__main__':
 
     ]
 
-    experiments = parse_args(all_experiments)
+    experiments,venv = parse_args(all_experiments)
+    venv_path=venv
 
     for e in experiments:
         e()

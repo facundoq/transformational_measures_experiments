@@ -108,6 +108,10 @@ class RunningMeanAndVariance:
             self.old_m = self.new_m
             self.old_s = self.new_s
 
+    def update_all(self,x:np.ndarray):
+        for i in range(x.shape[0]):
+            self.update(x[i,:])
+
     def mean(self):
         return self.new_m if self.n else 0.0
 

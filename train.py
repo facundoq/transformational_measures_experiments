@@ -1,4 +1,5 @@
-
+#!/usr/bin/env python3
+# PYTHON_ARGCOMPLETE_OK
 
 
 import config
@@ -99,7 +100,7 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
                         , choices=transformations.keys()
                         ,default=tm.SimpleAffineTransformationGenerator())
 
-    #argcomplete.autocomplete(parser)
+    argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
     transformation=transformations[args.transformation]
