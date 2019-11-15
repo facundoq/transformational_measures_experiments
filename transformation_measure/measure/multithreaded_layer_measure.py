@@ -10,6 +10,11 @@ class LayerMeasure(abc.ABC):
         self.id=id
         self.name=name
 
+    def eval_private(self,q:Queue,inner_q:Queue,rq:Queue):
+        result,extra=self.eval(q,inner_q)
+        rq.put(result)
+
+
     @abc.abstractmethod
     def eval(self,q:Queue,inner_q:Queue):
         pass
@@ -65,9 +70,10 @@ class PerLayerMeasure(Measure,abc.ABC):
         layer_measures = [self.generate_layer_measure(i, name) for i, name in enumerate(names)]
         queues = [Queue() for i in range(layers)]
         inner_queues = [Queue() for i in range(layers)]
+        result_queues = [Queue() for i in range(layers)]
 
-        threads = [threading.Thread(target=c.eval, args=[q, qi],daemon=True) for c, q, qi in
-                   zip(layer_measures, queues, inner_queues)]
+        threads = [threading.Thread(target=c.eval, args=[q, qi,qr],daemon=True) for c, q, qi, qr in
+                   zip(layer_measures, queues, inner_queues,result_queues )]
 
         self.start_threads(threads)
         if self.activations_order == ActivationsOrder.SamplesFirst:
@@ -78,7 +84,11 @@ class PerLayerMeasure(Measure,abc.ABC):
             raise ValueError(f"Unknown activations order {self.activations_order}")
 
         self.wait_for_threads(threads)
-        results = [r.get_final_result() for r in layer_measures]
+        results  = [qr.get() for qr in result_queues]
+        return self.generate_result_from_layer_results(results,names)
+
+
+    def generate_result_from_layer_results(self,results,names):
         return MeasureResult(results, names, self)
 
     def eval_samples_first(self,activations_iterator:ActivationsIterator, queues:[Queue], inner_queues:[Queue]):

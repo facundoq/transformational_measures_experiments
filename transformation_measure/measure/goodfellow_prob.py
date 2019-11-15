@@ -28,17 +28,15 @@ class GlobalVarianceNormal(LayerMeasure):
         mean=mean.reshape(mean.size)
         std = std.reshape(std.size)
         # calculate the threshold values (approximately)
-        self.thresholds=np.zeros(mean.size)
+        thresholds=np.zeros(mean.size)
         for i,(mu,sigma) in enumerate(zip(mean,std)):
             t=norm.ppf(self.alpha,loc=mu,scale=sigma)
-            self.thresholds[i]=t
-        #self.thresholds = mean+2*std
-        self.thresholds=self.thresholds.reshape(original_shape)
+            thresholds[i]=t
+        #thresholds = mean+2*std
+        thresholds=thresholds.reshape(original_shape)
         # set g(i) equal to the activations_percentage
-        self.g= np.zeros_like(self.thresholds) + (1-self.alpha)
-
-    def get_final_result(self):
-        return self.g
+        g= np.zeros_like(thresholds) + (1-self.alpha)
+        return g,thresholds
 
 class LocalVarianceNormal(LayerMeasure):
 
@@ -58,10 +56,9 @@ class LocalVarianceNormal(LayerMeasure):
                 activated = (activations > self.threshold) * 1.0
                 running_mean.update_all(activated)
 
-        self.l=running_mean.mean()
+        return running_mean.mean()
 
-    def get_final_result(self):
-        return self.l
+
 
 
 class GlobalFiringRateNormalMeasure(PerLayerMeasure):
@@ -69,21 +66,16 @@ class GlobalFiringRateNormalMeasure(PerLayerMeasure):
         super().__init__(ActivationsOrder.TransformationsFirst)
         self.activation_percentage:float=activation_percentage
         self.sign:int=sign
-        self.layer_measures:{int, GlobalVarianceNormal}={}
 
     def __repr__(self):
         return f"G()"
 
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
-        layer_measure = GlobalVarianceNormal(i, name, self.activation_percentage, self.sign)
-        self.layer_measures[i]=layer_measure
-        return layer_measure
+        return GlobalVarianceNormal(i, name, self.activation_percentage, self.sign)
 
-    def get_layer_measure(self,i:int):
-        return self.layer_measures[i]
-
-    def get_thresholds(self):
-        return {i:m.thresholds  for i,m in self.layer_measures.items()}
+    def generate_result_from_layer_results(self, results_tresholds, names):
+        results_tresholds, tresholds = zip(*results_tresholds)
+        return MeasureResult(results_tresholds, names, self, extra_values={"thresholds":tresholds})
 
 class LocalFiringRateNormalMeasure(PerLayerMeasure):
     def __init__(self,thresholds:[np.ndarray],sign:int):
@@ -95,7 +87,6 @@ class LocalFiringRateNormalMeasure(PerLayerMeasure):
         return f"L()"
 
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
-
         return LocalVarianceNormal(i, name, self.thresholds[i], self.sign)
 
 class GoodfellowNormalMeasure(Measure):
@@ -110,12 +101,13 @@ class GoodfellowNormalMeasure(Measure):
     def eval(self,activations_iterator:ActivationsIterator):
         self.g = GlobalFiringRateNormalMeasure(self.alpha, self.sign)
         g_result = self.g.eval(activations_iterator)
-        self.thresholds = self.g.get_thresholds()
+        self.thresholds = g_result.extra_values["thresholds"]
         self.l = LocalFiringRateNormalMeasure(self.thresholds, self.sign)
         l_result = self.l.eval(activations_iterator)
 
         ratio = tm.divide_activations(l_result.layers,g_result.layers)
         return MeasureResult(ratio,activations_iterator.activation_names(),self)
+
 
     def __repr__(self):
         return f"GoodfellowNormal(gp={self.alpha})"
