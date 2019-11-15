@@ -1,8 +1,11 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 
-from multiprocessing import Queue
-import threading
+#from multiprocessing import Queue,Process
+from queue import Queue
+from threading import Thread
+import time
+import numpy as np
 import abc
 
 class LayerMeasure(abc.ABC):
@@ -20,7 +23,7 @@ class LayerMeasure(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_final_result(self):
+    def get_final_result(self)->np.ndarray:
         pass
 
     def queue_as_generator(self,q: Queue):
@@ -39,18 +42,16 @@ class ActivationsOrder(Enum):
 
 class PerLayerMeasure(Measure,abc.ABC):
 
-    def __init__(self,activations_order:ActivationsOrder):
+    def __init__(self,activations_order:ActivationsOrder,queue_max_size=1):
         self.activations_order = activations_order
+        self.queue_max_size=queue_max_size
+
     @abc.abstractmethod
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
         pass
 
     def signal_iteration_end(self, queues: [Queue]):
         self.put_value(queues,None)
-
-    def wait_for_threads(self, threads: [threading.Thread]):
-        for t in threads:
-            t.join()
 
     def put_values(self,queues: [Queue],values:[]):
         for q,v in zip(queues,values):
@@ -60,19 +61,23 @@ class PerLayerMeasure(Measure,abc.ABC):
         for q in queues:
             q.put(value)
 
-    def start_threads(self,threads:[threading.Thread]):
+    def start_threads(self,threads:[]):
         for t in threads:
             t.start()
+    def wait_for_threads(self, threads: []):
+        for t in threads:
+            t.join()
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         names = activations_iterator.activation_names()
         layers = len(names)
         layer_measures = [self.generate_layer_measure(i, name) for i, name in enumerate(names)]
-        queues = [Queue() for i in range(layers)]
-        inner_queues = [Queue() for i in range(layers)]
-        result_queues = [Queue() for i in range(layers)]
 
-        threads = [threading.Thread(target=c.eval, args=[q, qi,qr],daemon=True) for c, q, qi, qr in
+        queues = [Queue(self.queue_max_size) for i in range(layers)]
+        inner_queues = [Queue(self.queue_max_size) for i in range(layers)]
+        result_queues = [Queue(self.queue_max_size) for i in range(layers)]
+
+        threads = [Thread(target=c.eval, args=[q, qi,qr],daemon=True) for c, q, qi, qr in
                    zip(layer_measures, queues, inner_queues,result_queues )]
 
         self.start_threads(threads)
@@ -82,7 +87,6 @@ class PerLayerMeasure(Measure,abc.ABC):
             self.eval_transformations_first(activations_iterator, queues, inner_queues)
         else:
             raise ValueError(f"Unknown activations order {self.activations_order}")
-
         self.wait_for_threads(threads)
         results  = [qr.get() for qr in result_queues]
         return self.generate_result_from_layer_results(results,names)
