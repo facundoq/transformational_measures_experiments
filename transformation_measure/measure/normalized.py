@@ -3,7 +3,7 @@ from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
 from transformation_measure import MeasureFunction,QuotientMeasure
-
+import numpy as np
 
 class TransformationMeasure(Measure):
     def __init__(self, measure_function:MeasureFunction,conv_aggregation:ConvAggregation):
@@ -19,10 +19,11 @@ class TransformationMeasure(Measure):
         n_intermediates = len(layer_names)
         mean_running= [RunningMean() for i in range(n_intermediates)]
         for activations, x_transformed in activations_iterator.samples_first():
-
             # activations has the activations for all the transformations
             for j, layer_activations in enumerate(activations):
+                # apply function to conv layers
                 layer_activations = self.conv_aggregation.apply(layer_activations)
+                # directly compute the function
                 layer_measure = self.measure_function.apply(layer_activations)
                 # update the mean over all transformation
                 mean_running[j].update(layer_measure)
@@ -51,8 +52,7 @@ class SampleMeasure(Measure):
             for x, batch_activations in transformation_activations:
                 for j, layer_activations in enumerate(batch_activations):
                     layer_activations = self.conv_aggregation.apply(layer_activations)
-                    for i in range(layer_activations.shape[0]):
-                        samples_variances_running[j].update(layer_activations[i,])
+                    samples_variances_running[j].update_all(layer_activations)
             # update the mean over all transformation (and layers)
             for layer_mean_variances_running, layer_samples_variance_running in zip(mean_variances_running,samples_variances_running):
                 samples_variance=self.measure_function.apply_running(layer_samples_variance_running)

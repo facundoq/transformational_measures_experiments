@@ -10,7 +10,10 @@ from experiment import variance
 
 def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
 
-    m=m.collapse_convolutions(tm.ConvAggregation.sum)
+    m=m.collapse_convolutions(tm.ConvAggregation.mean)
+    for l in m.layers:
+        print(l.shape)
+        print(l)
 
     n = len(m.layer_names)
     f, axes = plt.subplots(1, n, dpi=150)

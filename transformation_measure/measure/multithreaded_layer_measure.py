@@ -1,9 +1,10 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 
-#from multiprocessing import Queue,Process
+import multiprocessing
 from queue import Queue
 from threading import Thread
+
 import time
 import numpy as np
 import abc
@@ -14,16 +15,12 @@ class LayerMeasure(abc.ABC):
         self.name=name
 
     def eval_private(self,q:Queue,inner_q:Queue,rq:Queue):
-        result,extra=self.eval(q,inner_q)
+        result=self.eval(q,inner_q)
         rq.put(result)
 
 
     @abc.abstractmethod
     def eval(self,q:Queue,inner_q:Queue):
-        pass
-
-    @abc.abstractmethod
-    def get_final_result(self)->np.ndarray:
         pass
 
     def queue_as_generator(self,q: Queue):
@@ -42,9 +39,15 @@ class ActivationsOrder(Enum):
 
 class PerLayerMeasure(Measure,abc.ABC):
 
-    def __init__(self,activations_order:ActivationsOrder,queue_max_size=1):
+    def __init__(self,activations_order:ActivationsOrder,queue_max_size=1,multiprocess=False):
         self.activations_order = activations_order
         self.queue_max_size=queue_max_size
+        if multiprocess:
+            self.process_class = multiprocessing.Process
+            self.queue_class = multiprocessing.Queue
+        else:
+            self.process_class = Thread
+            self.queue_class = Queue
 
     @abc.abstractmethod
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
@@ -73,11 +76,11 @@ class PerLayerMeasure(Measure,abc.ABC):
         layers = len(names)
         layer_measures = [self.generate_layer_measure(i, name) for i, name in enumerate(names)]
 
-        queues = [Queue(self.queue_max_size) for i in range(layers)]
-        inner_queues = [Queue(self.queue_max_size) for i in range(layers)]
-        result_queues = [Queue(self.queue_max_size) for i in range(layers)]
+        queues = [self.queue_class(self.queue_max_size) for i in range(layers)]
+        inner_queues = [self.queue_class(self.queue_max_size) for i in range(layers)]
+        result_queues = [self.queue_class(self.queue_max_size) for i in range(layers)]
 
-        threads = [Thread(target=c.eval, args=[q, qi,qr],daemon=True) for c, q, qi, qr in
+        threads = [self.process_class(target=c.eval_private, args=[q, qi,qr],daemon=True) for c, q, qi, qr in
                    zip(layer_measures, queues, inner_queues,result_queues )]
 
         self.start_threads(threads)

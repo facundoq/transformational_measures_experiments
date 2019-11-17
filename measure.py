@@ -12,7 +12,7 @@ from experiment import training, variance, util
 
 
 def experiment(p: variance.Parameters, o: variance.Options):
-    assert(len(p.transformations)>1)
+    assert(len(p.transformations)>0)
     use_cuda = torch.cuda.is_available()
 
     dataset = datasets.get(p.dataset.name)
@@ -53,11 +53,13 @@ def experiment(p: variance.Parameters, o: variance.Options):
 
     if not p.stratified:
         iterator = tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size)
-        print(f"Calculating measure {p.measure} dataset size {len(numpy_dataset)}...")
+        if o.verbose:
+            print(f"Calculating measure {p.measure} dataset size {len(numpy_dataset)}...")
 
         measure_result = p.measure.eval(iterator)
     else:
-        print(f"Calculating stratified version of measure {p.measure}...")
+        if o.verbose:
+            print(f"Calculating stratified version of measure {p.measure}...")
         stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test, dataset.x_test)
         stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size,num_workers=o.num_workers) for numpy_dataset in stratified_numpy_datasets]
         measure_result = p.measure.eval_stratified(stratified_iterators,dataset.labels)
@@ -68,7 +70,8 @@ if __name__ == "__main__":
     profiler= util.Profiler()
     profiler.event("start")
     p, o = variance.parse_parameters()
-    print(f"Experimenting with parameters: {p}")
+    if o.verbose:
+        print(f"Experimenting with parameters: {p}")
     measures_results=experiment(p,o)
     profiler.event("end")
     print(profiler.summary(human=True))
