@@ -40,6 +40,8 @@ class ActivationsOrder(Enum):
 class PerLayerMeasure(Measure,abc.ABC):
 
     def __init__(self,activations_order:ActivationsOrder,queue_max_size=1,multiprocess=False):
+        if multiprocess:
+            print("Warning, deadlocks when using multiprocess are possible")
         self.activations_order = activations_order
         self.queue_max_size=queue_max_size
         if multiprocess:

@@ -3,22 +3,32 @@ from transformation_measure.iterators.activations_iterator import ActivationsIte
 import numpy as np
 
 
-def divide_activations(a:ActivationsByLayer, b:ActivationsByLayer)->ActivationsByLayer:
-        eps = 0
-        measures = []  # coefficient of variations
-        for layer_v_transformations,layer_v_samples in zip(a, b):
-            normalized_measure = layer_v_transformations.copy()
+def divide_activations(num:ActivationsByLayer, den:ActivationsByLayer)->ActivationsByLayer:
+    #TODO evaluate other implementations
+    # https://stackoverflow.com/questions/26248654/how-to-return-0-with-divide-by-zero
+    eps = 0
 
-            normalized_measure[layer_v_samples  > eps] /= layer_v_samples [layer_v_samples  > eps]
-            both_below_eps = np.logical_and(layer_v_samples  <= eps,
-                                            layer_v_transformations <= eps)
-            normalized_measure[both_below_eps] = 1
-            only_baseline_below_eps = np.logical_and(
-                layer_v_samples  <= eps,
-                layer_v_transformations > eps)
-            normalized_measure[only_baseline_below_eps] = np.inf
-            measures.append(normalized_measure)
-        return measures
+    measures = []  # coefficient of variations
+    for num_values,den_values in zip(num, den):
+        # print(layer_v_transformations.shape,layer_v_samples.shape)
+
+        normalized_measure = num_values.copy()
+
+        normalized_measure[den_values  > eps] /= den_values [den_values  > eps]
+        both_below_eps = np.logical_and(den_values  <= eps,
+                                        num_values <= eps)
+        normalized_measure[both_below_eps] = 1
+
+        only_baseline_below_eps = np.logical_and(
+            den_values  <= eps,
+            num_values > eps)
+        # print("num", np.where(num_values > eps))
+        # print("den", np.where(den_values <= eps))
+        # print("both", np.where(only_baseline_below_eps))
+
+        normalized_measure[only_baseline_below_eps] = np.inf
+        measures.append(normalized_measure)
+    return measures
 
 class QuotientMeasure(Measure):
     def __init__(self, numerator_measure:Measure,denominator_measure:Measure):

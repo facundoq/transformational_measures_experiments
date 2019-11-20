@@ -137,9 +137,10 @@ def common_measures()-> [Measure]:
     mf, ca_sum, ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.sum, tm.ConvAggregation.mean
     ca_none = ConvAggregation.none
     measures=[
-        SampleVarianceMeasure(mf,ca_none)
-        ,TransformationVarianceMeasure(mf,ca_none)
-        ,NormalizedVarianceMeasure(mf,ca_none)
+        SampleMeasure(mf,ca_none)
+        ,TransformationMeasure(mf,ca_none)
+        ,NormalizedMeasure(mf,ca_none)
+        ,NormalizedMeasure(mf, ca_mean)
         ,AnovaFMeasure(ca_none)
         ,AnovaMeasure(ca_none, alpha=0.99,bonferroni=True)
         ,tm.DistanceMeasure(dmean)
@@ -161,7 +162,7 @@ def common_transformations_without_identity()-> [TransformationSet]:
     return transformations
 
 def rotation_transformations(n:int):
-    return [SimpleAffineTransformationGenerator(r=i * 360 // n) for i in range(0, n)]
+    return [SimpleAffineTransformationGenerator(r=i * 360 // n) for i in range(0, n+1)]
 
 def scale_transformations(n:int):
     return [SimpleAffineTransformationGenerator(s=i) for i in range(n)]
@@ -211,7 +212,7 @@ def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
 
 
 def min_accuracy(model:str,dataset:str)-> float:
-    min_accuracies = {"mnist": .95, "cifar10": .5}
+    min_accuracies = {"mnist": .90, "cifar10": .5}
     min_accuracy = min_accuracies[dataset]
 
     if dataset == "mnist" and model == models.FFNet.__name__:

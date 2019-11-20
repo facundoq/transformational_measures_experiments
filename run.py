@@ -99,10 +99,10 @@ class CompareMeasures(Experiment):
         mf, ca_none = tm.MeasureFunction.std, tm.ConvAggregation.none
         dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
         measure_sets = {"Variance": [
-            # tm.SampleMeasure(mf,ca_none)
-            # tm.TransformationMeasure(mf,ca_none),
-            tm.TransformationVarianceMeasure(mf, ca_none),
-            tm.SampleVarianceMeasure(mf, ca_none),
+            tm.SampleMeasure(mf,ca_none),
+            tm.TransformationMeasure(mf,ca_none),
+            # tm.TransformationVarianceMeasure(mf, ca_none),
+            # tm.SampleVarianceMeasure(mf, ca_none),
         ],
             "Distance": [
                 tm.DistanceTransformationMeasure(dmean),
@@ -111,7 +111,7 @@ class CompareMeasures(Experiment):
             "HighLevel": [
                 tm.AnovaMeasure(ca_none, 0.99, bonferroni=True),
                 tm.NormalizedMeasure(mf, ca_none),
-                tm.NormalizedVarianceMeasure(mf, ca_none),
+                # tm.NormalizedVarianceMeasure(mf, ca_none),
                 tm.DistanceMeasure(dmean),
                 # tm.GoodfellowMeasure()
                 tm.GoodfellowNormalMeasure(alpha=0.99)
@@ -349,9 +349,10 @@ class ComparePreConvAgg(Experiment):
 
     def run(self):
         functions = [tm.ConvAggregation.sum, tm.ConvAggregation.mean, tm.ConvAggregation.max, tm.ConvAggregation.none]
-        measure_sets_constructors = {"nm": tm.NormalizedVarianceMeasure
-            , "sm": tm.SampleVarianceMeasure
-            , "tm": tm.TransformationVarianceMeasure}
+        measure_sets_constructors = {
+            "nm": tm.NormalizedMeasure
+            , "sm": tm.SampleMeasure
+            , "tm": tm.TransformationMeasure}
         measure_sets = []
         for set_name, measure_constructor in measure_sets_constructors.items():
             measure_objects = [measure_constructor(tm.MeasureFunction.std, f) for f in functions]
@@ -464,7 +465,6 @@ class InvarianceWhileTraining(Experiment):
         n_intermediate_models = 10
         step = 100 // n_intermediate_models
         savepoints = list(range(0, 100, step)) + [100]
-
         mp = zip(measures, dataset_percentages)
         combinations = itertools.product(
             model_names, dataset_names, config.common_transformations_without_identity(), mp)
@@ -489,14 +489,16 @@ class InvarianceWhileTraining(Experiment):
 
             # plot results
             experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure}"
-            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
             results = config.load_results(config.results_paths(variance_parameters))
             # TODO implement a heatmap where the x axis is the training time/epoch
             # and the y axis indicates the layer, and the color indicates the invariance
             # to see it evolve over time.
 
             labels = [f"{sp}%" for sp in savepoints]
-            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
+
+            legend_location = ("center right", (1.25,0.5))
+            visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name,legend_location=legend_location)
 
 
 class CompareBN(Experiment):
@@ -686,15 +688,22 @@ class ValidateMeasure(Experiment):
     def run(self):
         measure_function, conv_agg = tm.MeasureFunction.std, tm.ConvAggregation.none
         measures = [
-            tm.TransformationVarianceMeasure(measure_function, conv_agg),
-            tm.SampleVarianceMeasure(measure_function, conv_agg),
-            tm.TransformationMeasure(measure_function, conv_agg),
-            tm.SampleMeasure(measure_function, conv_agg),
+            # tm.TransformationVarianceMeasure(measure_function, conv_agg),
+            # tm.SampleVarianceMeasure(measure_function, conv_agg),
+            # tm.NormalizedVarianceMeasure(measure_function, conv_agg),
+
+            # tm.TransformationMeasure(measure_function, conv_agg),
+            # tm.SampleMeasure(measure_function, conv_agg),
             tm.NormalizedMeasure(measure_function, conv_agg),
-            tm.NormalizedVarianceMeasure(measure_function, conv_agg),
-            tm.GoodfellowNormalMeasure(),
+            tm.NormalizedMeasure(measure_function, tm.ConvAggregation.sum),
+
+            # tm.GoodfellowNormalMeasure(),
         ]
-        combinations = itertools.product(model_names, dataset_names, measures, config.common_transformations())
+        model_names = ["SimpleConv"]
+        dataset_names = ["mnist"]
+        transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
+        #transformations=config.common_transformations()
+        combinations = itertools.product(model_names, dataset_names, measures, transformations)
         for model, dataset, measure, transformation in combinations:
             experiment_name = f"{model}_{dataset}_{measure.id()}_{transformation.id()}"
             epochs = config.get_epochs(model, dataset, transformation)
@@ -712,6 +721,7 @@ class ValidateMeasure(Experiment):
 
             title = f"Invariance to \n. Model: {model}, Dataset: {dataset}, Measure {measure.id()} \n transformation: {transformation.id()} "
             result = config.load_result(config.results_path(p_measure))
+            print(config.results_path(p_measure))
             visualization.plot_heatmap(result.measure_result,plot_filepath,title=title)
 
 
@@ -742,7 +752,7 @@ def parse_args(experiments: [Experiment]) -> [Experiment]:
 import warnings
 
 if __name__ == '__main__':
-    warnings.simplefilter('error', UserWarning)
+    # warnings.simplefilter('error', UserWarning)
 
     todo = [InvarianceVsEpochs(),
             InvarianceVsMaxPooling(),
