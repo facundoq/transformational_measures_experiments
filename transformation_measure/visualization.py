@@ -5,12 +5,18 @@ from typing import List
 from pytorch.numpy_dataset import NumpyDataset
 from transformation_measure.measure.base import MeasureResult
 import transformation_measure as tm
-
+from pathlib import Path
 from experiment import variance
 
 def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
 
-    m=m.collapse_convolutions(tm.ConvAggregation.sum)
+    for l in m.layers:
+        print(l.shape, np.sum(np.isinf(l)))
+
+    m=m.collapse_convolutions(tm.ConvAggregation.mean)
+
+    for l in m.layers:
+        print(l.shape, np.sum(np.isinf(l)))
 
     n = len(m.layer_names)
     f, axes = plt.subplots(1, n, dpi=150)
@@ -20,7 +26,7 @@ def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
         activation = activation[:, np.newaxis]
         #mappable = ax.imshow(cv, cmap='inferno')
         if vmax is not None:
-            mappable=ax.imshow(activation,vmin=vmin,vmax=vmax,cmap='inferno',aspect="auto")
+            mappable = ax.imshow(activation,vmin=vmin,vmax=vmax,cmap='inferno',aspect="auto")
         else:
             mappable = ax.imshow(activation, vmin=vmin, cmap='inferno', aspect="auto")
 
@@ -88,7 +94,7 @@ def outlier_range(stds,iqr_away):
 
 
 
-def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath, labels=None,title="",linestyles=None,plot_mean=False,color=None):
+def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,plot_mean=False,color=None,legend_location=None):
     n=len(results)
     if n == 0:
         raise ValueError(f"`results` is an empty list.")
@@ -145,7 +151,12 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
                      box.width, box.height * 0.9])
 
     # Put legend below current axis
-    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15),
+    if legend_location is None:
+        loc, pos = ['lower center', np.array((0.5, -0.2))]
+    else:
+        loc, pos = legend_location
+
+    ax.legend(loc=loc, bbox_to_anchor=pos,
               fancybox=True, shadow=True)
 
     plt.savefig(filepath, bbox_inches="tight")

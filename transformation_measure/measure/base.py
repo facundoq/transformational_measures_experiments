@@ -2,14 +2,14 @@
 import abc
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
-from typing import Dict, List, Tuple
-from .stats_running import RunningMean, RunningMeanAndVariance
+from typing import  List
+from .stats_running import RunningMean
 from .layer_transformation import ConvAggregation
 
 ActivationsByLayer = [np.ndarray]
 
 class MeasureResult:
-    def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure',extra_values={}):
+    def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure',extra_values=dict()):
         self.layers=layers
         self.layer_names=layer_names
         self.measure=measure
@@ -54,6 +54,7 @@ class MeasureResult:
 
         return MeasureResult(results,self.layer_names,self.measure)
 
+
 class StratifiedMeasureResult(MeasureResult):
     def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure'
                  ,class_measures:List[MeasureResult],class_labels:List[str]):
@@ -66,8 +67,6 @@ class StratifiedMeasureResult(MeasureResult):
 
 
 # TODO use abc.ABC as base class
-import abc
-
 class Measure():
 
     def __repr__(self):

@@ -25,7 +25,8 @@ def get_all_models()->Dict[str,Callable]:
     def setup_model(model:ObservableLayersModule,use_cuda:bool,lr:float,wd:float)->Optimizer:
         if use_cuda:
             model = model.cuda()
-        parameters = training.add_weight_decay(model.named_parameters(), wd)
+        #parameters = training.add_weight_decay(model.named_parameters(), wd)
+        parameters = model.parameters()
         optimizer = optim.AdamW(parameters, lr=lr)
         #rp = optim.lr_scheduler.ReduceLROnPlateau(optimizer , patience=2, cooldown=0)
         return optimizer
@@ -100,8 +101,8 @@ def get_all_models()->Dict[str,Callable]:
                           }
         else:
             resnet_version = {"mnist": models.ResNet18,
-                              "cifar10": models.ResNet50,
-                              "fashion_mnist": models.ResNet34,
+                              "cifar10": models.ResNet18,
+                              "fashion_mnist": models.ResNet18,
                               }
 
         model = resnet_version[dataset.name](dataset.input_shape, dataset.num_classes)

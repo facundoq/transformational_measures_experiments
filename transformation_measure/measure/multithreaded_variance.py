@@ -17,18 +17,19 @@ class VarianceLayerMeasure(LayerMeasure):
 
     def eval(self,q:Queue,inner_q:Queue):
 
-        self.m = RunningMean()
+        m = RunningMean()
         for iteration_info in self.queue_as_generator(q):
             inner_m = RunningMeanAndVariance()
+
             for activations in self.queue_as_generator(inner_q):
                 activations = self.conv_aggregation.apply(activations)
-                for j in range(activations.shape[0]):
-                    inner_m.update(activations[j,])
-            inner_result=self.measure_function.apply_running(inner_m)
-            self.m.update(inner_result)
+                inner_m.update_all(activations)
+                # i += 1
 
-    def get_final_result(self):
-        return self.m.mean()
+            inner_result = self.measure_function.apply_running(inner_m)
+            m.update(inner_result)
+
+        return m.mean()
 
 class VarianceMeasure(PerLayerMeasure):
     def __init__(self,order:ActivationsOrder,measure_function: MeasureFunction, conv_aggregation: ConvAggregation):

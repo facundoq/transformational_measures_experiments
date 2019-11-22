@@ -1,9 +1,10 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 
-#from multiprocessing import Queue,Process
+import multiprocessing
 from queue import Queue
 from threading import Thread
+
 import time
 import numpy as np
 import abc
@@ -13,12 +14,13 @@ class LayerMeasure(abc.ABC):
         self.id=id
         self.name=name
 
-    @abc.abstractmethod
-    def eval(self,q:Queue,inner_q:Queue):
-        pass
+    def eval_private(self,q:Queue,inner_q:Queue,rq:Queue):
+        result=self.eval(q,inner_q)
+        rq.put(result)
+
 
     @abc.abstractmethod
-    def get_final_result(self)->np.ndarray:
+    def eval(self,q:Queue,inner_q:Queue):
         pass
 
     def queue_as_generator(self,q: Queue):
@@ -37,9 +39,17 @@ class ActivationsOrder(Enum):
 
 class PerLayerMeasure(Measure,abc.ABC):
 
-    def __init__(self,activations_order:ActivationsOrder,queue_max_size=1):
+    def __init__(self,activations_order:ActivationsOrder,queue_max_size=1,multiprocess=False):
+        if multiprocess:
+            print("Warning, deadlocks when using multiprocess are possible")
         self.activations_order = activations_order
         self.queue_max_size=queue_max_size
+        if multiprocess:
+            self.process_class = multiprocessing.Process
+            self.queue_class = multiprocessing.Queue
+        else:
+            self.process_class = Thread
+            self.queue_class = Queue
 
     @abc.abstractmethod
     def generate_layer_measure(self, i:int, name:str) -> LayerMeasure:
@@ -67,11 +77,13 @@ class PerLayerMeasure(Measure,abc.ABC):
         names = activations_iterator.activation_names()
         layers = len(names)
         layer_measures = [self.generate_layer_measure(i, name) for i, name in enumerate(names)]
-        queues = [Queue(self.queue_max_size) for i in range(layers)]
-        inner_queues = [Queue(self.queue_max_size) for i in range(layers)]
 
-        threads = [Thread(target=c.eval, args=[q, qi],daemon=True) for c, q, qi in
-                   zip(layer_measures, queues, inner_queues)]
+        queues = [self.queue_class(self.queue_max_size) for i in range(layers)]
+        inner_queues = [self.queue_class(self.queue_max_size) for i in range(layers)]
+        result_queues = [self.queue_class(self.queue_max_size) for i in range(layers)]
+
+        threads = [self.process_class(target=c.eval_private, args=[q, qi,qr],daemon=True) for c, q, qi, qr in
+                   zip(layer_measures, queues, inner_queues,result_queues )]
 
         self.start_threads(threads)
         if self.activations_order == ActivationsOrder.SamplesFirst:
@@ -81,7 +93,11 @@ class PerLayerMeasure(Measure,abc.ABC):
         else:
             raise ValueError(f"Unknown activations order {self.activations_order}")
         self.wait_for_threads(threads)
-        results = [l.get_final_result() for l in layer_measures]
+        results  = [qr.get() for qr in result_queues]
+        return self.generate_result_from_layer_results(results,names)
+
+
+    def generate_result_from_layer_results(self,results,names):
         return MeasureResult(results, names, self)
 
     def eval_samples_first(self,activations_iterator:ActivationsIterator, queues:[Queue], inner_queues:[Queue]):
