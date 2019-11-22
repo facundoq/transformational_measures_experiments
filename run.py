@@ -115,7 +115,8 @@ class CompareMeasures(Experiment):
                                    ],
                 "Equivariance":[
                             tm.DistanceSameEquivarianceMeasure(dmean),
-                            tm.DistanceMeasure(dmean),
+                            tm.DistanceTransformationMeasure(dmean),
+                            # tm.DistanceMeasure(dmean),
                             ]
                       }
 
@@ -618,6 +619,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
                     ]
         conv_model_names = [m for m in model_names if (not "FFNet" in m)]
         conv_model_names = [models.SimpleConv.__name__]
+
         combinations = itertools.product(
             conv_model_names, dataset_names, config.common_transformations_without_identity(), measures)
         for (model_name, dataset_name, transformation_set, measure) in combinations:

@@ -110,6 +110,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
 
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
+
         x= np.arange(n_layers)+1
         y= result.measure_result.per_layer_average()
         if plot_mean:
@@ -234,9 +235,10 @@ def plot_feature_maps(feature_maps:np.ndarray, feature_indices:[int], variance_s
 
         axis[i + 1, -1].imshow(std_feature_map,cmap="gray")
         axis[i + 1, -1].axis("off")
-        plt.colorbar(colorbar_images[i], ax=axis[i + 1, -1])
+        cbar = plt.colorbar(colorbar_images[i], ax=axis[i + 1, -1])
+        cbar.ax.tick_params(labelsize=5)
 
-    # mean and std of images columns
+        # mean and std of images columns
     axis[0, -2].imshow(x_transformed.mean(axis=0),cmap="gray")
     axis[0, -2].axis("off")
 
