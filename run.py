@@ -161,7 +161,7 @@ class CompareMeasures(Experiment):
 
             # plot results
             experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure_set_name}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"`3`2
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [m.id() for m in measures]
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
