@@ -170,8 +170,18 @@ def scale_transformations(n:int):
 def translation_transformations(n:int):
     return [SimpleAffineTransformationGenerator(t=i) for i in range(n)]
 
+def combined_transformations():
+    ts=[]
+    for i in range(17):
+        r = i * 360 //16
+        for s in range(6):
+            for t in range(6):
+                ts.append(SimpleAffineTransformationGenerator(r=r, s=s, t=t))
+
+    return ts
+
 def all_transformations():
-    return common_transformations()+rotation_transformations(16)+scale_transformations(5)+translation_transformations(4)
+    return combined_transformations() #common_transformations()+rotation_transformations(16)+scale_transformations(6)+translation_transformations(6) +
 
 
 def common_dataset_sizes()->[float]:

@@ -15,12 +15,23 @@ from experiment import variance, training, model_loading, utils_runner
 from transformation_measure import visualization
 
 all_model_names = config.model_names
-bn_model_names = [name for name in all_model_names if name.endswith("BN")]
-model_names = [name for name in all_model_names if not name.endswith("BN")]
 
-model_names.sort()
-model_names = [name for name in model_names if not name.startswith("ResNet")]
-model_names = ["SimpleConv"]
+
+
+#
+
+common_model_names = [models.SimpleConv.__name__, models.AllConvolutional.__name__, models.VGGLike.__name__, models.ResNet.__name__]
+common_model_names.sort()
+
+bn_model_names = [name for name in all_model_names if name.endswith("BN")]
+non_bn_model_names = [name for name in all_model_names if not name.endswith("BN")]
+
+common_model_names_except_resnet = [name for name in common_model_names if not name.startswith("ResNet")]
+
+small_model_names = [models.SimpleConv.__name__, models.AllConvolutional.__name__]
+
+simple_model_names = [models.SimpleConv.__name__]
+
 
 measures = config.common_measures()
 
@@ -114,7 +125,7 @@ class CompareMeasures(Experiment):
                 # tm.NormalizedVarianceMeasure(mf, ca_none),
                 tm.DistanceMeasure(dmean),
                 # tm.GoodfellowMeasure()
-                tm.GoodfellowNormalMeasure(alpha=0.99)
+                # tm.GoodfellowNormalMeasure(alpha=0.99)
             ],
             "Equivariance": [
                 tm.DistanceSameEquivarianceMeasure(dmean),
@@ -124,6 +135,9 @@ class CompareMeasures(Experiment):
 
         # model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
+
+        model_names = common_model_names
+        model_names = ["SimpleConv"]
         transformations = config.common_transformations_without_identity()
 
         combinations = itertools.product(*[model_names, dataset_names, transformations, measure_sets.items()])
@@ -147,7 +161,7 @@ class CompareMeasures(Experiment):
 
             # plot results
             experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure_set_name}"
-            plot_filepath = os.path.join(self.plot_folderpath, f"{experiment_name}.png")
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"`3`2
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [m.id() for m in measures]
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels, title=experiment_name)
@@ -160,6 +174,7 @@ class MeasureVsDatasetSize(Experiment):
 
     def run(self):
         dataset_sizes = [0.01, 0.05, 0.1, 0.5, 1.0]
+        model_names = small_model_names
         combinations = list(itertools.product(
             *[model_names, dataset_names, config.common_transformations_without_identity(), measures]))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
@@ -187,9 +202,9 @@ class MeasureVsDatasetSubset(Experiment):
 
     def run(self):
         dataset_sizes = [(variance.DatasetSubset.test, 0.1), (variance.DatasetSubset.train, 0.02)]
-
+        model_names = small_model_names
         combinations = list(itertools.product(
-            *[model_names, dataset_names, config.common_transformations_without_identity(), measures]))
+            *[model_names , dataset_names, config.common_transformations_without_identity(), measures]))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
             epochs = config.get_epochs(model, dataset, transformation)
@@ -223,7 +238,7 @@ class InvarianceVsTransformationDiversity(Experiment):
         measure = tm.NormalizedMeasure(measure_function, conv_agg)
         distance_measure = tm.DistanceMeasure(tm.DistanceAggregation.mean)
         measures = [measure, distance_measure]
-        combinations = itertools.product(*[model_names, dataset_names, measures])
+        combinations = itertools.product(*[common_model_names, dataset_names, measures])
 
         for model, dataset, measure in combinations:
             print(model, dataset)
@@ -261,7 +276,7 @@ class InvarianceVsTransformationDifferentScales(Experiment):
         n_transformations = 5
         measure_function, conv_agg = tm.MeasureFunction.std, tm.ConvAggregation.none
         measure = tm.NormalizedMeasure(measure_function, conv_agg)
-        combinations = itertools.product(*[model_names, dataset_names])
+        combinations = itertools.product(*[common_model_names, dataset_names])
         names = ["rotation", "translation", "scale"]
         sets = [config.rotation_transformations(16), config.translation_transformations(4),
                 config.scale_transformations(5)]
@@ -300,7 +315,7 @@ class CollapseConvBeforeOrAfter(Experiment):
 
     def run(self):
         pre_functions = [tm.ConvAggregation.sum, tm.ConvAggregation.mean, tm.ConvAggregation.max]
-
+        model_names = small_model_names
         measures = []
         for f in pre_functions:
             measure = tm.NormalizedMeasure(tm.MeasureFunction.std, f)
@@ -309,7 +324,7 @@ class CollapseConvBeforeOrAfter(Experiment):
         post_functions = [tm.ConvAggregation.mean]
 
         combinations = itertools.product(
-            *[model_names, dataset_names, config.common_transformations_without_identity()])
+            *[model_names , dataset_names, config.common_transformations_without_identity()])
         for (model, dataset, transformation) in combinations:
             # train
 
@@ -359,7 +374,7 @@ class ComparePreConvAgg(Experiment):
             measure_sets.append((set_name, measure_objects))
 
         combinations = itertools.product(
-            model_names, dataset_names, config.common_transformations_without_identity(), measure_sets)
+            small_model_names , dataset_names, config.common_transformations_without_identity(), measure_sets)
         for model, dataset, transformation, (set_name, measures) in combinations:
             p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
             experiment_name = f"{model}_{p_dataset.id()}_{transformation.id()}_{set_name}"
@@ -403,7 +418,7 @@ class InvarianceForRandomNetworks(Experiment):
 
         mp = zip(measures, dataset_percentages)
         combinations = itertools.product(
-            model_names, dataset_names, config.common_transformations_without_identity(), mp)
+            common_model_names, dataset_names, config.common_transformations_without_identity(), mp)
         for model_name, dataset_name, transformation, (measure, p) in combinations:
             # generate `random_model_n` models and save them without training
             models_paths = []
@@ -467,7 +482,7 @@ class InvarianceWhileTraining(Experiment):
         savepoints = list(range(0, 100, step)) + [100]
         mp = zip(measures, dataset_percentages)
         combinations = itertools.product(
-            model_names, dataset_names, config.common_transformations_without_identity(), mp)
+            common_model_names, dataset_names, config.common_transformations_without_identity(), mp)
         for model, dataset, transformation, (measure, p) in combinations:
             # train
             epochs = config.get_epochs(model, dataset, transformation)
@@ -515,7 +530,7 @@ class CompareBN(Experiment):
 
         # model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
-        model_pairs = zip(bn_model_names, model_names)
+        model_pairs = zip(bn_model_names, common_model_names)
         combinations = itertools.product(
             model_pairs, dataset_names, config.common_transformations_without_identity(), measures)
         for (model_pair, dataset, transformation, measure) in combinations:
@@ -557,7 +572,7 @@ class InvarianceAcrossDatasets(Experiment):
                     tm.DistanceMeasure(tm.DistanceAggregation.mean)]
 
         combinations = itertools.product(
-            model_names, dataset_names, config.common_transformations_without_identity(), measures)
+            small_model_names , dataset_names, config.common_transformations_without_identity(), measures)
         for (model, dataset, transformation, measure) in combinations:
             # train
             epochs = config.get_epochs(model, dataset, transformation)
@@ -645,7 +660,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
             tm.DistanceSameEquivarianceMeasure(dmean),
 
         ]
-        conv_model_names = [m for m in model_names if (not "FFNet" in m)]
+        conv_model_names = [m for m in common_model_names if (not "FFNet" in m)]
         conv_model_names = [models.SimpleConv.__name__]
         combinations = itertools.product(
             conv_model_names, dataset_names, config.common_transformations_without_identity(), measures)

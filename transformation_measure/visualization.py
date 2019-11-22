@@ -151,7 +151,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
 
     # Put legend below current axis
     if legend_location is None:
-        loc, pos = ['lower center', np.array((0.5, -1))]
+        loc, pos = ['lower center', np.array((0.5, -0.2))]
     else:
         loc, pos = legend_location
 
