@@ -1,3 +1,23 @@
+params = {
+    # 'text.latex.preamble': ['\\usepackage{gensymb}'],
+    'image.origin': 'lower',
+    'image.interpolation': 'nearest',
+    'image.cmap': 'gray',
+    'axes.grid': False,
+    'savefig.dpi': 150,  # to adjust notebook inline plot size
+    'axes.labelsize': 8, # fontsize for x and y labels (was 10)
+    'axes.titlesize': 8,
+    'font.size': 8, # was 10
+    'legend.fontsize': 6, # was 10
+    'xtick.labelsize': 8,
+    'ytick.labelsize': 8,
+    # 'text.usetex': True,
+    'figure.figsize': [3.39, 2.10],
+    'font.family': 'serif',
+}
+import matplotlib
+matplotlib.rcParams.update(params)
+
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -7,6 +27,8 @@ from transformation_measure.measure.base import MeasureResult
 import transformation_measure as tm
 from pathlib import Path
 from experiment import variance
+
+
 
 def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
 
@@ -152,7 +174,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
 
     # Put legend below current axis
     if legend_location is None:
-        loc, pos = ['lower center', np.array((0.5, -0.2))]
+        loc, pos = ['lower center', np.array((0.5, 0))]
     else:
         loc, pos = legend_location
 
@@ -211,12 +233,14 @@ def plot_feature_maps(feature_maps:np.ndarray, feature_indices:[int], variance_s
     if ct == 1:
         x_transformed = x_transformed[:,:, :, 0]
 
+    fontsize=max(3, 10 - int(np.sqrt(n)))
     dpi = int(np.sqrt(n) * 9) + 100
-    f, axis = plt.subplots(c+1,n+3,dpi=dpi)
+    f, axis = plt.subplots(c+1, n+4, dpi=dpi)
     axis[0, 0].set_title("Inputs")
     axis[0, 0].axis("off")
     for i in range(c):
-        axis[i+1, 0].set_title(f"FM {feature_indices[i]} \n, score:{variance_scores[i]:0.2f} ",fontsize=5)
+        title=f"FM {feature_indices[i]}\n, score:\n{variance_scores[i]:0.2f} "
+        axis[i+1, 0].text(0,0, title,fontsize=fontsize)
         axis[i+1, 0].axis("off")
 
     for j in range(n):
@@ -240,21 +264,23 @@ def plot_feature_maps(feature_maps:np.ndarray, feature_indices:[int], variance_s
     for i in range(c):
         mean_feature_map = np.mean(feature_maps[:,:,:,i],axis=0)
         std_feature_map = np.std(feature_maps[:, :, :, i], axis=0)
-
-        axis[i + 1, -2].imshow(mean_feature_map,cmap="gray")
+        axis[i + 1, -3].imshow(mean_feature_map,cmap="gray")
+        axis[i + 1, -3].axis("off")
+        axis[i + 1, -2].imshow(std_feature_map,cmap="gray")
         axis[i + 1, -2].axis("off")
 
-        axis[i + 1, -1].imshow(std_feature_map,cmap="gray")
+    for i in range(c):
         axis[i + 1, -1].axis("off")
         cbar = plt.colorbar(colorbar_images[i], ax=axis[i + 1, -1])
-        cbar.ax.tick_params(labelsize=5)
+        cbar.ax.tick_params(labelsize=fontsize)
+    axis[0, -1].axis("off")
 
         # mean and std of images columns
-    axis[0, -2].imshow(x_transformed.mean(axis=0),cmap="gray")
-    axis[0, -2].axis("off")
+    axis[0, -3].imshow(x_transformed.mean(axis=0),cmap="gray")
+    axis[0, -3].axis("off")
 
-    axis[0, -1].imshow(x_transformed.std(axis=0),cmap="gray")
-    axis[0, -1].axis("off")
+    axis[0, -2].imshow(x_transformed.std(axis=0),cmap="gray")
+    axis[0, -2].axis("off")
 
     plt.savefig(filepath)
     plt.close("all")

@@ -690,7 +690,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
             plot_folderpath.mkdir(parents=True, exist_ok=True)
 
             visualization.plot_invariant_feature_maps_pytorch(plot_folderpath, model, dataset, transformation_set,
-                                                              result, images=8, most_invariant_k=4, least_invariant_k=4,
+                                                              result, images=2, most_invariant_k=4, least_invariant_k=4,
                                                               conv_aggregation=tm.ConvAggregation.mean)
             (finished).touch()
 
