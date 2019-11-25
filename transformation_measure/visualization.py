@@ -115,8 +115,63 @@ def outlier_range(stds,iqr_away):
 
 
 
+def plot_collapsing_layers_different_models(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,color=None,legend_location=None):
+    n = len(results)
+    if n == 0:
+        raise ValueError(f"`results` is an empty list.")
+    if color is None:
+        if n==2:
+            color = np.array([[1,0,0],[0,0,1]])
+        else:
+            color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
 
-def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,plot_mean=False,color=None,legend_location=None):
+    f, ax = plt.subplots(dpi=min(350, max(150, n * 15)))
+    f.suptitle(title)
+
+    result_layers = np.array([len(r.measure_result.layer_names) for r in results])
+    min_n, max_n = result_layers.min(), result_layers.max()
+    x_result_most_layers=np.zeros(1)
+    for i, result in enumerate(results):
+        n_layers = len(result.measure_result.layers)
+        x = np.linspace(0,100,n,endpoint=True)
+        if n_layers>=x_result_most_layers.size:
+            x_result_most_layers=x
+        y = result.measure_result.per_layer_average()
+
+        if labels is None:
+            label = None
+        else:
+            label = labels[i]
+        if linestyles is None:
+            linestyle = "-"
+        else:
+            linestyle = linestyles[i]
+        ax.plot(x, y, label=label, linestyle=linestyle, color=color[i, :] * 0.7)
+
+    ax.set_ylabel("Measure values")
+    ax.set_xlabel("Layer")
+    if max_n < 25:
+        # if all results have the same model, use the layer names
+        # instead of just numbers
+        ax.set_xticks(x_result_most_layers)
+
+    box = ax.get_position()
+    ax.set_position([box.x0, box.y0 + box.height * 0.1,
+                     box.width, box.height * 0.9])
+
+    # Put legend below current axis
+    if legend_location is None:
+        loc, pos = ['lower center', np.array((0.5, 0))]
+    else:
+        loc, pos = legend_location
+
+    ax.legend(loc=loc, bbox_to_anchor=pos,
+              fancybox=True, shadow=True)
+    plt.savefig(filepath, bbox_inches="tight")
+    plt.close()
+
+
+def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,plot_mean=False,color=None,legend_location=None,same_model=False):
     n=len(results)
     if n == 0:
         raise ValueError(f"`results` is an empty list.")
@@ -139,7 +194,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
 
-        x= np.arange(n_layers)+1
+        x= np.arange(n_layers)
         y= result.measure_result.per_layer_average()
         if plot_mean:
             average+=y
@@ -165,7 +220,13 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     ax.set_xlabel("Layer")
     # ax.set_ylim(max_measure)
     if max_n < 25:
-        ax.set_xticks(range(max_n))
+        # if all results have the same model, use the layer names
+        # instead of just numbers
+        if same_model:
+            labels = results[0].measure_result.layer_names
+            ax.set_xticklabels(labels, rotation=45)
+        else:
+            ax.set_xticks(range(max_n))
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,

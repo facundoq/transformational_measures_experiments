@@ -30,7 +30,7 @@ class DistanceAggregation(Enum):
         result=np.zeros(c)
         for i in range(c):
             sample = x[:,i,:]
-            d = scipy.spatial.distance.pdist(sample, 'cityblock')
+            d = scipy.spatial.distance.pdist(sample, 'euclidean')
             #d = euclidean_distances(sample)
             result[i] = self.aggregate(d)
         return result
@@ -41,7 +41,7 @@ class DistanceAggregation(Enum):
         result = np.zeros(c)
         for i in range(c):
             sample = x[:, i,:]
-            d = scipy.spatial.distance.pdist(sample, 'cityblock')
+            d = scipy.spatial.distance.pdist(sample, 'euclidean')
             #d = euclidean_distances(sample)
             result[i] = self.aggregate(d)
         return result

@@ -178,7 +178,7 @@ class CompareMeasures(Experiment):
 
 
 
-class MeasureStability(Experiment):
+class RandomInitialization(Experiment):
     def description(self):
         return """Test measures with various instances of the same architecture/transformation/dataset to see if the measure is dependent on the random initialization in the training or simply on the architecture"""
 
@@ -188,7 +188,7 @@ class MeasureStability(Experiment):
         measures=[
                     # tm.AnovaMeasure(ca_none, 0.99, bonferroni=True),
                     tm.NormalizedMeasure(mf, ca_mean),
-                    # tm.DistanceMeasure(dmean),
+                    tm.DistanceMeasure(dmean),
                     # tm.DistanceSameEquivarianceMeasure(dmean),
         ]
         repetitions = 8
@@ -223,7 +223,7 @@ class MeasureStability(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath,plot_mean=True)
 
 
-class MeasureVsDatasetSize(Experiment):
+class DatasetSize(Experiment):
 
     def description(self):
         return '''Vary the test dataset size and see how it affects the measure's value. That is, vary the size of the dataset used to compute the invariance (not the training dataset) and see how it affects the calculation of the measure.'''
@@ -231,6 +231,14 @@ class MeasureVsDatasetSize(Experiment):
     def run(self):
         dataset_sizes = [0.01, 0.05, 0.1, 0.5, 1.0]
         model_names = simple_model_names
+        mf, ca_none, ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.none, tm.ConvAggregation.mean
+        dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
+        measures = [
+            # tm.AnovaMeasure(ca_none, 0.99, bonferroni=True),
+            tm.NormalizedMeasure(mf, ca_mean),
+            tm.DistanceMeasure(dmean),
+            tm.DistanceSameEquivarianceMeasure(dmean),
+        ]
         combinations = list(itertools.product(
             model_names, dataset_names, config.common_transformations_without_identity(), measures))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
@@ -251,16 +259,26 @@ class MeasureVsDatasetSize(Experiment):
             visualization.plot_collapsing_layers(results, plot_filepath, labels=labels)
 
 
-class MeasureVsDatasetSubset(Experiment):
+class DatasetSubset(Experiment):
 
     def description(self):
         return '''Vary the test dataset subset (either train o testing) and see how it affects the measure's value.'''
 
     def run(self):
-        dataset_sizes = [(variance.DatasetSubset.test, 0.1), (variance.DatasetSubset.train, 0.02)]
-        model_names = simple_model_names#small_model_names
+        dataset_sizes = [(variance.DatasetSubset.test, 0.5), (variance.DatasetSubset.train, 0.1)]
+
+        model_names = simple_model_names
+        mf, ca_none, ca_mean = tm.MeasureFunction.std, tm.ConvAggregation.none, tm.ConvAggregation.mean
+        dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
+        measures = [
+            # tm.AnovaMeasure(ca_none, 0.99, bonferroni=True),
+            tm.NormalizedMeasure(mf, ca_mean),
+            tm.DistanceMeasure(dmean),
+            tm.DistanceSameEquivarianceMeasure(dmean),
+        ]
         combinations = list(itertools.product(
             model_names , dataset_names, config.common_transformations_without_identity(), measures))
+
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
             epochs = config.get_epochs(model, dataset, transformation)
@@ -270,7 +288,7 @@ class MeasureVsDatasetSubset(Experiment):
             p_datasets = []
             for (subset, p) in dataset_sizes:
                 if measure.__class__ == tm.AnovaMeasure.__class__:
-                    p = p * 5
+                    p = p * 2
                 p_datasets.append(variance.DatasetParameters(dataset, subset, p))
             experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
@@ -723,17 +741,23 @@ class CompareAnovaMeasures(Experiment):
         pass
 
 
-class InvarianceVsKernelSize(Experiment):
+class KernelSize(Experiment):
     def description(self):
-        return """Determine which model is more invariant. Plots invariance of models as layers progress"""
+        return """Determine how the kernel sizes affect invariance"""
 
     def run(self):
         pass
 
-
-class InvarianceVsMaxPooling(Experiment):
+class Stratified(Experiment):
     def description(self):
-        return """Determine which model is more invariant. Plots invariance of models as layers progress"""
+        return """Determine the differences between stratified computations and non-stratified."""
+
+    def run(self):
+        pass
+
+class MaxPooling(Experiment):
+    def description(self):
+        return """Determine wheter MaxPooling affects the invariance structure of the network or it is similar to a network with strided convolutions"""
 
     def run(self):
         pass
@@ -752,19 +776,19 @@ class VisualizeInvariantFeatureMaps(Experiment):
             # tm.AnovaMeasure(ca_none, alpha=0.99,bonferroni=True),
             # #tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.mean, alpha=0.99,bonferroni=True),
             # tm.NormalizedMeasure(mf, ca_sum),
-            # tm.NormalizedMeasure(mf, ca_mean),
+            tm.NormalizedMeasure(mf, ca_mean),
             # tm.TransformationMeasure(mf, tm.ConvAggregation.none),
             # tm.TransformationMeasure(mf, ca_sum),
             # tm.DistanceTransformationMeasure(mf, dmean),
             # tm.DistanceTransformationMeasure(mf, dmax),
-            # tm.DistanceMeasure(mf,dmean),
-            # tm.DistanceMeasure(mf, dmax),
-            # tm.DistanceSameEquivarianceMeasure(mf, dmax),
+            tm.DistanceMeasure(dmean),
+            # tm.DistanceMeasure(dmax),
+            # tm.DistanceSameEquivarianceMeasure(dmax),
             tm.DistanceSameEquivarianceMeasure(dmean),
 
         ]
-        conv_model_names = [m for m in common_model_names if (not "FFNet" in m)]
-        conv_model_names = [models.SimpleConv.__name__]
+        #conv_model_names = [m for m in common_model_names if (not "FFNet" in m)]
+        conv_model_names = simple_model_names # [models.SimpleConv.__name__]
         combinations = itertools.product(
             conv_model_names, dataset_names, config.common_transformations_without_identity(), measures)
         for (model_name, dataset_name, transformation_set, measure) in combinations:
@@ -792,10 +816,8 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
             plot_folderpath.mkdir(parents=True, exist_ok=True)
 
-            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath, model, dataset, transformation_set,
-                                                              result, images=2, most_invariant_k=4, least_invariant_k=4,
-                                                              conv_aggregation=tm.ConvAggregation.mean)
-            (finished).touch()
+            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath, model, dataset, transformation_set,result, images=2, most_invariant_k=4, least_invariant_k=4,conv_aggregation=tm.ConvAggregation.mean)
+            finished.touch()
 
 
 class ValidateMeasure(Experiment):
@@ -882,8 +904,8 @@ if __name__ == '__main__':
 
     todo = [
             InvarianceVsEpochs(),
-            InvarianceVsMaxPooling(),
-            InvarianceVsKernelSize(),
+            MaxPooling(),
+            KernelSize(),
 
 
             ]
@@ -893,10 +915,11 @@ if __name__ == '__main__':
 
         InvarianceWhileTraining(),  # run this first or you'll need to retrain some models
         CompareMeasures(),
+        RandomInitialization(),
+        DatasetSize(),
+        DatasetSubset(),
         # ComparePreConvAgg(),
         # CollapseConvBeforeOrAfter(),
-        MeasureVsDatasetSize(),
-        MeasureVsDatasetSubset(),
         TransformationDiversity(),
         TransformationComplexity(),
         CompareBN(),
@@ -904,7 +927,7 @@ if __name__ == '__main__':
         InvarianceAcrossDatasets(),
         InvarianceForRandomNetworks(),
         CompareModels(),
-        MeasureStability(),
+
         ValidateMeasure(),
 
 
