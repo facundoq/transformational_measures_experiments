@@ -15,10 +15,9 @@ def models_folder():
     model_folderpath.mkdir(parents=True, exist_ok=True)
     return model_folderpath
 
-def model_path(p: training.Parameters,savepoint=None,model_folderpath= models_folder()):
-
+def model_path(p: training.Parameters,savepoint=None,model_folderpath= models_folder())->Path:
     filename=f"{p.id(savepoint=savepoint)}.pt"
-    filepath=os.path.join(model_folderpath,filename)
+    filepath=model_folderpath / filename
     return filepath
 
 
@@ -195,8 +194,11 @@ import numpy as np
 model_names=model_loading.model_names
 
 def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
+
     if model.startswith('SimpleConv'):
-        epochs = {'cifar10': 40, 'mnist': 10, 'fashion_mnist': 12}
+        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12}
+    elif model == models.SimplestConv.__name__ or model == models.SimplestConvBN.__name__:
+        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12}
     elif model == models.AllConvolutional.__name__ or model == models.AllConvolutionalBN.__name__:
         epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12}
     elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:

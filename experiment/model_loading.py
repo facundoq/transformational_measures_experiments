@@ -43,12 +43,25 @@ def get_all_models()->Dict[str,Callable]:
         optimizer=setup_model(model,use_cuda,0.001,1e-9)
         return model, optimizer
 
+    def simplest_conv(dataset: datasets.ClassificationDataset, use_cuda: bool, bn=False) -> (
+    ObservableLayersModule, Optimizer):
+        conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
+        fc_filters = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
+        if bn:
+            klass = models.SimplestConvBN
+        else:
+            klass = models.SimplestConv
+        model = klass(dataset.input_shape, dataset.num_classes,
+                      conv_filters=conv_filters[dataset.name], fc_filters=fc_filters[dataset.name])
+        optimizer = setup_model(model, use_cuda, 0.001, 1e-9)
+
+        return model, optimizer
 
     def simple_conv(dataset:datasets.ClassificationDataset,use_cuda:bool,bn=False)->(ObservableLayersModule,Optimizer):
         conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
         fc_filters = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
         if bn:
-            klass = models.SimpleConvLargeKernel
+            klass = models.SimpleConvBN
         else:
             klass = models.SimpleConv
         model = klass(dataset.input_shape, dataset.num_classes,
@@ -110,6 +123,7 @@ def get_all_models()->Dict[str,Callable]:
         return model, optimizer
 
     all_models = {models.SimpleConv.__name__: model_maker(simple_conv),
+                  models.SimplestConv.__name__: model_maker(simplest_conv),
                   models.AllConvolutional.__name__: all_convolutional,
                   models.VGGLike.__name__: vgglike,
                   models.ResNet.__name__: resnet,
@@ -119,6 +133,7 @@ def get_all_models()->Dict[str,Callable]:
                   models.AllConvolutionalBN.__name__: model_maker(all_convolutional,bn=True),
                   models.VGGLikeBN.__name__: model_maker(vgglike,bn=True),
                   models.SimpleConvBN.__name__: model_maker(simple_conv,bn=True),
+                  models.SimplestConvBN.__name__: model_maker(simplest_conv,bn=True),
                   models.ResNetBN.__name__: model_maker(resnet,bn=True),
                   }
 

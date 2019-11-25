@@ -44,14 +44,22 @@ class DistanceSameEquivarianceMeasure(Measure):
 
         for j,layer in enumerate(activations):
             if len(layer.shape)==4:
-                # n,c,h,w=layer.shape
+                n,c,h,w=layer.shape
                 # f,ax=plt.subplots(2,n)
                 for i,inverse in enumerate(inverses):
                     # ax[0, i].imshow(layer[i,0,:,:],cmap="gray")
                     # ax[0, i].axis("off")
                     layer[i,:] = inverse(layer[i,:])
+
+                #normalize feature maps
+                layer-=layer.min(axis=1,keepdims=True)
+                max_values=layer.max(axis=1,keepdims=True)
+                max_values[max_values==0]=1
+                layer/=max_values
                     # ax[1, i].imshow(layer[i,0,:,:],cmap="gray")
                     # ax[1, i].axis("off")
+
+
             else:
                 layer[:]=0
 

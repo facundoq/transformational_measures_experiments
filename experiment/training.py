@@ -4,7 +4,7 @@ from pytorch.training import train,test
 import numpy as np
 import os
 import torch
-
+from pathlib import Path
 import typing
 import logging
 from torch import nn
@@ -18,13 +18,14 @@ class Parameters:
     def __init__(self,model:str,dataset:str
                  ,transformations:tm.TransformationSet
                  ,epochs:int
-                 ,notransform_epochs:int=0,savepoints:[int]=None):
+                 ,notransform_epochs:int=0,savepoints:[int]=None,suffix=""):
 
         self.model=model
         self.dataset=dataset
         self.transformations=transformations
         self.epochs=epochs
         self.notransform_epochs=notransform_epochs
+        self.suffix=suffix
 
         if savepoints is None:
             savepoints=[]
@@ -54,6 +55,10 @@ class Parameters:
                 raise ValueError(f"Invalid savepoint {savepoint}. Options: {', '.join(self.savepoints)}")
             result += f"_savepoint={savepoint}"
 
+        #TODO simply use self.suffix when retraining all models
+        suffix = getattr(self, 'suffix', '')
+        if len(suffix)>0:
+            result += f"_{suffix}"
         return result
 
 class Options:
@@ -172,7 +177,7 @@ def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:str):
     }, filepath)
 
 
-def load_model(model_filepath:str,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
+def load_model(model_filepath:Path,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
     logging.info(f"Loading models from {model_filepath}...")
     if use_cuda:
         data = torch.load(model_filepath)

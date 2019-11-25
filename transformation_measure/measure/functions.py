@@ -18,7 +18,8 @@ class MeasureFunction(Enum):
 
     def apply(self, activations):
         if (self == MeasureFunction.var or self == MeasureFunction.std) and activations.shape[0]<=1:
-            print("single sample activation")
+            print("single sample activation"
+                  "")
             return np.zeros_like(activations[0,:])
         functions = {
             MeasureFunction.var: lambda x: np.var(x, axis=0,ddof=1)

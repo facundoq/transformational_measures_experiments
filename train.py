@@ -100,13 +100,20 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
                         , choices=transformations.keys()
                         ,default=tm.SimpleAffineTransformationGenerator())
 
+    parser.add_argument('-suffix', metavar='suff'
+                        , help=f'Suffix to add to model name'
+                        , type=str
+                        , default="")
+
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
     transformation=transformations[args.transformation]
 
-    p= training.Parameters(args.model, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints)
+    p= training.Parameters(args.model, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints,args.suffix)
+
     o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
+
     min_accuracy = args.min_accuracy
     return p,o,min_accuracy
 

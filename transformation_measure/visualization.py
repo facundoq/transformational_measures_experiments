@@ -1,10 +1,10 @@
 params = {
     # 'text.latex.preamble': ['\\usepackage{gensymb}'],
-    'image.origin': 'lower',
-    'image.interpolation': 'nearest',
+    # 'image.origin': 'lower',
+    # 'image.interpolation': 'nearest',
     'image.cmap': 'gray',
     'axes.grid': False,
-    'savefig.dpi': 150,  # to adjust notebook inline plot size
+    # 'savefig.dpi': 150,  # to adjust notebook inline plot size
     'axes.labelsize': 8, # fontsize for x and y labels (was 10)
     'axes.titlesize': 8,
     'font.size': 8, # was 10
@@ -12,8 +12,8 @@ params = {
     'xtick.labelsize': 8,
     'ytick.labelsize': 8,
     # 'text.usetex': True,
-    'figure.figsize': [3.39, 2.10],
-    'font.family': 'serif',
+    # 'figure.figsize': [3.39, 2.10],
+    'font.family': 'sans',
 }
 import matplotlib
 matplotlib.rcParams.update(params)
@@ -144,10 +144,9 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
         if plot_mean:
             average+=y
         if labels is None:
-            label=result.parameters.id()
+            label = None
         else:
-            label=labels[i]
-
+            label = labels[i]
         if linestyles is None:
             linestyle="-"
         else:
