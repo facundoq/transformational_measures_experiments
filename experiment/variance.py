@@ -108,7 +108,7 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
     parser.add_argument("-model", metavar="mo",type=is_valid_file,required=True)
     parser.add_argument("-dataset", metavar="d", choices=datasets.keys(),required=True)
     parser.add_argument("-measure", metavar="me", choices=measures.keys(),required=True)
-    parser.add_argument("-stratified", metavar="stra",type=bool_parser,default=False)
+    parser.add_argument("-stratified", action="store_true")
     parser.add_argument("-adapt_dataset", metavar="adapt", type=bool_parser, default=False)
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
     parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,

@@ -9,7 +9,7 @@ import transformation_measure as tm
 import shutil
 
 if __name__ == '__main__':
-    results_folderpath=config.variance_results_folder()
+    results_folderpath=config.results_folder()
     print(results_folderpath)
     files=os.listdir(results_folderpath)
 

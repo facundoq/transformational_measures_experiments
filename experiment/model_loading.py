@@ -45,8 +45,8 @@ def get_all_models()->Dict[str,Callable]:
 
     def simplest_conv(dataset: datasets.ClassificationDataset, use_cuda: bool, bn=False) -> (
     ObservableLayersModule, Optimizer):
-        conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
-        fc_filters = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
+        conv_filters = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
+        fc_filters = {"mnist": 64, "cifar10": 256, "fashion_mnist": 128}
         if bn:
             klass = models.SimplestConvBN
         else:
@@ -58,7 +58,7 @@ def get_all_models()->Dict[str,Callable]:
         return model, optimizer
 
     def simple_conv(dataset:datasets.ClassificationDataset,use_cuda:bool,bn=False)->(ObservableLayersModule,Optimizer):
-        conv_filters = {"mnist": 32, "cifar10": 64, "fashion_mnist": 64}
+        conv_filters = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
         fc_filters = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
         if bn:
             klass = models.SimpleConvBN

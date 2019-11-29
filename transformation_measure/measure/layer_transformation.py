@@ -4,13 +4,11 @@ from enum import Enum
 class ConvAggregation(Enum):
     mean = "mean"
     max = "max"
-    min = "min"
     sum = "sum"
     none = "none"
     def functions(self):
         return {ConvAggregation.mean: np.nanmean
         , ConvAggregation.sum: np.nansum
-        , ConvAggregation.min: np.nanmin
         , ConvAggregation.max: np.nanmax
         }
 
@@ -23,7 +21,7 @@ class ConvAggregation(Enum):
         # none does no aggregation
         if self == ConvAggregation.none:
             return layer
-
+        layer=np.abs(layer)
         # only aggregate conv layers (n,c,h,w)
         if len(layer.shape) != 4:
             return layer
@@ -45,7 +43,7 @@ class ConvAggregation(Enum):
         '''
         if self == ConvAggregation.none:
             return layer
-
+        layer = np.abs(layer)
         # only aggregate conv layers (c,h,w)
         if len(layer.shape) != 3:
             return layer

@@ -49,7 +49,7 @@ class Parameters:
             result+=notransform_message
 
         if not savepoint is None:
-            assert (savepoint <= 100)
+            assert (savepoint <= self.epochs+self.notransform_epochs)
             assert (savepoint >= 0)
             if not self.savepoints.__contains__(savepoint):
                 raise ValueError(f"Invalid savepoint {savepoint}. Options: {', '.join(self.savepoints)}")
@@ -94,10 +94,10 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
 
     if p.notransform_epochs == 0:
         if o.train_verbose:
-            print(f"### Skipping pretraining rotated models |{model.name}| with dataset |{dataset.name}|")
+            print(f"### Skipping pretraining model |{model.name}| with dataset |{dataset.name}| and no transformation")
     else:
         if o.train_verbose:
-            print(f"### Pretraining rotated models |{model.name}| with unrotated dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
+            print(f"### Pretraining models |{model.name}| with untransformed dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=tm.SimpleAffineTransformationGenerator()
         pre_history =do_run(model,dataset,t,o,optimizer,p.epochs,loss_function,epochs_callbacks)
 
@@ -167,7 +167,7 @@ def plot_history(history, p:Parameters, folderpath:str):
 
 
 
-def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:str):
+def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:Path):
 
     torch.save({"parameters":p,
                 "models":model,

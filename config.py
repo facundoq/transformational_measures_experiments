@@ -38,49 +38,48 @@ def training_plots_path():
 
 
 
+def heatmaps_folder()->Path:
+    return base_path() / "heatmaps"
 
-def variance_results_folder()->str:
-    return os.path.join(base_path(), "results")
+def results_folder()->Path:
+    return base_path() / "results"
 
 
 
-def results_paths(ps:[variance.Parameters], results_folder=variance_results_folder()):
-    variance_paths= [f'{results_path(p)}' for p in ps]
+def results_paths(ps:[variance.Parameters], results_folder=results_folder())->[Path]:
+    variance_paths= [results_path(p,results_folder) for p in ps]
     return variance_paths
 
-def results_path(p:variance.Parameters, results_folder=variance_results_folder()):
-    return  os.path.join(results_folder, f"{p.id()}.pickle")
+def results_path(p:variance.Parameters, results_folder=results_folder())-> Path:
+    return  results_folder / f"{p.id()}.pickle"
 
-def save_results(r:variance.VarianceExperimentResult, results_folder=variance_results_folder()):
+def save_results(r:variance.VarianceExperimentResult, results_folder=results_folder()):
     path = results_path(r.parameters, results_folder)
-    basename=os.path.dirname(path)
-    os.makedirs(basename,exist_ok=True)
-    pickle.dump(r,open(path,"wb"))
+    basename:Path = path.parent
+    basename.mkdir(exist_ok=True,parents=True)
+    pickle.dump(r,path.open(mode="wb"))
 
-def load_result(path)->variance.VarianceExperimentResult:
-    return pickle.load(open(path, "rb"))
+def load_result(path:Path)->variance.VarianceExperimentResult:
+    return pickle.load(path.open(mode="rb"))
 
 
-def load_results(filepaths:[str])-> [variance.VarianceExperimentResult]:
+def load_results(filepaths:[Path])-> [variance.VarianceExperimentResult]:
     results = []
     for filepath in filepaths:
         result = load_result(filepath)
         results.append(result)
     return results
 
-def load_all_results(folderpath:str)-> [variance.VarianceExperimentResult]:
-    filepaths=[os.path.join(folderpath, filename) for filename in os.listdir(folderpath)]
-    filepaths= [ f for f in filepaths if os.path.isfile(f)]
+def load_all_results(folderpath:Path)-> [variance.VarianceExperimentResult]:
+    filepaths=[f for f in folderpath.iterdir() if f.is_file()]
     return load_results(filepaths)
 
 
 def results_filepaths_for_model(training_parameters)->[variance.VarianceExperimentResult]:
     model_id = training_parameters.id()
-    results_folderpath = variance_results_folder()
-    all_results_filenames = os.listdir(results_folderpath)
-
-    results_filenames = [f for f in all_results_filenames if f.startswith(model_id)]
-    results_filepaths = [os.path.join(results_folderpath, f) for f in results_filenames]
+    results_folderpath = results_folder()
+    all_results_filepaths = results_folderpath.iterdir()
+    results_filepaths = [f for f in all_results_filepaths if f.name.startswith(model_id)]
     return results_filepaths
 
 
@@ -100,7 +99,7 @@ from transformation_measure import *
 
 
 def all_measures()-> [Measure]:
-    cas=[ConvAggregation.max,ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.min,ConvAggregation.none]
+    cas=[ConvAggregation.max,ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.none]
     das = [tm.DistanceAggregation.mean,tm.DistanceAggregation.max]
     measure_functions = [MeasureFunction.std]
     measures=[]
@@ -196,17 +195,19 @@ model_names=model_loading.model_names
 def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
 
     if model.startswith('SimpleConv'):
-        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12}
+        epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12}
+    elif model.startswith('SimpleConvLargeKernel'):
+        epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12}
     elif model == models.SimplestConv.__name__ or model == models.SimplestConvBN.__name__:
-        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12}
+        epochs = {'cifar10': 40, 'mnist': 5, 'fashion_mnist': 12}
     elif model == models.AllConvolutional.__name__ or model == models.AllConvolutionalBN.__name__:
-        epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12}
+        epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12}
     elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:
         epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12, }
     elif model == models.ResNet.__name__ or model == models.ResNetBN.__name__:
-        epochs = {'cifar10': 60, 'mnist': 40, 'fashion_mnist': 12}
+        epochs = {'cifar10': 60, 'mnist': 25, 'fashion_mnist': 12}
     elif model == models.FFNet.__name__ or model == models.FFNetBN.__name__:
-        epochs = {'cifar10': 20, 'mnist': 15, 'fashion_mnist': 8}
+        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 8}
     else:
         raise ValueError(f"Model \"{model}\" does not exist. Choices: {', '.join(model_names)}")
 
@@ -218,7 +219,7 @@ def get_epochs(model: str, dataset: str, t: tm.TransformationSet) -> int:
         factor = 1
 
     if not model.endswith("BN"):
-        factor *= 2
+        factor *= 1.5
 
     return int(epochs[dataset] * factor)
 

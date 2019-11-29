@@ -19,16 +19,23 @@ class SimplestConv(ObservableLayersModule):
         nn.MaxPool2d(stride=2, kernel_size=2),
         nn.Conv2d(conv_filters, conv_filters2, 3, padding=1),
         # bn
-        nn.ELU(),]
+        nn.ELU(),
+        nn.MaxPool2d(stride=2, kernel_size=2),
+        nn.Conv2d(conv_filters2, conv_filters2, 3, padding=1),
+        # bn
+        nn.ELU(),
+        nn.MaxPool2d(stride=2, kernel_size=2),
+        ]
 
         if self.bn:
             conv_layers.insert(1,nn.BatchNorm2d(conv_filters))
             conv_layers.insert(5, nn.BatchNorm2d(conv_filters2))
+            conv_layers.insert(9, nn.BatchNorm2d(conv_filters2))
 
 
         conv = SequentialWithIntermediates(*conv_layers)
 
-        self.linear_size = (h * w // 4) * conv_filters2
+        self.linear_size = (h * w // 4 // 4 //4) * conv_filters2
 
         fc_layers=[
             Flatten(),

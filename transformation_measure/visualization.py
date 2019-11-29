@@ -30,15 +30,15 @@ from experiment import variance
 
 
 
-def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
+def plot_heatmap(m:MeasureResult,filepath:Path,title:str, vmin=0, vmax=None):
 
-    for l in m.layers:
-        print(l.shape, np.sum(np.isinf(l)))
+    # for l in m.layers:
+    #     print(l.shape, np.sum(np.isinf(l)))
 
     m=m.collapse_convolutions(tm.ConvAggregation.mean)
 
-    for l in m.layers:
-        print(l.shape, np.sum(np.isinf(l)))
+    # for l in m.layers:
+    #     print(l.shape, np.sum(np.isinf(l)))
 
     n = len(m.layer_names)
     f, axes = plt.subplots(1, n, dpi=150)
@@ -55,7 +55,7 @@ def plot_heatmap(m:MeasureResult,filepath:str,title:str, vmin=0, vmax=None):
         if n<40:
             if len(name)>6:
                 name=name[:6]
-            ax.set_title(name, fontsize=4)
+            ax.set_title(name, fontsize=4,rotation = 45)
 
         # logging.debug(f"plotting stats of layer {name} of class {class_id}, shape {stat.mean().shape}")
     f.suptitle(f"{title}", fontsize=10)
@@ -114,8 +114,8 @@ def outlier_range(stds,iqr_away):
 
 
 
-
 def plot_collapsing_layers_different_models(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,color=None,legend_location=None):
+
     n = len(results)
     if n == 0:
         raise ValueError(f"`results` is an empty list.")
@@ -133,7 +133,7 @@ def plot_collapsing_layers_different_models(results:List[variance.VarianceExperi
     x_result_most_layers=np.zeros(1)
     for i, result in enumerate(results):
         n_layers = len(result.measure_result.layers)
-        x = np.linspace(0,100,n,endpoint=True)
+        x = np.linspace(0,100,n_layers,endpoint=True)
         if n_layers>=x_result_most_layers.size:
             x_result_most_layers=x
         y = result.measure_result.per_layer_average()
@@ -149,11 +149,12 @@ def plot_collapsing_layers_different_models(results:List[variance.VarianceExperi
         ax.plot(x, y, label=label, linestyle=linestyle, color=color[i, :] * 0.7)
 
     ax.set_ylabel("Measure values")
-    ax.set_xlabel("Layer")
-    if max_n < 25:
-        # if all results have the same model, use the layer names
-        # instead of just numbers
-        ax.set_xticks(x_result_most_layers)
+    ax.set_xlabel("Layer (%)")
+
+    x_result_most_layers_int = x_result_most_layers.astype(int)
+    ax.set_xticks(x_result_most_layers_int)
+    x_result_most_layers_str = [str(x) for x in x_result_most_layers_int]
+    ax.set_xticklabels(x_result_most_layers_str,rotation=45)
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
@@ -171,7 +172,7 @@ def plot_collapsing_layers_different_models(results:List[variance.VarianceExperi
     plt.close()
 
 
-def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,plot_mean=False,color=None,legend_location=None,same_model=False):
+def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,plot_mean=False,color=None,legend_location=None):
     n=len(results)
     if n == 0:
         raise ValueError(f"`results` is an empty list.")
@@ -194,7 +195,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
 
-        x= np.arange(n_layers)
+        x= np.arange(n_layers)+1
         y= result.measure_result.per_layer_average()
         if plot_mean:
             average+=y
@@ -210,7 +211,7 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
 
 
     if plot_mean:
-        x = np.arange(max_n) + 1
+        x = np.arange(max_n)+1
         y=average/len(results)
         label="mean"
         linestyle="--"
@@ -219,14 +220,11 @@ def plot_collapsing_layers(results:List[variance.VarianceExperimentResult], file
     ax.set_ylabel("Variance")
     ax.set_xlabel("Layer")
     # ax.set_ylim(max_measure)
-    if max_n < 25:
-        # if all results have the same model, use the layer names
-        # instead of just numbers
-        if same_model:
-            labels = results[0].measure_result.layer_names
-            ax.set_xticklabels(labels, rotation=45)
-        else:
-            ax.set_xticks(range(max_n))
+    if max_n < 32:
+        labels = results[0].measure_result.layer_names
+        x = np.arange(max_n) + 1
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, rotation=45)
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,

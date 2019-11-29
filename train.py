@@ -27,15 +27,7 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
 
     parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
 
-    parser.add_argument('-verbose', metavar='v'
-                        ,help=f'Print info about dataset/models/transformations'
-                        ,type=bool_parser
-                        , default=True)
 
-    parser.add_argument('-train_verbose', metavar='tvb'
-                        , help=f'Print details about the training'
-                        , type=bool_parser
-                        , default=True)
     parser.add_argument('-max_restarts', metavar='mr'
                         , help=f'Maximum number of restarts to train the model until a minimum accuracy is reached'
                         , type=int
@@ -65,13 +57,8 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
                         , type=int
                         , default=0)
 
-    parser.add_argument('-savemodel', metavar='b'
-                        , help=f'Save model after training (after last epoch)'
-                        , type=bool_parser
-                        , default=True)
-
     parser.add_argument('-savepoints', metavar='b'
-                        , help=f'Percentages of epochs where models is to be saved'
+                        , help=f'Epochs where models is to be saved'
                         , type=list_parser
                         , default=[])
 
@@ -105,6 +92,14 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
                         , type=str
                         , default="")
 
+    parser.add_argument('-verbose',
+                        help=f'Print info about dataset/models/transformations',
+                        action="store_true", )
+
+    parser.add_argument('-train_verbose',
+                        help=f'Print details about the training',
+                        action="store_true", )
+
     argcomplete.autocomplete(parser)
 
     args = parser.parse_args()
@@ -112,7 +107,7 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
 
     p= training.Parameters(args.model, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints,args.suffix)
 
-    o= training.Options(args.verbose, args.train_verbose, args.savemodel, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
+    o= training.Options(args.verbose, args.train_verbose, True, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
 
     min_accuracy = args.min_accuracy
     return p,o,min_accuracy
@@ -133,13 +128,12 @@ if __name__ == "__main__":
 
         def generate_epochs_callbacks():
             epochs_callbacks=[]
-            for sp in p.savepoints:
-                epoch=int(p.epochs*sp/100)
-                def callback(sp=sp,epoch=epoch):
+            for epoch in p.savepoints:
+                def callback(epoch=epoch):
                     scores=training.eval_scores(model,dataset,p,o)
                     if o.verbose:
-                        print(f"Saving model {model.name} at epoch {epoch} ({sp}%).")
-                    training.save_model(p, o, model, scores, config.model_path(p, sp))
+                        print(f"Saving model {model.name} at epoch {epoch}/{p.epochs}.")
+                    training.save_model(p, o, model, scores, config.model_path(p, epoch))
                 epochs_callbacks.append((epoch,callback))
 
             return dict(epochs_callbacks)
@@ -152,9 +146,8 @@ if __name__ == "__main__":
             print(f"Training with models {p.model}.")
             print(model)
             if len(p.savepoints):
-                savepoints_str=", ".join([f"{sp}%" for sp in p.savepoints])
-                epochs_str= ", ".join([f"{epoch}" for epoch in epochs_callbacks.keys()])
-                print(f"Savepoints at {savepoints_str} (epochs {epochs_str})")
+                epochs_str= ", ".join([ str(sp) for sp in p.savepoints])
+                print(f"Savepoints at epochs {epochs_str}.")
 
 
 

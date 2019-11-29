@@ -7,7 +7,7 @@ import scipy.stats
 class AnovaMeasure(Measure):
     # alpha = degree of confidence
     # Typically 0.90, 0.95, 0.99
-    def __init__(self, conv_aggregation: ConvAggregation=ConvAggregation.none,alpha:float=0.99,bonferroni:bool=False):
+    def __init__(self, conv_aggregation: ConvAggregation=ConvAggregation.none,alpha:float=0.99,bonferroni:bool=True):
         super().__init__()
         self.anova_f_measure=AnovaFMeasure(conv_aggregation)
         assert(alpha>0)
