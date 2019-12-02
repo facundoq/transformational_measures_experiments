@@ -75,21 +75,22 @@ class PytorchActivationsIterator(ActivationsIterator):
         x_transformed = self.transform_sample(x)
         dataloader = DataLoader(x_transformed, batch_size=self.batch_size, shuffle=False,
                                 num_workers=self.num_workers, drop_last=False)
-
-        l=len(self.activation_names())
-        # print("activations: ",l)
-        # print(self.activation_names())
-        activations=[[] for i in range(l)]
-
+        i_start=0
         for batch in dataloader:
+            i_end = i_start + batch.shape[0]
+            batch_numpy = x_transformed[i_start:i_end, :].numpy()
+            i_start=i_end
             if self.use_cuda:
                 batch=batch.cuda()
             y, batch_activations = self.model.forward_intermediates(batch)
-            for i,a in enumerate(batch_activations):
-                # print(a.detach().cpu().numpy().shape)
-                # print(self.activation_names()[i],"=> ",a.detach().cpu().numpy().shape)
-                activations[i].append(a.detach().cpu().numpy())
-        activations=[ np.vstack(a) for a in activations]
+            batch_activations = [a.cpu().numpy() for a in batch_activations]
+            yield batch_numpy,batch_activations
+
+        #     for i,a in enumerate(batch_activations.detach().cpu().numpy()):
+        #         # print(a.detach().cpu().numpy().shape)
+        #         # print(self.activation_names()[i],"=> ",a.detach().cpu().numpy().shape)
+        #         activations[i].append(a.)
+        # activations=[ np.vstack(a) for a in activations]
         # n = x.shape[0]
         # if self.use_cuda:
         #     x= x.cuda()
@@ -112,8 +113,7 @@ class PytorchActivationsIterator(ActivationsIterator):
         #     batch_activations = [a.detach().cpu().numpy() for a in batch_activations]
         #     activations.append(batch_activations)
         #
-
-        return activations,x_transformed
+        # return activations,x_transformed
 
     '''
         Returns the activations of the models by iterating first over transformations and 
@@ -125,8 +125,9 @@ class PytorchActivationsIterator(ActivationsIterator):
         with torch.no_grad():
             for x, y_true in dataloader:
                 for i in range(x.shape[0]):
-                    activations,x_transformed=self.transformations_activations(x[i, :])
-                    yield activations,x_transformed.numpy()
+                    sample=x[i, :]
+                    yield sample,self.transformations_activations(sample)
+
 
 
 from abc import abstractmethod

@@ -70,12 +70,15 @@ class DistanceTransformationMeasure(Measure):
         layer_names=activations_iterator.activation_names()
         n_intermediates = len(layer_names)
         mean_running= [RunningMean() for i in range(n_intermediates)]
-        for activations, x_transformed in activations_iterator.samples_first():
-            # activations has the activations for all the transformations
-            for j, layer_activations in enumerate(activations):
-                layer_measure = self.distance_aggregation.apply(layer_activations)
-                # update the mean over all transformation
-                mean_running[j].update(layer_measure)
+        for x, transformation_activations_iterator in activations_iterator.samples_first():
+            # transformation_activations_iterator can iterate over all transforms
+            for x_transformed, activations in transformation_activations_iterator:
+                for j, layer_activations in enumerate(activations):
+                    # calculate the distance aggregation only for this batch
+                    layer_measure = self.distance_aggregation.apply(layer_activations)
+                    # update the mean over all transformation
+                    mean_running[j].update(layer_measure)
+
         # calculate the final mean over all samples (and layers)
         mean_variances = [b.mean() for b in mean_running]
         return MeasureResult(mean_variances,layer_names,self)

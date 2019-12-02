@@ -17,7 +17,8 @@ from transformation_measure import visualization
 
 all_model_names = config.model_names
 
-common_model_names = [models.SimplestConv.__name__,
+common_model_names = [
+                      # models.SimplestConv.__name__,
                       models.SimpleConv.__name__,
                       models.AllConvolutional.__name__,
                       # models.VGGLike.__name__,
@@ -49,7 +50,7 @@ venv_path = ""
 common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
                        tm.SimpleAffineTransformationGenerator(t=5),
                        tm.SimpleAffineTransformationGenerator(s=5),
-                       tm.SimpleAffineTransformationGenerator(r=360, s=3, t=3),
+#                       tm.SimpleAffineTransformationGenerator(r=360, s=3, t=3),
                        ]
 
 import abc
@@ -338,7 +339,7 @@ class TransformationDiversity(Experiment):
         measures = [measure, distance_measure]
 
         combinations = itertools.product(simple_model_names, dataset_names, measures)
-        transformations = common_transformations
+        transformations = [tm.SimpleAffineTransformationGenerator()]+common_transformations
 
         for model, dataset, measure in combinations:
             for i, train_transformation in enumerate(transformations):

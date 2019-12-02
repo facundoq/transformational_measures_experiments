@@ -72,7 +72,6 @@ class AnovaFMeasure(Measure):
             ssdw_per_layer = [0] * n_layers
             samples_per_transformation = []
             for means_per_layer,(transformation, transformation_activations) in zip(means_per_layer_and_transformation, activations_iterator.transformations_first()):
-
                 # calculate the variance of all samples for this transformation
                 n_samples = 0
                 for x, batch_activations in transformation_activations:

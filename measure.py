@@ -68,8 +68,8 @@ def experiment(p: variance.Parameters, o: variance.Options):
 
 if __name__ == "__main__":
     profiler= util.Profiler()
-    profiler.event("start")
     p, o = variance.parse_parameters()
+    profiler.event("start")
     if o.verbose:
         print(f"Experimenting with parameters: {p}")
     measures_results=experiment(p,o)
