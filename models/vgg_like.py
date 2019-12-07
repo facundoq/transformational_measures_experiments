@@ -86,44 +86,9 @@ class VGGLike(ObservableLayersModule):
 
     def forward_intermediates(self,x)->(object,[]):
         return self.layers.forward_intermediates(x)
-        # outputs = []
-        # for i in range(4):
-        #     x,intermediates = self.conv_layers[i*3].forward_intermediates(x)
-        #     outputs.append(intermediates[0])
-        #     outputs.append(intermediates[1])
-        #     x,intermediates = self.conv_layers[i*3+1].forward_intermediates(x)
-        #     outputs.append(intermediates[0])
-        #     outputs.append(intermediates[1])
-        #     x = self.conv_layers[i*3+ 2].forward(x)
-        #     outputs.append(x)
-        # x=self.conv_layers[-1].forward(x)# flatten
-        # x,intermediates=self.dense_layers.forward_intermediates(x)
-        # outputs.append(intermediates[0])
-        # outputs.append(intermediates[2])
-        # outputs.append(intermediates[3])
-        # x = F.log_softmax(x, dim=1)
-        # outputs.append(x)
-        # return x, outputs
 
     def activation_names(self):
         return self.layers.activation_names()
-        # names=[]
-        # for i in range(4):
-        #     names.append(f"c{i}_0")
-        #     names.append(f"c{i}_0act")
-        #     if self.bn:
-        #         names.append(f"c{i}_0bn")
-        #     names.append(f"c{i}_1")
-        #     names.append(f"c{i}_1act")
-        #     if self.bn:
-        #         names.append(f"c{i}_1bn")
-        #     names.append(f"mp{i}")
-        #
-        # fc_names=["fc1","fc1act","fc2","fc2act"]
-        # if self.bn:
-        #     fc_names.insert(1,"bn")
-        #
-        # return names+fc_names
 
 
 

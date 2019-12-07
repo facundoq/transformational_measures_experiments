@@ -11,11 +11,12 @@ from torch import nn
 from torch.optim.optimizer import Optimizer
 
 import  transformation_measure as tm
-
+import config
 import datasets
+from typing import *
 
 class Parameters:
-    def __init__(self,model:str,dataset:str
+    def __init__(self,model:config.ModelConfig,dataset:str
                  ,transformations:tm.TransformationSet
                  ,epochs:int
                  ,notransform_epochs:int=0,savepoints:[int]=None,suffix=""):
@@ -36,13 +37,11 @@ class Parameters:
             notransform_message=f", Notransform_epochs={self.notransform_epochs}"
         else:
             notransform_message=""
-        return f"Model: {self.model}, Dataset={self.dataset}, Transformations=({self.transformations}), Epochs={self.epochs}{notransform_message}"
-
-
+        return f"Model: {self.model.name}, Dataset={self.dataset}, Transformations=({self.transformations}), Epochs={self.epochs}{notransform_message}"
 
     def id(self,savepoint:float=None):
 
-        result = f"{self.model}_{self.dataset}_{self.transformations.id()}"
+        result = f"{self.model.name}_{self.dataset}_{self.transformations.id()}"
 
         if self.notransform_epochs > 0:
             notransform_message = "_notransform_epochs={self.notransform_epochs}"
@@ -94,10 +93,10 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
 
     if p.notransform_epochs == 0:
         if o.train_verbose:
-            print(f"### Skipping pretraining model |{model.name}| with dataset |{dataset.name}| and no transformation")
+            print(f"### Skipping pretraining model |{p.model}| with dataset |{dataset.name}| and no transformation")
     else:
         if o.train_verbose:
-            print(f"### Pretraining models |{model.name}| with untransformed dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
+            print(f"### Pretraining models |{p.model}| with untransformed dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=tm.SimpleAffineTransformationGenerator()
         pre_history =do_run(model,dataset,t,o,optimizer,p.epochs,loss_function,epochs_callbacks)
 

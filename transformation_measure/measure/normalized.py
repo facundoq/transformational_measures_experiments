@@ -5,14 +5,17 @@ from transformation_measure.measure.stats_running import RunningMeanAndVariance,
 from .base import Measure, MeasureResult
 
 
-class TransformationMeasure(Measure):
-    def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
+class TransformationVariance(Measure):
+    def __init__(self, measure_function:MeasureFunction=MeasureFunction.std):
         super().__init__()
         self.measure_function = measure_function
-        self.conv_aggregation = conv_aggregation
 
     def __repr__(self):
-        return f"TM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
+        if self.measure_function == MeasureFunction.std:
+            mf=""
+        else:
+            mf =f"f={self.measure_function.value}"
+        return f"TV({mf})"
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
         layer_names = activations_iterator.activation_names()
@@ -25,7 +28,6 @@ class TransformationMeasure(Measure):
             for x_transformed, activations in transformation_activations:
                 for i, layer_activations in enumerate(activations):
                     # apply function to conv layers
-                    layer_activations = self.conv_aggregation.apply(layer_activations)
                     # update the mean over all transformations for this sample
                     transformation_variances_running[i].update_all(layer_activations)
             # update the mean with the measure sample of all transformations of x
@@ -38,14 +40,18 @@ class TransformationMeasure(Measure):
         return MeasureResult(mean_variances, layer_names, self)
 
 
-class SampleMeasure(Measure):
-    def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
+class SampleVariance(Measure):
+    def __init__(self, measure_function: MeasureFunction=MeasureFunction.std):
         super().__init__()
         self.measure_function = measure_function
-        self.conv_aggregation = conv_aggregation
 
     def __repr__(self):
-        return f"SM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
+        if self.measure_function == MeasureFunction.std:
+            mf=""
+        else:
+            mf =f"f={self.measure_function.value}"
+        return f"SV({mf})"
+
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
         layer_names = activations_iterator.activation_names()
@@ -57,7 +63,6 @@ class SampleMeasure(Measure):
             # calculate the variance of all samples for this transformation
             for x, batch_activations in samples_activations_iterator:
                 for j, layer_activations in enumerate(batch_activations):
-                    layer_activations = self.conv_aggregation.apply(layer_activations)
                     samples_variances_running[j].update_all(layer_activations)
             # update the mean over all transformation (and layers)
             for layer_mean_variances_running, layer_samples_variance_running in zip(mean_variances_running,samples_variances_running):
@@ -69,16 +74,36 @@ class SampleMeasure(Measure):
         mean_variances = [b.mean() for b in mean_variances_running]
         return MeasureResult(mean_variances, layer_names, self)
 
+from .quotient import divide_activations
 
-class NormalizedMeasure(QuotientMeasure):
-    def __init__(self, measure_function: MeasureFunction, conv_aggregation: ConvAggregation):
-        sm = SampleMeasure(measure_function, conv_aggregation)
-        ttm = TransformationMeasure(measure_function, conv_aggregation)
-        super().__init__(ttm, sm)
-        self.numerator_measure = ttm
-        self.denominator_measure = sm
+class NormalizedVariance(Measure):
+    def __init__(self, conv_aggregation: ConvAggregation,measure_function: MeasureFunction=MeasureFunction.std):
+        self.sv = SampleVariance(measure_function)
+        self.tv = TransformationVariance(measure_function)
         self.measure_function = measure_function
         self.conv_aggregation = conv_aggregation
 
+    def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
+        tv_result=self.tv.eval(activations_iterator)
+        sv_result=self.sv.eval(activations_iterator)
+
+        tv_result = tv_result.collapse_convolutions(self.conv_aggregation)
+        sv_result = sv_result.collapse_convolutions(self.conv_aggregation)
+
+        result=divide_activations(tv_result.layers,sv_result.layers)
+        return MeasureResult(result,activations_iterator.activation_names(),self)
+
     def __repr__(self):
-        return f"NM(f={self.measure_function.value},ca={self.conv_aggregation.value})"
+        if self.measure_function == MeasureFunction.std:
+            mf = ""
+        else:
+            mf = f"f={self.measure_function.value}"
+        if self.conv_aggregation == ConvAggregation.none:
+            ca =""
+        else:
+            ca = f"ca={self.conv_aggregation.value}"
+        if ca!="" and mf!="":
+            sep = ","
+        else:
+            sep = ""
+        return f"NV({ca}{sep}{mf})"

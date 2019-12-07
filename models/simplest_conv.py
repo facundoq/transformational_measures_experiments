@@ -12,6 +12,8 @@ class SimplestConv(ObservableLayersModule):
         self.name = self.__class__.__name__
         h, w, channels = input_shape
         self.bn=bn
+        if self.bn:
+            self.name+="BN"
         conv_filters2=conv_filters*2
         conv_layers=[nn.Conv2d(channels, conv_filters, 3, padding=1),
         # bn

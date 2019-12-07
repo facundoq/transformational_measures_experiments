@@ -5,7 +5,7 @@
 import config
 import torch
 import datasets
-from experiment import model_loading, training
+from experiment import  training
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple
@@ -25,6 +25,7 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
     transformations=config.all_transformations()
     transformations={t.id():t for t in transformations}
 
+    model_configs = config.all_models()
     parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
 
 
@@ -68,8 +69,8 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
                         , default=True)
 
     parser.add_argument('-model', metavar='m',
-                        help=f'Model to train/use. Allowed values: {", ".join(model_loading.model_names)}'
-                        ,choices=model_loading.model_names
+                        help=f'Model to train/use. Allowed values: {", ".join(model_configs.keys())}'
+                        ,choices=model_configs.keys()
                         ,required=True)
 
     parser.add_argument('-usecuda', metavar='c'
@@ -104,21 +105,21 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
 
     args = parser.parse_args()
     transformation=transformations[args.transformation]
-
-    p= training.Parameters(args.model, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints,args.suffix)
+    model_config = model_configs[args.model]
+    p= training.Parameters(model_config, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints,args.suffix)
 
     o= training.Options(args.verbose, args.train_verbose, True, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
 
     min_accuracy = args.min_accuracy
     return p,o,min_accuracy
 
-import sys
 
 if __name__ == "__main__":
     p,o,min_accuracy = parse_args()
     def do_train():
         dataset = datasets.get(p.dataset)
-        model, optimizer = model_loading.get_model(p.model, dataset, o.use_cuda)
+        model,optimizer = p.model.make_model(dataset.input_shape, dataset.num_classes, o.use_cuda)
+
         # an="\n".join(model.activation_names())
         # print("Activation names: "+an)
         if o.verbose:

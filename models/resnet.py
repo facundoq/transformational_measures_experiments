@@ -96,7 +96,10 @@ class ResNet( ObservableLayersModule):
     def __init__(self, block, num_blocks,input_shape,num_classes,bn=False):
         super(ResNet, self).__init__()
         self.name = self.__class__.__name__
-        self.bn=bn
+        self.bn = bn
+        if self.bn:
+            self.name+="BN"
+
         self.in_planes = 64
         h,w,c=input_shape
         layer0=[nn.Conv2d(c, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -164,45 +167,26 @@ class ResNet( ObservableLayersModule):
 
 
 
+# TODO unify, move the config of each resnet to config/models.py
 
-def ResNet18(input_shape,num_classes):
-    return ResNet(Block, [2, 2, 2, 2], input_shape, num_classes)
+def ResNet18(input_shape:(int,int,int),num_classes:int,bn:bool=False):
+    return ResNet(Block, [2, 2, 2, 2], input_shape, num_classes,bn=bn)
 
-def ResNet34(input_shape,num_classes):
-    return ResNet(Block, [3, 4, 6, 3], input_shape, num_classes)
+def ResNet34(input_shape:(int,int,int),num_classes:int,bn:bool=False):
+    return ResNet(Block, [3, 4, 6, 3], input_shape, num_classes,bn=bn)
 
-def ResNet50(input_shape,num_classes):
-    return ResNet(Bottleneck, [3,4,6,3],input_shape,num_classes)
+def ResNet50(input_shape:(int,int,int),num_classes:int,bn:bool=False):
+    return ResNet(Bottleneck, [3,4,6,3],input_shape,num_classes,bn=bn)
 
-def ResNet101(input_shape,num_classes):
-    return ResNet(Bottleneck, [3,4,23,3],input_shape,num_classes)
+def ResNet101(input_shape:(int,int,int),num_classes:int,bn:bool=False):
+    return ResNet(Bottleneck, [3,4,23,3],input_shape,num_classes,bn=bn)
 
-def ResNet152(input_shape,num_classes):
-    return ResNet(Bottleneck, [3,8,36,3],input_shape,num_classes)
+def ResNet152(input_shape:(int,int,int),num_classes:int,bn:bool=False):
+    return ResNet(Bottleneck, [3,8,36,3],input_shape,num_classes,bn=bn)
 
-def ResNet18BN(input_shape,num_classes):
-    return ResNetBN(Block, [2, 2, 2, 2], input_shape, num_classes)
-
-def ResNet34BN(input_shape,num_classes):
-    return ResNetBN(Block, [3, 4, 6, 3], input_shape, num_classes)
-
-def ResNet50BN(input_shape,num_classes):
-    return ResNetBN(Bottleneck, [3,4,6,3],input_shape,num_classes)
-
-def ResNet101BN(input_shape,num_classes):
-    return ResNetBN(Bottleneck, [3,4,23,3],input_shape,num_classes)
-
-def ResNet152BN(input_shape,num_classes):
-    return ResNetBN(Bottleneck, [3,8,36,3],input_shape,num_classes)
 
 
 def test():
     net = ResNet18((32,32,3),10)
     y = net(torch.randn(1,3,32,32))
     print(y.size())
-
-
-class ResNetBN(ResNet):
-
-    def __init__(self, block, num_blocks, input_shape, num_classes):
-        super(ResNetBN, self).__init__(block, num_blocks, input_shape, num_classes,bn=True)

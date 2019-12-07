@@ -2,19 +2,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_image_grid(x,y,samples=64,show=True,save=None):
-
-
+def plot_image_grid(x,samples=64,grid_cols=8,show=True,save=None):
+    n=x.shape[0]
     initial_sample=0
-    samples=min(samples,len(y))
-    skip= y.shape[0] // samples
+    samples=min(samples,n)
+    skip= n // samples
 
-    grid_cols=8
+
     grid_rows=samples // grid_cols
     if samples % grid_cols >0:
         grid_rows+=1
 
-    f,axes=plt.subplots(grid_rows,grid_cols,dpi=100)
+    f,axes=plt.subplots(grid_rows,grid_cols,dpi=200,squeeze=False,figsize=(grid_cols,grid_rows))
     for axr in axes:
         for ax in axr:
             ax.get_xaxis().set_visible(False)
@@ -22,10 +21,10 @@ def plot_image_grid(x,y,samples=64,show=True,save=None):
 
     for i in range(samples):
         i_sample=i*skip+initial_sample
-        klass = y[i_sample]
         row=i // grid_cols
         col=i % grid_cols
-        ax=axes[row,col]
+        ax = axes[row, col]
+
         if x.shape[3]==1:
             ax.imshow(x[i_sample,:,:,0], cmap='gray')
         else:

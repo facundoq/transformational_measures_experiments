@@ -6,7 +6,7 @@ import os
 import config
 
 
-results_path = config.testing_folder()/"affine_inverse"
+results_path = config.testing_path() / "affine_inverse"
 results_path.mkdir(parents=True,exist_ok=True)
 
 source_path="testing/samples/mnist.png"

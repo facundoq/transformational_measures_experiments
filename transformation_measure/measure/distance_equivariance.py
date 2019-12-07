@@ -36,7 +36,8 @@ class DistanceSameEquivarianceMeasure(Measure):
                 self.inverse_trasform_feature_maps(activations, transformations[t_start:t_end])
                 t_start=t_end
                 for j, layer_activations in enumerate(activations):
-                    layer_measure= self.distance_aggregation.apply(layer_activations)
+                    # TODO change normalize to True
+                    layer_measure= self.distance_aggregation.apply(layer_activations,normalize=False)
                     # update the mean over all transformation
                     mean_variances_running[j].update(layer_measure)
         # calculate the final mean over all samples (and layers)

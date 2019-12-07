@@ -25,7 +25,7 @@ def get_image(path):
     image = image.transpose(2, 0, 1)
     return image
 
-results_path=config.testing_folder()/"affine_generator/"
+results_path= config.testing_path() / "affine_generator/"
 results_path.mkdir(parents=True,exist_ok=True)
 
 samples = {

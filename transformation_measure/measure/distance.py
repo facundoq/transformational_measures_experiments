@@ -15,12 +15,15 @@ class DistanceAggregation(Enum):
     max = "max"
     mean = "mean"
 
-    def apply(self,x:np.ndarray):
+    def apply(self,x:np.ndarray,normalize=False):
         l = len(x.shape)
         if l == 4:
-            return self.apply_feature_maps(x)
+            n, c, h, w = x.shape
+            x = x.reshape((n, c, h * w))
+            return self.apply_features(x,normalize)
         elif l == 2:
-            return self.apply_features(x)
+            x = x[:, :, np.newaxis]
+            return self.apply_features(x,normalize)
         else:
             raise ValueError(f"Activation shape not supported {x.shape}")
 
@@ -35,12 +38,13 @@ class DistanceAggregation(Enum):
             result[i] = self.aggregate(d)
         return result
 
-    def apply_features(self,x:np.ndarray):
-        n, c = x.shape
-        x = x[:,:,np.newaxis]
+    def apply_features(self,x:np.ndarray,normalize:bool):
+        n, c, d = x.shape
         result = np.zeros(c)
         for i in range(c):
             sample = x[:, i,:]
+            if normalize:
+                sample/=sample.sum()
             d = scipy.spatial.distance.pdist(sample, 'euclidean')
             #d = euclidean_distances(sample)
             result[i] = self.aggregate(d)

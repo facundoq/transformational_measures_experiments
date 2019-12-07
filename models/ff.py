@@ -11,6 +11,8 @@ class FFNet( ObservableLayersModule):
         super(FFNet, self).__init__()
         self.bn = bn
         self.name = self.__class__.__name__
+        if self.bn:
+            self.name+="BN"
 
 
         h,w,channels=input_shape

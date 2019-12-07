@@ -1,22 +1,21 @@
 from .base import Measure,MeasureResult,ActivationsByLayer
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
-from .layer_transformation import ConvAggregation
 import scipy.stats
 
 class AnovaMeasure(Measure):
     # alpha = degree of confidence
     # Typically 0.90, 0.95, 0.99
-    def __init__(self, conv_aggregation: ConvAggregation=ConvAggregation.none,alpha:float=0.99,bonferroni:bool=True):
+    def __init__(self, alpha:float=0.99,bonferroni:bool=True):
         super().__init__()
-        self.anova_f_measure=AnovaFMeasure(conv_aggregation)
+        self.anova_f_measure=AnovaFMeasure()
         assert(alpha>0)
         assert (alpha <1)
         self.alpha=alpha
         self.bonferroni=bonferroni
 
     def __repr__(self):
-        return f"AnovaMeasure(ca={self.anova_f_measure.conv_aggregation.value},alpha={self.alpha},bonferroni={self.bonferroni})"
+        return f"AnovaMeasure(alpha={self.alpha},bonferroni={self.bonferroni})"
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
         f_result=self.anova_f_measure.eval(activations_iterator)
@@ -38,13 +37,12 @@ class AnovaMeasure(Measure):
         return MeasureResult(layers,f_result.layer_names,self,f_result.extra_values)
 
 class AnovaFMeasure(Measure):
-    def __init__(self, conv_aggregation: ConvAggregation):
+    def __init__(self):
         super().__init__()
-        self.conv_aggregation = conv_aggregation
 
 
     def __repr__(self):
-        return f"AnovaFMeasure(ca={self.conv_aggregation.value})"
+        return f"AnovaFMeasure()"
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
 
@@ -78,7 +76,6 @@ class AnovaFMeasure(Measure):
                     n_samples += x.shape[0]
                     for j, layer_activations in enumerate(batch_activations):
                         for i in range(layer_activations.shape[0]):
-                            layer_activations = self.conv_aggregation.apply(layer_activations)
                             d=(layer_activations[i,]-means_per_layer[j])**2
                             ssdw_per_layer[j]=ssdw_per_layer[j]+d
                 samples_per_transformation.append(n_samples)
@@ -113,7 +110,7 @@ class AnovaFMeasure(Measure):
         :param n_layers:
         :return: The global means for each layer, averaging out the transformations
         '''
-        n_transformations = len(means_per_layer_and_transformation)
+        # n_transformations = len(means_per_layer_and_transformation)
         global_means_running = [RunningMean() for i in range(n_layers)]
         for transformation_means in means_per_layer_and_transformation:
             # means_per_layer  has the means for a given transformation
@@ -143,7 +140,6 @@ class AnovaFMeasure(Measure):
                 n_samples+=x.shape[0]
                 for j, layer_activations in enumerate(batch_activations):
                     for i in range(layer_activations.shape[0]):
-                        layer_activations = self.conv_aggregation.apply(layer_activations)
                         samples_variances_running[j].update(layer_activations[i,])
             samples_per_transformation.append(n_samples)
             means_per_transformation.append([rm.mean() for rm in samples_variances_running])

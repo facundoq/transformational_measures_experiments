@@ -17,7 +17,7 @@ class SimpleConvLargeKernel(ObservableLayersModule):
         padding2=((kernel_size2-1)//2,(kernel_size2-1)//2)
 
         h, w, channels = input_shape
-        self.bn=bn
+
         conv_filters2=conv_filters*2
         conv_filters4 = conv_filters * 4
         conv_layers=[nn.Conv2d(channels, conv_filters, kernel_size, padding=padding ),

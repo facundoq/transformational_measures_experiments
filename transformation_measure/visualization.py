@@ -251,6 +251,7 @@ import typing
 from pathlib import Path
 
 def plot_activations(features:np.ndarray, feature_indices:[int], variance_scores:[float], x_transformed:np.ndarray, transformations:tm.TransformationSet, filepath:Path):
+
     x_transformed= x_transformed.transpose((0, 2, 3, 1))
     n,c = features.shape
     nt,ht,wt,ct = x_transformed.shape
@@ -388,7 +389,8 @@ def plot_invariant_feature_maps(plot_folderpath:Path, activations_iterator:tm.Ac
     feature_indices_per_layer,invariance_scores_per_layer=select_feature_maps(measure_result, most_invariant_k,least_invariant_k)
     transformations=activations_iterator.get_transformations()
 
-    for i_image,(layers_activations, x_transformed) in enumerate(activations_iterator.samples_first()):
+    for i_image,(x,transformation_activations_iterator) in enumerate(activations_iterator.samples_first()):
+        layers_activations,x_transformed = activations_iterator.row_from_iterator(transformation_activations_iterator)
         for i_layer,layer_activations in enumerate(layers_activations):
             layer_name=result.measure_result.layer_names[i_layer]
             filepath = plot_folderpath / f"image{i_image}_layer{i_layer}_{layer_name}.png"
@@ -406,7 +408,7 @@ def plot_invariant_feature_maps(plot_folderpath:Path, activations_iterator:tm.Ac
 
 def plot_invariant_feature_maps_pytorch(plot_folderpath:Path,model:torch.nn.Module,dataset:datasets.ClassificationDataset,transformations:tm.TransformationSet,result:variance.VarianceExperimentResult,images=8,most_invariant_k:int=4,least_invariant_k:int=4,conv_aggregation=tm.ConvAggregation.mean):
     numpy_dataset = NumpyDataset(dataset.x_test[:images,:],dataset.y_test[:images])
-    iterator = tm.PytorchActivationsIterator(model,numpy_dataset, transformations, batch_size=images)
+    iterator = tm.PytorchActivationsIterator(model,numpy_dataset, transformations, batch_size=32)
     plot_invariant_feature_maps(plot_folderpath,iterator,result,most_invariant_k,least_invariant_k,conv_aggregation)
 
 

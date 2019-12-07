@@ -16,7 +16,7 @@ from .image_transformations import AffineTransformationGenerator,SimpleAffineTra
 from .measure.multithreaded_layer_measure import PerLayerMeasure,LayerMeasure,SamplesFirstPerLayerMeasure,TransformationsFirstPerLayerMeasure
 
 from .measure.multithreaded_variance import TransformationVarianceMeasure,SampleVarianceMeasure,NormalizedVarianceMeasure
-from .measure.normalized import NormalizedMeasure,SampleMeasure,TransformationMeasure
+from .measure.normalized import NormalizedVariance,SampleVariance,TransformationVariance
 from .measure.anova import AnovaMeasure,AnovaFMeasure
 from .measure.distance import DistanceMeasure,DistanceSampleMeasure,DistanceTransformationMeasure,DistanceAggregation
 from .measure.distance_equivariance import DistanceSameEquivarianceMeasure

@@ -68,10 +68,10 @@ class ClassificationDataset:
 
 
 datasets={"mnist":mnist
-          ,"fashion_mnist":fashion_mnist
+          # ,"fashion_mnist":fashion_mnist
           ,"cifar10":cifar10
-          ,"mnist_rot":mnist_rot
-          ,"cluttered_mnist":cluttered_mnist
+          # ,"mnist_rot":mnist_rot
+          # ,"cluttered_mnist":cluttered_mnist
           }
 names=datasets.keys()
 

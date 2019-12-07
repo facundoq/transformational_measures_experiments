@@ -37,7 +37,10 @@ class AllConvolutional( ObservableLayersModule):
     def __init__(self, input_shape, num_classes,filters=96,dropout=False,bn=False):
         super(AllConvolutional, self).__init__()
         self.name = self.__class__.__name__
-        self.bn=bn
+        self.bn = bn
+        if self.bn:
+            self.name+="BN"
+
         h,w,c=input_shape
         filters2=filters*2
         self.dropout=dropout

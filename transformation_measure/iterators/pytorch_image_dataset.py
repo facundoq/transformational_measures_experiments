@@ -89,6 +89,7 @@ class ImageDataset(Dataset):
             raise ValueError()
         return x
 
+    # TODO convert to pure pytorch
     def transform_batch(self,x):
         nt = len(self.transformations)
         # to NHWC order

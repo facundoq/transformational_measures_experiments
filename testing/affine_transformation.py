@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 import config
-results_path=config.testing_folder()/"affine_generator_transformation/"
+results_path= config.testing_path() / "affine_generator_transformation/"
 results_path.mkdir(parents=True,exist_ok=True)
 
 source_path="testing/mnist.png"
@@ -14,9 +14,9 @@ def apply_transformation(p, image_name):
 
     image= skimage.io.imread(source_path)
     image = image[:, :, np.newaxis]
-    image= image.transpose(2, 0, 1)
+    image= image.transpose((2, 0, 1))
     image= a(image)
-    image= image.transpose(1 , 2, 0)
+    image= image.transpose((1 , 2, 0))
     filepath = results_path / f"{image_name}.png"
     skimage.io.imsave( filepath, image)
 

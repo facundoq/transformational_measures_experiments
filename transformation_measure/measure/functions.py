@@ -1,6 +1,7 @@
 from transformation_measure.measure.stats_running import RunningMeanAndVariance
 from enum import Enum
 import numpy as np
+
 class MeasureFunction(Enum):
     var = "var"
     std = "std"
