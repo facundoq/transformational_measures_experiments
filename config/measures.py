@@ -1,6 +1,13 @@
 from transformation_measure import *
 import itertools
 
+def dataset_size_for_measure(measure:Measure)->float:
+    if measure.__class__.__name__.endswith("Variance"):
+        return 0.1
+    else:
+        return 0.5
+
+
 def all_measures()-> [Measure]:
     cas=[ConvAggregation.none, ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.max,]
     das = [DistanceAggregation.mean,DistanceAggregation.max]
@@ -18,7 +25,7 @@ def all_measures()-> [Measure]:
     for (da,mf) in itertools.product(das,measure_functions):
         measures.append(DistanceSampleMeasure(da))
         measures.append(DistanceTransformationMeasure(da))
-        measures.append(DistanceMeasure( da))
+        measures.append(DistanceMeasure(da))
         measures.append(DistanceSameEquivarianceMeasure(da))
 
     for percentage in [0.01,0.001,0.1]:
@@ -46,6 +53,5 @@ def common_measures()-> [Measure]:
         ,AnovaMeasure(alpha=0.99,bonferroni=True)
         ,DistanceMeasure(dmean)
         ,DistanceSameEquivarianceMeasure(dmean)
-
     ]
     return measures

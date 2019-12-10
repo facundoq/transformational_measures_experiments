@@ -27,12 +27,9 @@ small_models_generators = [config.SimpleConvConfig,
                            config.AllConvolutionalConfig, ]
 
 simple_models_generators = [config.SimpleConvConfig]
-
+common_models_generators  = simple_models_generators
 
 measures = config.common_measures()
-
-# dataset_subsets=  [variance.DatasetSubset.train,variance.DatasetSubset.test]
-# dataset_percentages= [0.1, 0.5, 1.0]x
 
 dataset_names = ["mnist", "cifar10"]
 venv_path = ""
@@ -44,7 +41,7 @@ common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
                        ]
 
 ca_none, ca_mean,ca_sum =  tm.ConvAggregation.none, tm.ConvAggregation.mean, tm.ConvAggregation.mean
-dmean, dmax, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
+da_mean, da_max, = tm.DistanceAggregation.mean, tm.DistanceAggregation.max
 
 import abc
 
@@ -144,19 +141,19 @@ class CompareMeasures(Experiment):
             # tm.SampleVarianceMeasure(mf, ca_none),
         ],
             "Distance": [
-                tm.DistanceTransformationMeasure(dmean),
-                tm.DistanceSampleMeasure(dmean),
+                tm.DistanceTransformationMeasure(da_mean),
+                tm.DistanceSampleMeasure(da_mean),
             ],
             "HighLevel": [
                 tm.AnovaMeasure(0.99, bonferroni=True),
                 tm.NormalizedVariance(ca_sum),
                 # tm.NormalizedVarianceMeasure(mf, ca_none),
-                tm.DistanceMeasure(dmean),
+                tm.DistanceMeasure(da_mean),
                 # tm.GoodfellowMeasure()
                 # tm.GoodfellowNormalMeasure(alpha=0.99)
             ],
             "Equivariance": [
-                tm.DistanceSameEquivarianceMeasure(dmean),
+                tm.DistanceSameEquivarianceMeasure(da_mean),
                 # tm.DistanceTransformationMeasure(dmean),
             ]
         }
@@ -164,11 +161,12 @@ class CompareMeasures(Experiment):
         # model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]
 
-        model_names = common_models_generators
+        #model_generators = common_models_generators
+        model_generators = simple_models_generators
         #model_names = ["SimpleConv"]
         transformations = config.common_transformations_without_identity()
 
-        combinations = itertools.product(model_names, dataset_names, transformations, measure_sets.items())
+        combinations = itertools.product(model_generators, dataset_names, transformations, measure_sets.items())
         for (model_config_generator, dataset, transformation, measure_set) in combinations:
             model_config=model_config_generator.for_dataset(dataset)
             # train
@@ -179,7 +177,7 @@ class CompareMeasures(Experiment):
             variance_parameters = []
             measure_set_name, measures = measure_set
             for m in measures:
-                p = 0.5 if m.__class__ == tm.AnovaMeasure else 0.1
+                p = config.dataset_size_for_measure(measure)
                 p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
                 p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, m)
                 variance_parameters.append(p_variance)
@@ -205,8 +203,8 @@ class RandomInitialization(Experiment):
         measures=[
                     # tm.AnovaMeasure(ca_none, 0.99, bonferroni=True),
                     tm.NormalizedVariance(ca_mean),
-                    tm.DistanceMeasure(dmean),
-                    tm.DistanceSameEquivarianceMeasure(dmean),
+                    tm.DistanceMeasure(da_mean),
+                    tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         repetitions = 8
         model_names = [models.SimpleConv.__name__,models.SimpleConvBN.__name__]
@@ -225,7 +223,7 @@ class RandomInitialization(Experiment):
             variance_parameters = []
             for p_training in training_parameters:
                 model_path = config.model_path(p_training)
-                p = 0.5 if measure.__class__ == tm.AnovaMeasure else 0.1
+                p = config.dataset_size_for_measure(measure)
                 p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
                 p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
@@ -251,8 +249,8 @@ class DatasetSize(Experiment):
         measures = [
             # tm.AnovaMeasure(ca_none, 0.99, bonferroni=True),
             tm.NormalizedVariance(ca_mean),
-            tm.DistanceMeasure(dmean),
-            tm.DistanceSameEquivarianceMeasure(dmean),
+            tm.DistanceMeasure(da_mean),
+            tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         combinations = list(itertools.product(
             model_names, dataset_names, config.common_transformations_without_identity(), measures))
@@ -280,14 +278,14 @@ class DatasetSubset(Experiment):
         return '''Vary the test dataset subset (either train o testing) and see how it affects the measure's value.'''
 
     def run(self):
-        dataset_sizes = [(variance.DatasetSubset.test, 0.5), (variance.DatasetSubset.train, 0.1)]
+        dataset_subsets = [(variance.DatasetSubset.test, 1), (variance.DatasetSubset.train, 0.2)]
 
         model_names = simple_models_generators
         measures = [
-            # tm.AnovaMeasure(ca_none, 0.99, bonferroni=True),
+            tm.AnovaMeasure(0.99),
             tm.NormalizedVariance(ca_mean),
-            tm.DistanceMeasure(dmean),
-            tm.DistanceSameEquivarianceMeasure(dmean),
+            tm.DistanceMeasure(da_mean),
+            tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         combinations = list(itertools.product(
             model_names , dataset_names, config.common_transformations_without_identity(), measures))
@@ -302,9 +300,8 @@ class DatasetSubset(Experiment):
             self.experiment_training(p_training)
 
             p_datasets = []
-            for (subset, p) in dataset_sizes:
-                if measure.__class__ == tm.AnovaMeasure.__class__:
-                    p = p * 2
+            for subset, multiplier in dataset_subsets:
+                p = config.dataset_size_for_measure(measure) * multiplier
                 p_datasets.append(variance.DatasetParameters(dataset, subset, p))
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
@@ -361,8 +358,8 @@ class TransformationComplexity(Experiment):
 
     def run(self):
         measures = [tm.NormalizedVariance(ca_sum),
-                    tm.DistanceMeasure(dmean),
-                    tm.DistanceSameEquivarianceMeasure(dmean ),
+                    tm.DistanceMeasure(da_mean),
+                    tm.DistanceSameEquivarianceMeasure(da_mean),
                     ]
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
 
@@ -495,6 +492,38 @@ class ComparePreConvAgg(Experiment):
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
+class CompareSameEquivarianceNormalization(Experiment):
+    def description(self):
+        return """Compare the result of DistanceSameEquivariance normalized or not."""
+
+    def run(self):
+        measures = [
+                    tm.DistanceSameEquivarianceMeasure(da_mean,normalized=True),
+                    tm.DistanceSameEquivarianceMeasure(da_mean, normalized=False)
+                    ]
+
+        combinations = itertools.product(
+            simple_models_generators , dataset_names, config.common_transformations_without_identity())
+        for model_config_generator, dataset, transformation in combinations:
+            # train
+            model_config = model_config_generator.for_dataset(dataset)
+            epochs = config.get_epochs(model_config, dataset, transformation)
+            p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
+            self.experiment_training(p_training)
+            #eval
+            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
+            variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
+            model_path = config.model_path(p_training)
+            for p_variance in variance_parameters:
+                self.experiment_variance(p_variance, model_path)
+
+            experiment_name = f"{model_config.name}_{p_dataset.id()}_{transformation.id()}_Distance"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            results = config.load_results(config.results_paths(variance_parameters))
+            labels = ["Normalized", "Unnormalized"]
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+
+
 import datasets
 import torch
 
@@ -510,19 +539,18 @@ class RandomWeights(Experiment):
         measures = [
             tm.NormalizedVariance(ca_mean),
             # tm.AnovaMeasure(ca_none, alpha=0.99, bonferroni=True),
-            tm.DistanceMeasure(dmean),
-            tm.DistanceSameEquivarianceMeasure(dmean),
+            tm.DistanceMeasure(da_mean),
+            tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
-        dataset_percentages = [0.1, 0.5,0.5]
+
         # number of random models to generate
-        random_model_n = 30
+        random_model_n = 10
 
-        mp = zip(measures, dataset_percentages)
         combinations = itertools.product(
-            simple_models_generators, dataset_names, config.common_transformations_without_identity(), mp)
-        for model_config_generator, dataset_name, transformation, (measure, p) in combinations:
+            simple_models_generators, dataset_names, config.common_transformations_without_identity(),measures)
+        for model_config_generator, dataset_name, transformation, measure in combinations:
             model_config = model_config_generator.for_dataset(dataset_name)
-
+            p = config.dataset_size_for_measure(measure)
             # generate `random_model_n` models and save them without training
             models_paths = []
             p_training = training.Parameters(model_config, dataset_name, transformation, 0)
@@ -573,16 +601,17 @@ class DuringTraining(Experiment):
     def run(self):
         measures = [tm.NormalizedVariance( ca_mean)
             # , tm.AnovaMeasure(ca_none, alpha=0.99, bonferroni=True)
-            , tm.DistanceMeasure(dmean)
-            , tm.DistanceSameEquivarianceMeasure(dmean)
+            , tm.DistanceMeasure(da_mean)
+            , tm.DistanceSameEquivarianceMeasure(da_mean)
                     ]
-        dataset_percentages = [0.1, 0.5]
+
 
         savepoints_percentages = [0,1,2,3,4,5,10,20,30,40,50,100]
-        mp = zip(measures, dataset_percentages)
+
         combinations = itertools.product(
-            simple_models_generators, dataset_names, config.common_transformations_without_identity(), mp)
-        for model_config_generator, dataset, transformation, (measure, p) in combinations:
+            simple_models_generators, dataset_names, config.common_transformations_without_identity(), measures)
+        for model_config_generator, dataset, transformation, measure in combinations:
+            p = config.dataset_size_for_measure(measure)
             # train
             model_config = model_config_generator.for_dataset(dataset)
             epochs = config.get_epochs(model_config, dataset, transformation)
@@ -606,6 +635,7 @@ class DuringTraining(Experiment):
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure}"
+            print(experiment_name)
             plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
             results = config.load_results(config.results_paths(variance_parameters))
             # TODO implement a heatmap where the x axis is the training time/epoch
@@ -631,8 +661,8 @@ class BatchNormalization(Experiment):
         measures = [
             # tm.AnovaMeasure(tm.ConvAggregation.none, 0.99),
             tm.NormalizedVariance(ca_sum),
-            tm.DistanceMeasure(dmean),
-            tm.DistanceSameEquivarianceMeasure(dmean),
+            tm.DistanceMeasure(da_mean),
+            tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         models = [config.SimpleConvConfig]
         combinations = itertools.product(
@@ -713,7 +743,7 @@ class CompareModels(Experiment):
 
     def run(self):
         measures  = [tm.NormalizedVariance(ca_mean),
-                     tm.DistanceMeasure(dmean),
+                     tm.DistanceMeasure(da_mean),
                      ]
 
         models = common_models_generators
@@ -751,13 +781,13 @@ class CompareModels(Experiment):
             visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels)
 
 
-class CompareSiameseNetwork(Experiment):
+class CompareTIPooling(Experiment):
     def description(self):
         return """Compare SimpleConv with the SiameseSimpleConv Network"""
 
     def run(self):
         measures  = [tm.NormalizedVariance(ca_mean),
-                     tm.DistanceMeasure(dmean),
+                     tm.DistanceMeasure(da_mean),
                      ]
 
         model_config_generators = [config.SiameseSimpleConvConfig,config.SimpleConvConfig]
@@ -783,7 +813,7 @@ class CompareSiameseNetwork(Experiment):
                 # train
                 self.experiment_training(p_training)
                 # generate variance params
-                p = 0.5 if measure.__class__ == tm.AnovaMeasure else 0.1
+                p = config.dataset_size_for_measure(measure)
                 p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
                 p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
@@ -825,8 +855,8 @@ class Stratified(Experiment):
             tm.NormalizedVariance(ca_sum),
             # tm.DistanceTransformationMeasure(dmean),
             # tm.DistanceSampleMeasure(dmean),
-            tm.DistanceMeasure(dmean),
-            tm.DistanceSameEquivarianceMeasure(dmean),
+            tm.DistanceMeasure(da_mean),
+            tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
 
         # model_names=["SimpleConv","VGGLike","AllConvolutional"]
@@ -844,7 +874,7 @@ class Stratified(Experiment):
             p_training = training.Parameters(model_config, dataset, transformation, epochs)
             self.experiment_training(p_training)
             # generate variance params
-            p = 0.5 if measure.__class__ == tm.AnovaMeasure else 0.1
+            p = config.dataset_size_for_measure(measure)
             p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
             p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
             p_variance_stratified = variance.Parameters(p_training.id(), p_dataset, transformation, measure,stratified=True)
@@ -915,7 +945,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
                 continue
             # train
             self.experiment_training(p_training)
-            p = 0.5 if measure.__class__ == tm.AnovaMeasure else 0.1
+            p = config.dataset_size_for_measure(measure)
             p_dataset = variance.DatasetParameters(dataset_name, variance.DatasetSubset.test, p)
             p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
             model_path = config.model_path(p_training)
@@ -1054,8 +1084,9 @@ if __name__ == '__main__':
         TransformationComplexity(),
 
         BatchNormalization(),
+        CompareSameEquivarianceNormalization(),
 
-        CompareSiameseNetwork(),
+        CompareTIPooling(),
 
         ValidateMeasure(),
 

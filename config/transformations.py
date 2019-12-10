@@ -7,8 +7,8 @@ def common_transformations() -> [TransformationSet]:
 
 def common_transformations_without_identity()-> [TransformationSet]:
     transformations = [SimpleAffineTransformationGenerator(r=360),
-                       SimpleAffineTransformationGenerator(t=5),
-                       SimpleAffineTransformationGenerator(s=5),
+                       SimpleAffineTransformationGenerator(s=4),
+                       SimpleAffineTransformationGenerator(t=3),
                        # SimpleAffineTransformationGenerator(r=360, s=4, t=3),
                        ]
     return transformations
