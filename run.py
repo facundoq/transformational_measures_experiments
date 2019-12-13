@@ -176,10 +176,10 @@ class CompareMeasures(Experiment):
             # generate variance params
             variance_parameters = []
             measure_set_name, measures = measure_set
-            for m in measures:
+            for measure in measures:
                 p = config.dataset_size_for_measure(measure)
                 p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, m)
+                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
             # evaluate variance
             model_path = config.model_path(p_training)
@@ -207,16 +207,17 @@ class RandomInitialization(Experiment):
                     tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         repetitions = 8
-        model_names = [models.SimpleConv.__name__,models.SimpleConvBN.__name__]
+
+        model_generators = simple_models_generators
         transformations = config.common_transformations_without_identity()
 
-        combinations = itertools.product(model_names, dataset_names, transformations,measures)
-        for (model, dataset, transformation,measure) in combinations:
+        combinations = itertools.product(model_generators , dataset_names, transformations,measures)
+        for (model_generator, dataset, transformation,measure) in combinations:
             # train
-            epochs = config.get_epochs(model, dataset, transformation)
+            epochs = config.get_epochs(model_generator, dataset, transformation)
             training_parameters= []
             for r in range(repetitions):
-                p_training = training.Parameters(model, dataset, transformation, epochs, 0,suffix=f"rep{r:02}")
+                p_training = training.Parameters(model_generator, dataset, transformation, epochs, 0,suffix=f"rep{r:02}")
                 self.experiment_training(p_training)
                 training_parameters.append(p_training)
             # generate variance params
@@ -231,7 +232,7 @@ class RandomInitialization(Experiment):
                 self.experiment_variance(p_variance, model_path)
 
             # plot results
-            experiment_name = f"{model}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{model_generator}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
             results = config.load_results(config.results_paths(variance_parameters))
 
@@ -358,14 +359,61 @@ class TransformationComplexity(Experiment):
 
     def run(self):
         measures = [tm.NormalizedVariance(ca_sum),
+                    # tm.DistanceMeasure(da_mean),
+                    # tm.DistanceSameEquivarianceMeasure(da_mean),
+                    ]
+        combinations = itertools.product(simple_models_generators, dataset_names, measures)
+
+
+        test_sets = [config.rotation_transformations(4),
+                [tm.SimpleAffineTransformationGenerator(s=i) for i in [1,3,5]],
+                [tm.SimpleAffineTransformationGenerator(t=i) for i in [1,3,5]],
+                ]
+        train_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
+                               tm.SimpleAffineTransformationGenerator(s=5),
+                               tm.SimpleAffineTransformationGenerator(t=5),
+                            ]
+        for model_config_generator, dataset,measure in combinations:
+            model_config = model_config_generator.for_dataset(dataset)
+
+            for train_transformation,transformation_set in zip(train_transformations,test_sets):
+                    # TRAIN
+                    epochs = config.get_epochs(model_config, dataset, train_transformation)
+                    p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
+                    self.experiment_training(p_training)
+                    # MEASURE
+                    variance_parameters = []
+                    for k, test_transformation in enumerate(transformation_set):
+                        p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
+                        p_variance = variance.Parameters(p_training.id(), p_dataset, test_transformation, measure)
+                        model_path = config.model_path(p_training)
+                        self.experiment_variance(p_variance, model_path)
+                        variance_parameters.append(p_variance)
+                    # PLOT
+                    experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
+                    plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+                    title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n Train transformation: {train_transformation.id()}"
+                    labels = [f"Test transformation: {t}" for t in transformation_set[1:] ]
+
+                    results = config.load_results(config.results_paths(variance_parameters[1:]))
+                    visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels, title=title)
+
+class TransformationComplexityDetailed(Experiment):
+
+    def description(self):
+        return """Train a model/dataset with a transformation of scale X and then test with scales Y and Z of the same type, where Y<X and Z>X. Ie, train with 8 rotations, measure variance with 2, 4, 8 and 16. """
+
+    def run(self):
+        measures = [tm.NormalizedVariance(ca_sum),
                     tm.DistanceMeasure(da_mean),
                     tm.DistanceSameEquivarianceMeasure(da_mean),
                     ]
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
 
         names = ["rotation", "translation", "scale"]
-        sets = [config.rotation_transformations(8), config.translation_transformations(3),
-                config.scale_transformations(3)]
+        sets = [config.rotation_transformations(8),
+                config.translation_transformations(4),
+                config.scale_transformations(4)]
 
         for model_config_generator, dataset,measure in combinations:
             model_config = model_config_generator.for_dataset(dataset)
@@ -393,103 +441,105 @@ class TransformationComplexity(Experiment):
                         self.experiment_variance(p_variance, model_path)
                         variance_parameters.append(p_variance)
 
-                    title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n Train transformation: {train_transformation.id()} "
-                    labels = [f"Test transformation: {t}" for t in transformation_set]
-                    results = config.load_results(config.results_paths(variance_parameters))
+                    title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n Train transformation: {train_transformation.id()}"
+                    labels = [f"Test transformation: {t}" for t in transformation_set[1:] ]
+
+                    results = config.load_results(config.results_paths(variance_parameters[1:]))
                     visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels, title=title)
 
 
-class CollapseConvBeforeOrAfter(Experiment):
+# class CollapseConvBeforeOrAfter(Experiment):
+#     def description(self):
+#         return """Collapse convolutions spatial dims after/before computing variance."""
+#
+#     def run(self):
+#         cas = [tm.ConvAggregation.sum, tm.ConvAggregation.mean, tm.ConvAggregation.max]
+#         model_names = ["SimpleConv"] #simple_model_names#small_model_names
+#
+#         measure_sets_names=[
+#                             "NormalizedVariance",
+#                             # "Anova"
+#                             ]
+#         measure_sets={
+#             "NormalizedVariance" : [tm.NormalizedVariance(ca) for ca in cas],
+#             # "Anova" :[tm.AnovaMeasure(conv_aggregation=ca) for ca in cas],
+#         }
+#         measure_sets_no_agg = {
+#             "NormalizedVariance": tm.NormalizedVariance(ca_none),
+#             # "Anova": tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none) ,
+#         }
+#         post_functions = [tm.ConvAggregation.mean]
+#
+#         combinations = itertools.product(
+#             model_names , dataset_names, config.common_transformations_without_identity(),measure_sets_names)
+#         for (model_config_generator, dataset, transformation,measure_set_name) in combinations:
+#             model_config = model_config_generator.for_dataset(dataset)
+#             # train
+#             measures= measure_sets[measure_set_name]
+#             no_agg_measure=measure_sets_no_agg[measure_set_name]
+#             epochs = config.get_epochs(model_config, dataset, transformation)
+#             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
+#             self.experiment_training(p_training)
+#             # eval variance
+#             p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
+#             variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
+#             model_path = config.model_path(p_training)
+#             for p_variance in variance_parameters:
+#                 self.experiment_variance(p_variance, model_path)
+#
+#             no_aggregation_parameters = variance.Parameters(p_training.id(), p_dataset, transformation, no_agg_measure)
+#             self.experiment_variance(no_aggregation_parameters, model_path)
+#
+#             post_result_sets = {"all": cas, "mean": post_functions}
+#             for set, functions in post_result_sets.items():
+#                 post_results = config.load_results(config.results_paths([no_aggregation_parameters]*len(functions)))
+#                 for ca, r in zip(functions, post_results):
+#                     r.measure_result = r.measure_result.collapse_convolutions(ca)
+#
+#                 # plot
+#                 experiment_name = f"{model_config.name}_{p_dataset.id()}_{transformation.id()}_{set}"
+#                 plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+#                 results = config.load_results(config.results_paths(variance_parameters))
+#
+#                 labels = [f"Pre : {m.id()}" for m in measures]
+#                 post_labels = [f"Post: {no_agg_measure.id()} ({f})" for f in functions]
+#                 visualization.plot_collapsing_layers_same_model(results + post_results, plot_filepath, labels=labels + post_labels)
+
+
+class AggregationFunctionsVariance(Experiment):
     def description(self):
-        return """Collapse convolutions spatial dims after/before computing variance."""
+        return """Test different Convolutional Aggregation (sum,mean,max) functions to evaluate their differences. Convolutional aggregation collapses all the spatial dimensions of feature maps before normalization so that a single variance value for the feature map can be obtained."""
 
     def run(self):
-        cas = [tm.ConvAggregation.sum, tm.ConvAggregation.mean, tm.ConvAggregation.max]
-        model_names = ["SimpleConv"] #simple_model_names#small_model_names
-
-        measure_sets_names=[
-                            "NormalizedVariance",
-                            # "Anova"
-                            ]
-        measure_sets={
-            "NormalizedVariance" : [tm.NormalizedVariance(ca) for ca in cas],
-            # "Anova" :[tm.AnovaMeasure(conv_aggregation=ca) for ca in cas],
-        }
-        measure_sets_no_agg = {
-            "NormalizedVariance": tm.NormalizedVariance(ca_none),
-            # "Anova": tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none) ,
-        }
-        post_functions = [tm.ConvAggregation.mean]
-
+        functions = [ca_sum,ca_mean,tm.ConvAggregation.max]
         combinations = itertools.product(
-            model_names , dataset_names, config.common_transformations_without_identity(),measure_sets_names)
-        for (model_config_generator, dataset, transformation,measure_set_name) in combinations:
-            model_config = model_config_generator.for_dataset(dataset)
-            # train
-            measures= measure_sets[measure_set_name]
-            no_agg_measure=measure_sets_no_agg[measure_set_name]
-            epochs = config.get_epochs(model_config, dataset, transformation)
-            p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
-            self.experiment_training(p_training)
-            # eval variance
-            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
-            variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
-            model_path = config.model_path(p_training)
-            for p_variance in variance_parameters:
-                self.experiment_variance(p_variance, model_path)
-
-            no_aggregation_parameters = variance.Parameters(p_training.id(), p_dataset, transformation, no_agg_measure)
-            self.experiment_variance(no_aggregation_parameters, model_path)
-
-            post_result_sets = {"all": cas, "mean": post_functions}
-            for set, functions in post_result_sets.items():
-                post_results = config.load_results(config.results_paths([no_aggregation_parameters]*len(functions)))
-                for ca, r in zip(functions, post_results):
-                    r.measure_result = r.measure_result.collapse_convolutions(ca)
-
-                # plot
-                experiment_name = f"{model_config.name}_{p_dataset.id()}_{transformation.id()}_{set}"
-                plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
-                results = config.load_results(config.results_paths(variance_parameters))
-
-                labels = [f"Pre : {m.id()}" for m in measures]
-                post_labels = [f"Post: {no_agg_measure.id()} ({f})" for f in functions]
-                visualization.plot_collapsing_layers_same_model(results + post_results, plot_filepath, labels=labels + post_labels)
-
-
-class ComparePreConvAgg(Experiment):
-    def description(self):
-        return """Test different Convolutional Aggregation (sum,mean,max) functions to evaluate their differences. Convolutional aggregation collapses all the spatial dimensions of feature maps so that a single variance value for the feature map can be obtained."""
-
-    def run(self):
-        functions = [tm.ConvAggregation.sum, tm.ConvAggregation.mean, tm.ConvAggregation.max, tm.ConvAggregation.none]
-        measure_sets_constructors = {
-            "nm": tm.NormalizedVariance
-            , "sm": tm.SampleVariance
-            , "tm": tm.TransformationVariance}
-        measure_sets = []
-        for set_name, measure_constructor in measure_sets_constructors.items():
-            measure_objects = [measure_constructor(tm.MeasureFunction.std, f) for f in functions]
-            measure_sets.append((set_name, measure_objects))
-
-        combinations = itertools.product(
-            simple_models_generators , dataset_names, config.common_transformations_without_identity(), measure_sets)
-        for model_config_generator, dataset, transformation, (set_name, measures) in combinations:
+            simple_models_generators , dataset_names, config.common_transformations_without_identity())
+        for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
             p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
-            experiment_name = f"{model_config.name}_{p_dataset.id()}_{transformation.id()}_{set_name}"
+            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
+            measures = [tm.NormalizedVariance(ca) for ca in functions]
             variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_variance(p_variance, model_path)
-            results = config.load_results(config.results_paths(variance_parameters))
-            labels = [m.id() for m in measures]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            normal_results = config.load_results(config.results_paths(variance_parameters))
+
+            ca_none_variance_parameter = variance.Parameters(p_training.id(), p_dataset, transformation, tm.NormalizedVariance(ca_none))
+            self.experiment_variance(ca_none_variance_parameter , model_path)
+            ca_none_variance_parameters = [ca_none_variance_parameter]*3
+            ca_none_results = config.load_results(config.results_paths(ca_none_variance_parameters))
+            for (ca,r) in zip(functions,ca_none_results):
+                r.measure_result = r.measure_result.collapse_convolutions(ca)
+
+            all_results = normal_results + ca_none_results
+            labels = [f"Aggregation {ca} before normalization." for ca in functions] + [f"Aggregation {ca} after normalization." for ca in functions]
+            visualization.plot_collapsing_layers_same_model(all_results, plot_filepath, labels=labels)
 
 
 class CompareSameEquivarianceNormalization(Experiment):
@@ -704,7 +754,7 @@ class DatasetTransfer(Experiment):
         measures = [
                     # tm.AnovaMeasure(conv_aggregation=tm.ConvAggregation.none, alpha=0.99),
                     tm.NormalizedVariance(ca_sum),
-                    tm.DistanceMeasure(tm.DistanceAggregation.mean)
+                    # tm.DistanceMeasure(tm.DistanceAggregation.mean)
         ]
 
         combinations = itertools.product(
@@ -746,7 +796,11 @@ class CompareModels(Experiment):
                      tm.DistanceMeasure(da_mean),
                      ]
 
-        models = common_models_generators
+        models = [
+            config.SimpleConvConfig,
+            config.AllConvolutionalConfig,
+            config.VGG16DConfig,
+            config.ResNetConfig]
         #transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
 
         transformations =config.common_transformations_without_identity()
@@ -1077,8 +1131,8 @@ if __name__ == '__main__':
         DatasetSubset(),
         DatasetTransfer(),
 
-        ComparePreConvAgg(),
-        CollapseConvBeforeOrAfter(),
+        AggregationFunctionsVariance(),
+        # CollapseConvBeforeOrAfter(),
 
         TransformationDiversity(),
         TransformationComplexity(),

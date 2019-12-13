@@ -42,6 +42,9 @@ class MeasureResult:
         return rm.mean()
 
     def collapse_convolutions(self,conv_aggregation_function:ConvAggregation):
+        if conv_aggregation_function == ConvAggregation.none:
+            return self
+
         results=[]
         for layer in self.layers:
             # if conv average out spatial dims
