@@ -22,15 +22,17 @@ def scale_transformations(n:int):
 def translation_transformations(n:int):
     return [SimpleAffineTransformationGenerator(t=i) for i in range(n)]
 
-def combined_transformations():
-    ts=[]
-    for i in range(17):
-        r = i * 360 //16
-        for s in range(6):
-            for t in range(6):
-                ts.append(SimpleAffineTransformationGenerator(r=r, s=s, t=t))
+def combined_transformations(rs=16,ss=5,ts=5):
+    ''' Includes id transformation, ie Affine with r=0,s=0,t=0
+    '''
+    transformations=[]
 
-    return ts
+    for i in range(rs+1):
+        r = i * 360 //rs
+        for s in range(ss+1):
+            for t in range(ts+1):
+                transformations.append(SimpleAffineTransformationGenerator(r=r, s=s, t=t))
+    return transformations
 
 def all_transformations():
     return combined_transformations() #common_transformations()+rotation_transformations(16)+scale_transformations(6)+translation_transformations(6) +

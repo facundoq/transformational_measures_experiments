@@ -38,6 +38,8 @@ class TransformationVariance(Measure):
         # calculate the final mean over all samples (for each layer)
         mean_variances = [b.mean() for b in mean_running]
         return MeasureResult(mean_variances, layer_names, self)
+    def name(self):
+        return "Transformation Variance"
 
 
 class SampleVariance(Measure):
@@ -73,6 +75,8 @@ class SampleVariance(Measure):
 
         mean_variances = [b.mean() for b in mean_variances_running]
         return MeasureResult(mean_variances, layer_names, self)
+    def name(self):
+        return "Sample Variance"
 
 from .quotient import divide_activations
 
@@ -107,3 +111,5 @@ class NormalizedVariance(Measure):
         else:
             sep = ""
         return f"NV({ca}{sep}{mf})"
+    def name(self):
+        return "Normalized Variance"

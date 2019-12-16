@@ -111,3 +111,6 @@ class GoodfellowNormalMeasure(Measure):
 
     def __repr__(self):
         return f"GoodfellowNormal(gp={self.alpha})"
+
+    def name(self):
+        return "Goodfellow Normal"

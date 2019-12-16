@@ -86,7 +86,8 @@ class DistanceTransformationMeasure(Measure):
         # calculate the final mean over all samples (and layers)
         mean_variances = [b.mean() for b in mean_running]
         return MeasureResult(mean_variances,layer_names,self)
-
+    def name(self):
+        return "Transformation Distance"
 
 
 class DistanceSampleMeasure(Measure):
@@ -112,6 +113,8 @@ class DistanceSampleMeasure(Measure):
         # calculate the final mean over all transformations (and layers)
         mean_variances = [b.mean() for b in mean_running]
         return MeasureResult(mean_variances,layer_names,self)
+    def name(self):
+        return "Sample Distance"
 
 
 from transformation_measure import QuotientMeasure
@@ -129,3 +132,5 @@ class DistanceMeasure(QuotientMeasure):
         return f"DM(da={self.distance_aggregation.value})"
 
 
+    def name(self):
+        return "Normalized Distance"

@@ -5,11 +5,13 @@ import numpy as np
 from typing import  List
 from .stats_running import RunningMean
 from .layer_transformation import ConvAggregation
+from utils import get_all
 
 ActivationsByLayer = [np.ndarray]
 
 class MeasureResult:
     def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure',extra_values=dict()):
+        assert (len(layers) == len(layer_names))
         self.layers=layers
         self.layer_names=layer_names
         self.measure=measure
@@ -22,13 +24,31 @@ class MeasureResult:
         return np.any([ len(l.shape)==1 for l in self.layers])
 
     def per_layer_average(self) -> np.ndarray:
-
         result = []
         for layer in self.layers:
             layer=layer[:]
             layer_average=layer[np.isfinite(layer)].mean()
             result.append(layer_average)
         return np.array(result)
+
+    def per_layer_mean_std(self) -> (np.ndarray,np.ndarray):
+        means = []
+        stds = []
+        for layer in self.layers:
+            layer=layer[:]
+            layer_mean=layer[np.isfinite(layer)].mean()
+            layer_std=layer[np.isfinite(layer)].std()
+            means.append(layer_mean)
+            stds.append(layer_std)
+        return np.array(means),np.array(stds)
+
+    def remove_layers(self,remove_indices:[int])->'MeasureResult':
+        n = len(self.layer_names)
+        all_indices=set(list(range(n)))
+        keep_indices = list(all_indices.difference(set(remove_indices)))
+        layers = get_all(self.layers,keep_indices)
+        layer_names = get_all(self.layer_names,keep_indices)
+        return MeasureResult(layers,layer_names,self.measure,self.extra_values)
 
     def weighted_global_average(self):
         return self.per_layer_average().mean()
@@ -77,6 +97,10 @@ class Measure():
 
     def id(self):
         return str(self)
+
+    @abc.abstractmethod
+    def name(self):
+        pass
 
     @abc.abstractmethod
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:

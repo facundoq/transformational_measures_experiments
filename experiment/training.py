@@ -37,11 +37,11 @@ class Parameters:
             notransform_message=f", Notransform_epochs={self.notransform_epochs}"
         else:
             notransform_message=""
-        return f"Model: {self.model.name}, Dataset={self.dataset}, Transformations=({self.transformations}), Epochs={self.epochs}{notransform_message}"
+        return f"Model: {self.model.id()}, Dataset={self.dataset}, Transformations=({self.transformations}), Epochs={self.epochs}{notransform_message}"
 
     def id(self,savepoint:float=None):
 
-        result = f"{self.model.name}_{self.dataset}_{self.transformations.id()}"
+        result = f"{self.model.id()}_{self.dataset}_{self.transformations.id()}"
 
         if self.notransform_epochs > 0:
             notransform_message = "_notransform_epochs={self.notransform_epochs}"

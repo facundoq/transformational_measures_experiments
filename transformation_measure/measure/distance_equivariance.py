@@ -98,4 +98,5 @@ class DistanceSameEquivarianceMeasure(Measure):
                 # plt.close(f)
 
 
-
+    def name(self)->str:
+        return "Distance Same-Equivariance"

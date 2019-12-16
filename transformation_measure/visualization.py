@@ -27,7 +27,7 @@ from transformation_measure.measure.base import MeasureResult
 import transformation_measure as tm
 from pathlib import Path
 from experiment import variance
-
+from transformation_measure.measure.stats_running import  RunningMeanAndVariance
 
 
 def plot_heatmap(m:MeasureResult,filepath:Path,title:str, vmin=0, vmax=None):
@@ -171,16 +171,21 @@ def plot_collapsing_layers_different_models(results:List[variance.VarianceExperi
     plt.savefig(filepath, bbox_inches="tight")
     plt.close()
 
+def get_default(l:[],i:int,default):
+    if l is None:
+        return default
+    else:
+        return l[i]
 
-def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,plot_mean=False,color=None,legend_location=None):
+def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentResult], filepath:Path, labels:[str]=None, title="", linestyles=None, plot_mean=False, colors=None, legend_location=None, mark_layers:[int]=None):
     n=len(results)
     if n == 0:
         raise ValueError(f"`results` is an empty list.")
-    if color is None:
+    if colors is None:
         if n==2:
-            color = np.array([[1,0,0],[0,0,1]])
+            colors = np.array([[1, 0, 0], [0, 0, 1]])
         else:
-            color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
+            colors = plt.cm.rainbow(np.linspace(0.01, 1, n))
 
     f, ax = plt.subplots(dpi=min(350, max(150, n * 15)))
     f.suptitle(title)
@@ -190,54 +195,60 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
     if plot_mean:
         assert min_n==max_n,"To plot the mean values all results must have the same number of layers."
 
-    average=np.zeros(max_n)
 
+    mean_and_variance = RunningMeanAndVariance()
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
-
         x= np.arange(n_layers)+1
         y= result.measure_result.per_layer_average()
         if plot_mean:
-            average+=y
-        if labels is None:
-            label = None
-        else:
-            label = labels[i]
-        if linestyles is None:
-            linestyle="-"
-        else:
-            linestyle=linestyles[i]
-        ax.plot(x,y,label=label,linestyle=linestyle,color=color[i,:]*0.7)
+            mean_and_variance.update(y)
+        label = get_default(labels,i,None)
+        linestyle = get_default(linestyles,i,"-")
+        color=colors[i, :]
+        if plot_mean:
+            color*=0.7
+
+        ax.plot(x, y, label=label, linestyle=linestyle, color=color)
+
+        if not mark_layers is None:
+            x_mark = x[mark_layers]
+            y_mark = y[mark_layers]
+            ax.plot(x_mark,y_mark,linestyle="",color=color,marker="s")
 
 
     if plot_mean:
+
         x = np.arange(max_n)+1
-        y=average/len(results)
-        label="mean"
+        y,error=mean_and_variance.mean(),mean_and_variance.std()
+        label="Mean and deviation" #μ  σ
         linestyle="--"
-        ax.plot(x, y, label=label, linewidth=3, linestyle=linestyle, color=(0,0,0))
+        ax.errorbar(x, y,yerr=error, label=label, linewidth=1.5, linestyle=linestyle, color=(0,0,0))
+
 
     ax.set_ylabel("Variance")
     ax.set_xlabel("Layer")
     # ax.set_ylim(max_measure)
+
     if max_n < 32:
         labels = results[0].measure_result.layer_names
         x = np.arange(max_n) + 1
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=45)
+
+        ax.set_xticklabels(labels, rotation=45,fontsize=6)
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
-
-    # Put legend below current axis
-    if legend_location is None:
-        loc, pos = ['lower center', np.array((0.5, 0))]
-    else:
-        loc, pos = legend_location
-
-    ax.legend(loc=loc, bbox_to_anchor=pos,
-              fancybox=True, shadow=True)
+    if not labels is None:
+        # Put legend below current axis
+        if legend_location is None:
+            # loc, pos = ['lower center', np.array((0.5, 0))]
+            ax.legend(fancybox=True, shadow=True)
+        else:
+            loc, pos = legend_location
+            ax.legend(loc=loc, bbox_to_anchor=pos,
+                      fancybox=True, shadow=True)
 
     plt.savefig(filepath, bbox_inches="tight")
     plt.close()
@@ -412,3 +423,45 @@ def plot_invariant_feature_maps_pytorch(plot_folderpath:Path,model:torch.nn.Modu
     plot_invariant_feature_maps(plot_folderpath,iterator,result,most_invariant_k,least_invariant_k,conv_aggregation)
 
 
+
+import matplotlib
+def discrete_colormap(n:int=16,base_colormap="rainbow",):
+    colors = plt.cm.get_cmap(base_colormap, n)(range(n))
+    cm = matplotlib.colors.ListedColormap(colors)
+    return cm
+
+
+def default_discrete_colormap():
+    return plt.cm.get_cmap("Set1")
+
+def labels_for_measure_results(ms:[MeasureResult]):
+    return [label_for_measure_result(m) for m in ms]
+def label_for_measure_result(m:MeasureResult):
+    return label_for_measure(m.measure)
+def label_for_measure(m:tm.Measure):
+    return m.name()
+def labels_for_measures(ms:[MeasureResult]):
+    return [label_for_measure(m) for m in ms]
+
+
+def plot_accuracies(plot_filepath:Path,accuracies_by_transformation:[[float]],transformation_names:[str],model_names:[str]):
+    # set width of bar
+    barWidth = 0.25
+    cmap = default_discrete_colormap()
+    # Set position of bar on X axis
+    pos = np.arange(len(model_names),dtype=float)
+    for i,(accuracies,transformation_name) in enumerate(zip(accuracies_by_transformation,transformation_names)):
+    # Make the plot
+        plt.bar(pos, accuracies, color=cmap(i), width=barWidth, edgecolor='white', label=transformation_name)
+        pos+=barWidth
+    plt.gca().set_ylim(0,1)
+
+    # Add xticks on the middle of the group bars
+    plt.xlabel('Model')
+    plt.ylabel('Accuracy')
+    plt.xticks([r + barWidth for r in range(len(model_names))], model_names)
+
+    # Create legend & save
+    plt.legend()
+    plt.savefig(plot_filepath, bbox_inches="tight")
+    plt.close()

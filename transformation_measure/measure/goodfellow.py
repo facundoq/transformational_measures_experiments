@@ -127,3 +127,6 @@ class GoodfellowMeasure(Measure):
 
     def __repr__(self):
         return f"Goodfellow(gp={self.activations_percentage})"
+
+    def name(self):
+        return "Goodfellow"

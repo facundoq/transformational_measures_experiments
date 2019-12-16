@@ -8,7 +8,6 @@ import texttable
 import argcomplete
 import numpy as np
 from numpy import short
-
 import config
 import models
 import transformation_measure as tm
@@ -20,7 +19,8 @@ common_models_generators = [
                   config.SimpleConvConfig,
                   config.AllConvolutionalConfig,
                   config.VGG16DConfig,
-                  config.ResNetConfig]
+                  # config.ResNetConfig
+]
 
 
 small_models_generators = [config.SimpleConvConfig,
@@ -35,9 +35,9 @@ dataset_names = ["mnist", "cifar10"]
 venv_path = ""
 
 common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
-                       tm.SimpleAffineTransformationGenerator(t=5),
-                       tm.SimpleAffineTransformationGenerator(s=5),
-                      tm.SimpleAffineTransformationGenerator(r=360, s=3, t=3),
+                          tm.SimpleAffineTransformationGenerator(s=4),
+                          tm.SimpleAffineTransformationGenerator(t=3),
+                        # tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3),
                        ]
 
 ca_none, ca_mean,ca_sum =  tm.ConvAggregation.none, tm.ConvAggregation.mean, tm.ConvAggregation.mean
@@ -164,34 +164,50 @@ class CompareMeasures(Experiment):
         #model_generators = common_models_generators
         model_generators = simple_models_generators
         #model_names = ["SimpleConv"]
-        transformations = config.common_transformations_without_identity()
+        transformations = common_transformations
 
         combinations = itertools.product(model_generators, dataset_names, transformations, measure_sets.items())
         for (model_config_generator, dataset, transformation, measure_set) in combinations:
-            model_config=model_config_generator.for_dataset(dataset)
-            # train
-            epochs = config.get_epochs(model_config, dataset, transformation)
-            p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
-            self.experiment_training(p_training)
-            # generate variance params
-            variance_parameters = []
-            measure_set_name, measures = measure_set
-            for measure in measures:
-                p = config.dataset_size_for_measure(measure)
-                p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
-                variance_parameters.append(p_variance)
-            # evaluate variance
-            model_path = config.model_path(p_training)
-            for p_variance in variance_parameters:
-                self.experiment_variance(p_variance, model_path)
+            # train model with data augmentation and without
+            variance_parameters_both=[]
+            for t in [tm.SimpleAffineTransformationGenerator(),transformation]:
 
+                model_config=model_config_generator.for_dataset(dataset)
+                epochs = config.get_epochs(model_config, dataset, t)
+                p_training = training.Parameters(model_config, dataset, t, epochs, 0)
+                self.experiment_training(p_training)
+
+
+                # generate variance params
+                variance_parameters = []
+                measure_set_name, measures = measure_set
+                for measure in measures:
+                    p = config.dataset_size_for_measure(measure)
+                    p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
+                    p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                    variance_parameters.append(p_variance)
+                # evaluate variance
+                model_path = config.model_path(p_training)
+                for p_variance in variance_parameters:
+                    self.experiment_variance(p_variance, model_path)
+                variance_parameters_both.append(variance_parameters)
+
+            variance_parameters_id = variance_parameters_both[0]
+            variance_parameters_data_augmentation = variance_parameters_both[1]
+            variance_parameters_all = variance_parameters_id+variance_parameters_data_augmentation
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure_set_name}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
-            results = config.load_results(config.results_paths(variance_parameters))
-            labels = [m.id() for m in measures]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            results = config.load_results(config.results_paths(variance_parameters_all))
+            labels = [m.name()+" (No data augmentation)" for m in measures] + [m.name() for m in measures]
+            n = len(measures)
+            cmap = visualization.discrete_colormap(n=n)
+            cmap = visualization.default_discrete_colormap()
+            color= cmap(range(n))
+            colors = np.vstack([color,color])
+            linestyles = ["--" for i in range(n)]+["-" for i in range(n)]
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels, linestyles=linestyles,
+                                                            colors=colors)
 
 
 
@@ -209,15 +225,16 @@ class RandomInitialization(Experiment):
         repetitions = 8
 
         model_generators = simple_models_generators
-        transformations = config.common_transformations_without_identity()
+        transformations = common_transformations
 
         combinations = itertools.product(model_generators , dataset_names, transformations,measures)
         for (model_generator, dataset, transformation,measure) in combinations:
             # train
-            epochs = config.get_epochs(model_generator, dataset, transformation)
+            model_config = model_generator.for_dataset(dataset)
+            epochs = config.get_epochs(model_config , dataset, transformation)
             training_parameters= []
             for r in range(repetitions):
-                p_training = training.Parameters(model_generator, dataset, transformation, epochs, 0,suffix=f"rep{r:02}")
+                p_training = training.Parameters(model_config , dataset, transformation, epochs, 0,suffix=f"rep{r:02}")
                 self.experiment_training(p_training)
                 training_parameters.append(p_training)
             # generate variance params
@@ -232,8 +249,8 @@ class RandomInitialization(Experiment):
                 self.experiment_variance(p_variance, model_path)
 
             # plot results
-            experiment_name = f"{model_generator}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
 
             visualization.plot_collapsing_layers_same_model(results, plot_filepath,plot_mean=True)
@@ -254,7 +271,7 @@ class DatasetSize(Experiment):
             tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         combinations = list(itertools.product(
-            model_names, dataset_names, config.common_transformations_without_identity(), measures))
+            model_names, dataset_names, common_transformations, measures))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
             model_config = model.for_dataset(dataset)
@@ -263,7 +280,7 @@ class DatasetSize(Experiment):
             self.experiment_training(p_training)
             p_datasets = [variance.DatasetParameters(dataset, variance.DatasetSubset.test, p) for p in dataset_sizes]
             experiment_name = f"{model_config}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, measure) for p_dataset in p_datasets]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
@@ -289,7 +306,7 @@ class DatasetSubset(Experiment):
             tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         combinations = list(itertools.product(
-            model_names , dataset_names, config.common_transformations_without_identity(), measures))
+            model_names , dataset_names, common_transformations, measures))
 
         for i, (model_config_generator, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
@@ -305,7 +322,7 @@ class DatasetSubset(Experiment):
                 p = config.dataset_size_for_measure(measure) * multiplier
                 p_datasets.append(variance.DatasetParameters(dataset, subset, p))
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, measure) for p_dataset in p_datasets]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
@@ -333,8 +350,7 @@ class TransformationDiversity(Experiment):
                 # transformation_plot_folderpath = self.plot_folderpath / name
                 # transformation_plot_folderpath.mkdir(exist_ok=True,parents=True)
                 model_config = model_config_generator.for_dataset(dataset)
-                experiment_name = f"{model_config .name}_{dataset}_{measure.id()}_{train_transformation}"
-                plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+
                 variance_parameters = []
                 print(f"Train transformation {train_transformation}")
                 epochs = config.get_epochs(model_config, dataset, train_transformation)
@@ -349,6 +365,8 @@ class TransformationDiversity(Experiment):
                     variance_parameters.append(p_variance)
                 results = config.load_results(config.results_paths(variance_parameters))
                 labels = [str(t.parameters.transformations) for t in results]
+                experiment_name = f"{model_config.name}_{dataset}_{train_transformation}_{measure.id()}"
+                plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
                 visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
@@ -391,7 +409,7 @@ class TransformationComplexity(Experiment):
                         variance_parameters.append(p_variance)
                     # PLOT
                     experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
-                    plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+                    plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
                     title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n Train transformation: {train_transformation.id()}"
                     labels = [f"Test transformation: {t}" for t in transformation_set[1:] ]
 
@@ -428,7 +446,7 @@ class TransformationComplexityDetailed(Experiment):
 
                     transformation_plot_folderpath.mkdir(exist_ok=True,parents=True)
                     experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
-                    plot_filepath = transformation_plot_folderpath / f"{experiment_name}.png"
+                    plot_filepath = transformation_plot_folderpath / f"{experiment_name}.jpg"
                     variance_parameters = []
                     print(f"{j}, ", end="")
                     epochs = config.get_epochs(model_config, dataset, train_transformation)
@@ -471,7 +489,7 @@ class TransformationComplexityDetailed(Experiment):
 #         post_functions = [tm.ConvAggregation.mean]
 #
 #         combinations = itertools.product(
-#             model_names , dataset_names, config.common_transformations_without_identity(),measure_sets_names)
+#             model_names , dataset_names, common_transformations,measure_sets_names)
 #         for (model_config_generator, dataset, transformation,measure_set_name) in combinations:
 #             model_config = model_config_generator.for_dataset(dataset)
 #             # train
@@ -498,7 +516,7 @@ class TransformationComplexityDetailed(Experiment):
 #
 #                 # plot
 #                 experiment_name = f"{model_config.name}_{p_dataset.id()}_{transformation.id()}_{set}"
-#                 plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+#                 plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 #                 results = config.load_results(config.results_paths(variance_parameters))
 #
 #                 labels = [f"Pre : {m.id()}" for m in measures]
@@ -513,13 +531,13 @@ class AggregationFunctionsVariance(Experiment):
     def run(self):
         functions = [ca_sum,ca_mean,tm.ConvAggregation.max]
         combinations = itertools.product(
-            simple_models_generators , dataset_names, config.common_transformations_without_identity())
+            simple_models_generators , dataset_names, common_transformations)
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
             p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, 0.1)
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
@@ -553,7 +571,7 @@ class CompareSameEquivarianceNormalization(Experiment):
                     ]
 
         combinations = itertools.product(
-            simple_models_generators , dataset_names, config.common_transformations_without_identity())
+            simple_models_generators , dataset_names, common_transformations)
         for model_config_generator, dataset, transformation in combinations:
             # train
             model_config = model_config_generator.for_dataset(dataset)
@@ -568,7 +586,7 @@ class CompareSameEquivarianceNormalization(Experiment):
                 self.experiment_variance(p_variance, model_path)
 
             experiment_name = f"{model_config.name}_{p_dataset.id()}_{transformation.id()}_Distance"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = ["Normalized", "Unnormalized"]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
@@ -597,7 +615,7 @@ class RandomWeights(Experiment):
         random_model_n = 10
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, config.common_transformations_without_identity(),measures)
+            simple_models_generators, dataset_names, common_transformations,measures)
         for model_config_generator, dataset_name, transformation, measure in combinations:
             model_config = model_config_generator.for_dataset(dataset_name)
             p = config.dataset_size_for_measure(measure)
@@ -632,7 +650,7 @@ class RandomWeights(Experiment):
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset_name}_{transformation.id()}_{measure}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             n = len(results)
             labels = [f"Random models ({n} samples)."] + ([None] * (n - 1))
@@ -641,7 +659,7 @@ class RandomWeights(Experiment):
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True,
-                                                 labels=labels, color=color)
+                                                            labels=labels, colors=color)
 
 
 class DuringTraining(Experiment):
@@ -659,7 +677,7 @@ class DuringTraining(Experiment):
         savepoints_percentages = [0,1,2,3,4,5,10,20,30,40,50,100]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, config.common_transformations_without_identity(), measures)
+            simple_models_generators, dataset_names, common_transformations, measures)
         for model_config_generator, dataset, transformation, measure in combinations:
             p = config.dataset_size_for_measure(measure)
             # train
@@ -686,7 +704,7 @@ class DuringTraining(Experiment):
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure}"
             print(experiment_name)
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             # TODO implement a heatmap where the x axis is the training time/epoch
             # and the y axis indicates the layer, and the color indicates the invariance
@@ -712,11 +730,11 @@ class BatchNormalization(Experiment):
             # tm.AnovaMeasure(tm.ConvAggregation.none, 0.99),
             tm.NormalizedVariance(ca_sum),
             tm.DistanceMeasure(da_mean),
-            tm.DistanceSameEquivarianceMeasure(da_mean),
+            # tm.DistanceSameEquivarianceMeasure(da_mean),
         ]
         models = [config.SimpleConvConfig]
         combinations = itertools.product(
-            models, dataset_names, config.common_transformations_without_identity(), measures)
+            models, dataset_names, common_transformations, measures)
         for (model_config_generator, dataset, transformation, measure) in combinations:
             # train
 
@@ -738,11 +756,25 @@ class BatchNormalization(Experiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            experiment_name = f"{model_config.name}_bn_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath/ f"{experiment_name}.png"
-            results = config.load_results(config.results_paths(variance_parameters))
-            labels = ["Without BN", "With BN"]
-            visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels)
+            bn_result,result= config.load_results(config.results_paths(variance_parameters))
+            layer_names = bn_result.measure_result.layer_names
+            bn_indices = [i for i, n in enumerate(layer_names) if n.endswith("bn")]
+            # single
+            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            visualization.plot_collapsing_layers_same_model([bn_result], plot_filepath,mark_layers=bn_indices)
+
+            # comparison
+            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}_comparison"
+            plot_filepath = self.plot_folderpath/ f"{experiment_name}.jpg"
+            bn_result.measure_result = bn_result.measure_result.remove_layers(bn_indices)
+            labels = [ "With BN","Without BN"]
+            visualization.plot_collapsing_layers_same_model([bn_result,result], plot_filepath, labels=labels)
+
+
+
+
+
 
 
 class DatasetTransfer(Experiment):
@@ -758,7 +790,7 @@ class DatasetTransfer(Experiment):
         ]
 
         combinations = itertools.product(
-            simple_models_generators , dataset_names, config.common_transformations_without_identity(), measures)
+            simple_models_generators , dataset_names, common_transformations, measures)
         for (model_config_generator, dataset, transformation, measure) in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
@@ -778,13 +810,51 @@ class DatasetTransfer(Experiment):
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = dataset_names
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
 
+class ModelAccuracies(Experiment):
+    def description(self):
+        return """Compare the accuracies of the models for each set of transformations"""
+
+    def run(self):
+        models = [
+            config.SimpleConvConfig,
+            config.AllConvolutionalConfig,
+            config.VGG16DConfig,
+            config.ResNetConfig,
+        ]
+
+        transformations =common_transformations
+        model_names = [ m.for_dataset("mnist").name for m in models]
+        transformation_names = [t.id() for t in transformations]
+
+        for dataset in dataset_names:
+            variance_parameters = []
+            transformation_scores=[]
+            for transformation in transformations:
+                model_scores= []
+
+                for model_config_generator in models:
+                    # train
+                    model_config = model_config_generator.for_dataset(dataset)
+                    # train
+                    epochs = config.get_epochs(model_config, dataset, transformation)
+                    p_training = training.Parameters(model_config, dataset, transformation, epochs)
+                    self.experiment_training(p_training)
+                    model,p,o,scores= training.load_model(config.model_path(p_training),load_state=False,use_cuda=False)
+                    loss,acc = scores["test"]
+                    model_scores.append(acc)
+                transformation_scores.append(model_scores)
+            # plot results
+            experiment_name = f"{dataset}"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+
+            visualization.plot_accuracies(plot_filepath,transformation_scores,transformation_names,model_names)
 
 
 class CompareModels(Experiment):
@@ -800,10 +870,11 @@ class CompareModels(Experiment):
             config.SimpleConvConfig,
             config.AllConvolutionalConfig,
             config.VGG16DConfig,
-            config.ResNetConfig]
+            # config.ResNetConfig
+        ]
         #transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
 
-        transformations =config.common_transformations_without_identity()
+        transformations =common_transformations
 
         combinations = itertools.product( dataset_names, transformations, measures)
         for (dataset, transformation, measure) in combinations:
@@ -829,7 +900,7 @@ class CompareModels(Experiment):
 
             # plot results
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [m.name for m in model_configs]
             visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels)
@@ -847,7 +918,7 @@ class CompareTIPooling(Experiment):
         model_config_generators = [config.SiameseSimpleConvConfig,config.SimpleConvConfig]
         transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
 
-        #transformations =config.common_transformations_without_identity()
+        #transformations =common_transformations
 
         combinations = itertools.product( dataset_names, transformations, measures)
         for (dataset, transformation, measure) in combinations:
@@ -877,9 +948,9 @@ class CompareTIPooling(Experiment):
 
             # plot results
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
-            labels = [m.name for m in [siamese,normal]]
+            labels = ["TIPooling SimpleConv", "SimpleConv"]
             visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels)
 
 class CompareAnovaMeasures(Experiment):
@@ -917,7 +988,7 @@ class Stratified(Experiment):
         # model_names=["ResNet"]
 
         model_names = simple_models_generators
-        transformations = config.common_transformations_without_identity()
+        transformations = common_transformations
 
         combinations = itertools.product(model_names, dataset_names, transformations, measures)
         for (model_config_generator, dataset, transformation, measure) in combinations:
@@ -939,7 +1010,7 @@ class Stratified(Experiment):
             variance_parameters=[p_variance,p_variance_stratified]
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = ["Non-stratified", "Stratified"]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
@@ -1056,7 +1127,7 @@ class ValidateMeasure(Experiment):
 
             self.experiment_variance(p_measure, model_path)
             print(experiment_name)
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.png"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
             title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n transformation: {transformation.id()} "
             result = config.load_result(config.results_path(p_measure))
@@ -1119,13 +1190,12 @@ if __name__ == '__main__':
     all_experiments = [
 
         DuringTraining(),  # run this first or you'll need to retrain some models
+        ModelAccuracies(),
         CompareMeasures(),
         Stratified(),
         CompareModels(),
         VisualizeInvariantFeatureMaps(),
 
-        RandomInitialization(),
-        RandomWeights(),
 
         DatasetSize(),
         DatasetSubset(),
@@ -1141,6 +1211,9 @@ if __name__ == '__main__':
         CompareSameEquivarianceNormalization(),
 
         CompareTIPooling(),
+
+        RandomInitialization(),
+        RandomWeights(),
 
         ValidateMeasure(),
 

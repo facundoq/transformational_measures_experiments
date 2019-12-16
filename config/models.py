@@ -37,8 +37,9 @@ class ModelConfig(abc.ABC):
     @property
     def name(self)->str:
         id = self.id()
-        end_of_name_index=id.index("(")
-        return id[:end_of_name_index]
+        return id
+        # end_of_name_index=id.index("(")
+        # return id[:end_of_name_index]
 
 class SiameseSimpleConvConfig(ModelConfig):
 
@@ -82,7 +83,10 @@ class SimpleConvConfig(ModelConfig):
         return model,optimizer
 
     def id(self):
-        return f"SimpleConv(conv={self.conv},fc={self.fc},bn={self.bn})"
+        bn = "(bn=True)" if self.bn else ""
+        return f"SimpleConv{bn}"
+        # TODO rerun all
+        #return f"SimpleConv(conv={self.conv},fc={self.fc},bn={self.bn})"
 
 class AllConvolutionalConfig(ModelConfig):
 
@@ -101,7 +105,9 @@ class AllConvolutionalConfig(ModelConfig):
         return model,optimizer
 
     def id(self):
-        return f"AllConvolutional(conv={self.conv},bn={self.bn})"
+        return f"AllConvolutional"
+        # TODO rerun all
+        #return f"AllConvolutional(conv={self.conv},bn={self.bn})"
 
 class FFNetConfig(ModelConfig):
 
@@ -143,7 +149,9 @@ class VGG16DConfig(ModelConfig):
         return model,optimizer
 
     def id(self):
-        return f"VGG16D(conv={self.conv},fc={self.fc},bn={self.bn})"
+        return f"VGG16D"
+        # TODO rerun all
+        #return f"VGG16D(conv={self.conv},fc={self.fc},bn={self.bn})"
 
 class ResNetConfig(ModelConfig):
 
@@ -160,7 +168,9 @@ class ResNetConfig(ModelConfig):
         return model,optimizer
 
     def id(self):
-        return f"ResNet18(bn={self.bn})"
+        return f"ResNet18"
+        # TODO rerun all
+        #return f"ResNet18(bn={self.bn})"
 
 def all_models()->[ModelConfig]:
     combinations = itertools.product(datasets.names,[False,True])
