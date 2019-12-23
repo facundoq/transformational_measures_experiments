@@ -7,23 +7,23 @@ from models import SequentialWithIntermediates
 
 from models.util import Flatten
 
-class SiameseSimpleConvConfig():
+class TIPoolingSimpleConvConfig():
     def __init__(self,transformations:TransformationSet,conv_filters=32,fc_filters=128,bn=False):
         self.transformations=transformations
         self.conv_filters=conv_filters
         self.fc_filters=fc_filters
         self.bn=False
-class SiameseSimpleConv(ObservableLayersModule):
+
+class TIPoolingSimpleConv(ObservableLayersModule):
     def __init__(self, input_shape, num_classes, transformations:TransformationSet,conv_filters=32, fc_filters=128,bn=False):
         super().__init__()
         self.name = self.__class__.__name__
         self.bn = bn
-        if self.bn:
-            self.name+="BN"
         h, w, channels = input_shape
 
         self.transformations=transformations
         conv_filters2=conv_filters*2
+        conv_filters4 = conv_filters * 4
         conv_layers=[nn.Conv2d(channels, conv_filters, 3, padding=1),
         #bn
         nn.ELU(),
@@ -38,6 +38,9 @@ class SiameseSimpleConv(ObservableLayersModule):
         # bn
         nn.ELU(),
         nn.MaxPool2d(stride=2, kernel_size=2),
+        nn.Conv2d(conv_filters2, conv_filters4, 3, padding=1),
+        # bn
+        nn.ELU(),
         ]
 
         if self.bn:
@@ -45,11 +48,12 @@ class SiameseSimpleConv(ObservableLayersModule):
             conv_layers.insert(4, nn.BatchNorm2d(conv_filters))
             conv_layers.insert(8, nn.BatchNorm2d(conv_filters2))
             conv_layers.insert(11, nn.BatchNorm2d(conv_filters2))
+            conv_layers.insert(15, nn.BatchNorm2d(conv_filters4))
 
 
         self.conv = SequentialWithIntermediates(*conv_layers)
 
-        self.linear_size = h * w * (conv_filters * 2) // 4 // 4
+        self.linear_size = h * w * (conv_filters4) // 4 // 4
 
         fc_layers=[
             nn.Linear(self.linear_size, fc_filters),
@@ -89,22 +93,25 @@ class SiameseSimpleConv(ObservableLayersModule):
 
         x = torch.stack(results, dim=1)
 
-        x, _ = x.max(dim=1)
+        pooled, _ = x.max(dim=1)
 
-        x, fc_activations = self.fc.forward_intermediates(x)
-        return x, conv_intermediates+fc_activations
+        x, fc_activations = self.fc.forward_intermediates(pooled)
+        return x, conv_intermediates+[pooled]+fc_activations
 
+    def layer_before_pooling_each_transformation(self)->int:
+        return len(self.original_conv_names())
+
+    def original_conv_names(self)->[str]:
+        return self.conv.activation_names()
+
+    def fc_names(self)->[str]:
+        return self.fc.activation_names()
 
     def activation_names(self):
         conv_names=[]
-        original_conv_names=self.conv.activation_names()
+        original_conv_names=self.original_conv_names()
         for i in range(len(self.transformations)):
             t_names = [f"t{i:03}_{n}" for n in original_conv_names]
             conv_names.extend(t_names)
 
-        return conv_names+self.fc.activation_names()
-
-class SiameseSimpleConvBN(SiameseSimpleConv):
-    def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128):
-        super().__init__(input_shape, num_classes, conv_filters=conv_filters, fc_filters=fc_filters,bn=True)
-        self.name = self.__class__.__name__
+        return conv_names+["Pool+Flatten"]+self.fc.activation_names()

@@ -40,7 +40,8 @@ class TransformationVariance(Measure):
         return MeasureResult(mean_variances, layer_names, self)
     def name(self):
         return "Transformation Variance"
-
+    def abbreviation(self):
+        return "TV"
 
 class SampleVariance(Measure):
     def __init__(self, measure_function: MeasureFunction=MeasureFunction.std):
@@ -77,6 +78,8 @@ class SampleVariance(Measure):
         return MeasureResult(mean_variances, layer_names, self)
     def name(self):
         return "Sample Variance"
+    def abbreviation(self):
+        return "SV"
 
 from .quotient import divide_activations
 
@@ -113,3 +116,5 @@ class NormalizedVariance(Measure):
         return f"NV({ca}{sep}{mf})"
     def name(self):
         return "Normalized Variance"
+    def abbreviation(self):
+        return "NV"

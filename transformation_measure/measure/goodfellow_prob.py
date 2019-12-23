@@ -114,3 +114,5 @@ class GoodfellowNormalMeasure(Measure):
 
     def name(self):
         return "Goodfellow Normal"
+    def abbreviation(self):
+        return "GFN"

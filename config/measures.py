@@ -1,12 +1,19 @@
 from transformation_measure import *
 import itertools
-
-def dataset_size_for_measure(measure:Measure)->float:
-    if measure.__class__.__name__.endswith("Variance"):
-        return 0.1
+from experiment.variance import DatasetSubset
+def dataset_size_for_measure(measure:Measure,subset=DatasetSubset.test)->float:
+    if subset == DatasetSubset.test:
+        if measure.__class__.__name__.endswith("Variance"):
+            return 0.5
+        else:
+            return 0.5
+    elif subset == DatasetSubset.train:
+        if measure.__class__.__name__.endswith("Variance"):
+            return 0.1
+        else:
+            return 0.1
     else:
-        return 0.5
-
+        raise ValueError(f"Invalid subset {subset}")
 
 def all_measures()-> [Measure]:
     cas=[ConvAggregation.none, ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.max,]
@@ -26,7 +33,8 @@ def all_measures()-> [Measure]:
         measures.append(DistanceSampleMeasure(da))
         measures.append(DistanceTransformationMeasure(da))
         measures.append(DistanceMeasure(da))
-        measures.append(DistanceSameEquivarianceMeasure(da))
+        measures.append(DistanceSameEquivarianceMeasure(da,normalized=False))
+        measures.append(DistanceSameEquivarianceMeasure(da, normalized=True))
 
     for percentage in [0.01,0.001,0.1]:
         measures.append(GoodfellowMeasure(activations_percentage=percentage))

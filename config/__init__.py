@@ -1,11 +1,16 @@
-from .datasets import *
-from .transformations import *
-from .measures import *
-from .models import *
-
-import os,pickle
-from experiment import variance,training
+import os
+import pickle
 from pathlib import Path
+import torch
+from .models import *
+from .datasets import *
+from .measures import *
+from .transformations import *
+
+from experiment import variance, training
+
+
+
 
 def base_path():
     return Path(os.path.expanduser("~/variance/"))
@@ -22,6 +27,10 @@ def model_path(p: training.Parameters,savepoint=None,model_folderpath= models_fo
     filename=f"{p.id(savepoint=savepoint)}.pt"
     filepath=model_folderpath / filename
     return filepath
+
+def load_model(p: training.Parameters,savepoint=None,model_folderpath= models_folder(),use_cuda:bool=torch.cuda.is_available(),load_state=True):
+    model_path = config.model_path(p,savepoint,model_folderpath)
+    return training.load_model(model_path,use_cuda,load_state)
 
 def get_models_filenames():
     files=os.listdir(models_folder())

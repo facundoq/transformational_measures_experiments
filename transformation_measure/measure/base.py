@@ -103,6 +103,10 @@ class Measure():
         pass
 
     @abc.abstractmethod
+    def abbreviation(self):
+        pass
+
+    @abc.abstractmethod
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         '''
 

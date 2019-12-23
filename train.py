@@ -5,7 +5,7 @@
 import config
 import torch
 import datasets
-from experiment import  training
+from experiment import  training,util
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple
@@ -153,15 +153,15 @@ if __name__ == "__main__":
 
 
         # TRAINING
-        import time
         if 0 in p.savepoints:
             scores = training.eval_scores(model, dataset, p, o)
             print(f"Saving model {model.name} at epoch {0} (before training).")
             training.save_model(p, o, model, scores, config.model_path(p, 0))
-
-        t=time.perf_counter()
+        profiler = util.Profiler()
+        profiler.event("start")
         scores,history= training.run(p, o, model, optimizer, dataset,epochs_callbacks=epochs_callbacks)
-        print(f"Elapsed {time.perf_counter()-t} seconds.")
+        profiler.event("end")
+        print(profiler.summary(human=True))
 
         training.print_scores(scores)
         return model,history,scores
@@ -177,7 +177,7 @@ if __name__ == "__main__":
             message =f"""Model did not converge since it did not reach minimum accuracy ({test_accuracy}<{min_accuracy}). Restarting.. {restarts}/{o.max_restarts}"""
             print(message)
         model,history,scores=do_train()
-
+        training.plot_history(history, p, config.training_plots_path())
         test_accuracy = scores["test"][1]
         converged= test_accuracy > min_accuracy
         restarts += 1
@@ -187,7 +187,6 @@ if __name__ == "__main__":
         if converged:
             path=config.model_path(p)
             training.save_model(p, o, model, scores, path)
-            training.plot_history(history, p, config.training_plots_path())
             print(f"Model saved to {path}")
         else:
             print(f"Model was not saved since it did not reach minimum accuracy. Accuracy={test_accuracy}<{min_accuracy}.")

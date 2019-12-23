@@ -96,10 +96,7 @@ class ResNet( ObservableLayersModule):
     def __init__(self, block, num_blocks,input_shape,num_classes,bn=False):
         super(ResNet, self).__init__()
         self.name = self.__class__.__name__
-        self.bn = bn
-        if self.bn:
-            self.name+="BN"
-
+        self.bn=bn
         self.in_planes = 64
         h,w,c=input_shape
         layer0=[nn.Conv2d(c, 64, kernel_size=3, stride=1, padding=1, bias=False)
@@ -137,32 +134,17 @@ class ResNet( ObservableLayersModule):
 
     def forward(self, x):
         x=self.conv(x)
-        # for layer in self.layers:
-        #     x = layer(x)
         out = self.linear(x)
         return out
 
     def forward_intermediates(self,x):
         x,outputs=self.conv.forward_intermediates(x)
-        # outputs=[]
-        # for layer in self.layers:
-        #     x,intermediates = layer.forward_intermediates(x)
-        #     outputs=outputs+intermediates
-        #     # print(x.shape)
         x,fc_outputs=self.linear.forward_intermediates(x)
         outputs+=fc_outputs
         return x,outputs
 
     def activation_names(self)->[str]:
         return self.conv.activation_names()+self.linear.activation_names()
-        # names=[]
-        # for i,l in enumerate(self.layers):
-        #     for j,block in enumerate(l):
-        #         l_names=[f"l{i}_b{j}_{n}" for n in block.activation_names()]
-        #         names.extend(l_names)
-        #
-        # names+=["avgp","flatten","fc0","sm"]
-        # return names
 
 
 

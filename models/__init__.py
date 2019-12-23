@@ -1,6 +1,6 @@
 from models.util import *
 from models.simple_conv import *
-from models.siamese_simple_conv import *
+from models.tipooling_simple_conv import *
 from models.simplest_conv import *
 from models.simple_conv_large_kernel import *
 from models.vgg_like import *

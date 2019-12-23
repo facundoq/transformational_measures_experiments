@@ -1,9 +1,8 @@
 import torch.nn as nn
-import torch.nn.functional as F
 
+from models.util import SequentialWithIntermediates
 from transformation_measure import ObservableLayersModule
 
-from models.util import SequentialWithIntermediates,GlobalAvgPool2d
 
 class ConvBNAct(ObservableLayersModule):
     def __init__(self,in_filters,out_filters,kernel_size,stride=1,bn=False):
@@ -38,8 +37,6 @@ class AllConvolutional( ObservableLayersModule):
         super(AllConvolutional, self).__init__()
         self.name = self.__class__.__name__
         self.bn = bn
-        if self.bn:
-            self.name+="BN"
 
         h,w,c=input_shape
         filters2=filters*2

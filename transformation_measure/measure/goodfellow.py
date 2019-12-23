@@ -130,3 +130,5 @@ class GoodfellowMeasure(Measure):
 
     def name(self):
         return "Goodfellow"
+    def abbreviation(self):
+        return "GF"

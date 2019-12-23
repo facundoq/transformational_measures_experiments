@@ -7,30 +7,33 @@ from models import SequentialWithIntermediates
 from models.util import Flatten
 
 class SimpleConv(ObservableLayersModule):
-    def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128,bn=False):
+
+
+    def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128,bn=False,kernel_size=3):
         super(SimpleConv, self).__init__()
         self.name = self.__class__.__name__
         h, w, channels = input_shape
         self.bn=bn
-        if self.bn:
-            self.name+="BN"
+        self.kernel_size=kernel_size
+        assert (kernel_size % 2) ==1
+        same_padding = (kernel_size-1)//2
         conv_filters2=conv_filters*2
         conv_filters4 = conv_filters * 4
-        conv_layers=[nn.Conv2d(channels, conv_filters, 3, padding=1),
+        conv_layers=[nn.Conv2d(channels, conv_filters, kernel_size, padding=same_padding ),
         #bn
         nn.ELU(),
-        nn.Conv2d(conv_filters, conv_filters, 3, padding=1),
+        nn.Conv2d(conv_filters, conv_filters, kernel_size, padding=same_padding ),
         # bn
         nn.ELU(),
         nn.MaxPool2d(stride=2, kernel_size=2),
-        nn.Conv2d(conv_filters, conv_filters2, 3, padding=1),
+        nn.Conv2d(conv_filters, conv_filters2, kernel_size, padding=same_padding ),
         # bn
         nn.ELU(),
-        nn.Conv2d(conv_filters2, conv_filters2, 3, padding=1),
+        nn.Conv2d(conv_filters2, conv_filters2, kernel_size, padding=same_padding ),
         # bn
         nn.ELU(),
         nn.MaxPool2d(stride=2, kernel_size=2),
-        nn.Conv2d(conv_filters2, conv_filters4, 3, padding=1),
+        nn.Conv2d(conv_filters2, conv_filters4, kernel_size, padding=same_padding ),
         # bn
         nn.ELU(),]
 
@@ -61,15 +64,19 @@ class SimpleConv(ObservableLayersModule):
 
     def forward(self, x):
         return self.layers(x)
+        # return self.fc(self.conv(x))
 
     def forward_intermediates(self, x)->(object,[]):
         return self.layers.forward_intermediates(x)
+        # x,conv_intermediates = self.conv.forward_intermediates(x)
+        # x,fc_intermediates = self.fc.forward_intermediates(x)
+        # return x,conv_intermediates+fc_intermediates
 
+    def conv_layers(self):
+        return self.conv.activation_names()
+    def fc_layers(self):
+        return self.fc.activation_names()
 
     def activation_names(self):
         return self.layers.activation_names()
 
-class SimpleConvBN(SimpleConv):
-    def __init__(self, input_shape, num_classes, conv_filters=32, fc_filters=128):
-        super(SimpleConvBN, self).__init__(input_shape, num_classes, conv_filters=conv_filters, fc_filters=fc_filters,bn=True)
-        self.name = self.__class__.__name__

@@ -40,7 +40,6 @@ def experiment(p: variance.Parameters, o: variance.Options):
     import transformation_measure as tm
 
     from pytorch.numpy_dataset import NumpyDataset
-
     dataset = dataset.reduce_size_stratified(p.dataset.percentage)
 
     if p.dataset.subset == variance.DatasetSubset.test:

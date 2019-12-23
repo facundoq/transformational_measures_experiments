@@ -14,6 +14,7 @@ def common_transformations_without_identity()-> [TransformationSet]:
     return transformations
 
 def rotation_transformations(n:int):
+    # TODO change to range(0,n), 360 = 0
     return [SimpleAffineTransformationGenerator(r=i * 360 // n) for i in range(0, n+1)]
 
 def scale_transformations(n:int):

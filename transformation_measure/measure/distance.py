@@ -88,6 +88,8 @@ class DistanceTransformationMeasure(Measure):
         return MeasureResult(mean_variances,layer_names,self)
     def name(self):
         return "Transformation Distance"
+    def abbreviation(self):
+        return "TD"
 
 
 class DistanceSampleMeasure(Measure):
@@ -115,6 +117,8 @@ class DistanceSampleMeasure(Measure):
         return MeasureResult(mean_variances,layer_names,self)
     def name(self):
         return "Sample Distance"
+    def abbreviation(self):
+        return "SD"
 
 
 from transformation_measure import QuotientMeasure
@@ -134,3 +138,5 @@ class DistanceMeasure(QuotientMeasure):
 
     def name(self):
         return "Normalized Distance"
+    def abbreviation(self):
+        return "ND"

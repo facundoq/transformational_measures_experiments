@@ -36,18 +36,22 @@ class ModelConfig(abc.ABC):
 
     @property
     def name(self)->str:
-        id = self.id()
-        return id
-        # end_of_name_index=id.index("(")
-        # return id[:end_of_name_index]
+        idstr = self.id()
+        # return id
+        try:
+            end_of_name_index=idstr.index("(")
+            return idstr[:end_of_name_index]
+        except ValueError:
+            return idstr
 
-class SiameseSimpleConvConfig(ModelConfig):
+class TIPoolingSimpleConvConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls, dataset: str, bn: bool,t:tm.TransformationSet):
-        conv = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
+        # TODO different from SimpleConv, half the filters
+        conv = {"mnist": 16, "cifar10": 64, "fashion_mnist": 64}
         fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
-        return SiameseSimpleConvConfig(t,conv[dataset], fc[dataset],bn)
+        return TIPoolingSimpleConvConfig(t, conv[dataset], fc[dataset], bn)
 
     def __init__(self, transformations:tm.TransformationSet, conv=32, fc=128, bn=False):
         self.transformations=transformations
@@ -56,12 +60,12 @@ class SiameseSimpleConvConfig(ModelConfig):
         self.bn=bn
 
     def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
-        model = models.SiameseSimpleConv(input_shape, num_classes, self.transformations, self.conv, self.fc, self.bn)
+        model = models.TIPoolingSimpleConv(input_shape, num_classes, self.transformations, self.conv, self.fc, self.bn)
         model, optimizer = self.default_optimizer(model,cuda)
         return model,optimizer
 
     def id(self):
-        return f"SiameseSimpleConv(t={self.transformations.id()},conv={self.conv},fc={self.fc},bn={self.bn})"
+        return f"{models.TIPoolingSimpleConv.__name__}(t={self.transformations.id()},conv={self.conv},fc={self.fc},bn={self.bn})"
 
 
 class SimpleConvConfig(ModelConfig):
@@ -79,12 +83,12 @@ class SimpleConvConfig(ModelConfig):
 
     def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = models.SimpleConv(input_shape, num_classes,self.conv, self.fc, self.bn)
-        model, optimizer = self.default_optimizer(model,cuda)
+        model, optimizer = self.default_optimizer(model,cuda,lr=5e-4)
         return model,optimizer
 
     def id(self):
         bn = "(bn=True)" if self.bn else ""
-        return f"SimpleConv{bn}"
+        return f"{models.SimpleConv.__name__}{bn}"
         # TODO rerun all
         #return f"SimpleConv(conv={self.conv},fc={self.fc},bn={self.bn})"
 
@@ -105,9 +109,7 @@ class AllConvolutionalConfig(ModelConfig):
         return model,optimizer
 
     def id(self):
-        return f"AllConvolutional"
-        # TODO rerun all
-        #return f"AllConvolutional(conv={self.conv},bn={self.bn})"
+        return f"{models.AllConvolutional.__name__}(conv={self.conv},bn={self.bn})"
 
 class FFNetConfig(ModelConfig):
 
@@ -128,7 +130,7 @@ class FFNetConfig(ModelConfig):
         return model,optimizer
 
     def id(self):
-        return f"FFNet(h1={self.h1},h2={self.h2},bn={self.bn})"
+        return f"{models.FFNet.__name__}(h1={self.h1},h2={self.h2},bn={self.bn})"
 
 class VGG16DConfig(ModelConfig):
 
@@ -149,28 +151,28 @@ class VGG16DConfig(ModelConfig):
         return model,optimizer
 
     def id(self):
-        return f"VGG16D"
-        # TODO rerun all
-        #return f"VGG16D(conv={self.conv},fc={self.fc},bn={self.bn})"
+       return f"{models.VGG16D.__name__}(conv={self.conv},fc={self.fc},bn={self.bn})"
 
 class ResNetConfig(ModelConfig):
 
     @classmethod
-    def for_dataset(cls,dataset:str,bn:bool=False):
-        return ResNetConfig(bn=bn)
+    def for_dataset(cls,dataset:str,bn:bool=False,v="18"):
+        return ResNetConfig(bn=bn,v=v)
 
-    def __init__(self,  bn=False):
+    def __init__(self,  bn=False,v="18"):
         self.bn=bn
+        self.v=v
 
     def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
-        model = models.ResNet18(input_shape, num_classes, self.bn)
-        model, optimizer = self.default_optimizer(model,cuda)
-        return model,optimizer
+        if self.v == "18":
+            model = models.ResNet18(input_shape, num_classes, self.bn)
+            model, optimizer = self.default_optimizer(model,cuda,lr=5e-4)
+            return model,optimizer
+        else:
+            raise ValueError(f"Invalid ResNet version {self.v}")
 
     def id(self):
-        return f"ResNet18"
-        # TODO rerun all
-        #return f"ResNet18(bn={self.bn})"
+        return f"{models.ResNet.__name__}(v={self.v},bn={self.bn})"
 
 def all_models()->[ModelConfig]:
     combinations = itertools.product(datasets.names,[False,True])
@@ -183,7 +185,7 @@ def all_models()->[ModelConfig]:
         models_configs.append(FFNetConfig.for_dataset(dataset, bn))
 
         for t in config.all_transformations():
-            models_configs.append(SiameseSimpleConvConfig.for_dataset(dataset, bn,t))
+            models_configs.append(TIPoolingSimpleConvConfig.for_dataset(dataset, bn, t))
 
     models_configs = { m.id():m for m in models_configs}
     return models_configs
@@ -199,7 +201,7 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
         epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12}
     elif model == models.SimplestConv.__name__:
         epochs = {'cifar10': 40, 'mnist': 5, 'fashion_mnist': 12}
-    elif model == models.SiameseSimpleConv.__name__ :
+    elif model == models.TIPoolingSimpleConv.__name__ :
         epochs = {'cifar10': 20, 'mnist': 5, 'fashion_mnist': 12}
     elif model == models.AllConvolutional.__name__ :
         epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12}
@@ -207,21 +209,22 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
     #     epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12, }
     elif model == models.VGG16D.__name__ :
         epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12, }
-    elif model == "ResNet18":
-        epochs = {'cifar10': 60, 'mnist': 25, 'fashion_mnist': 12}
-    elif model == models.FFNet.__name__ or model == models.FFNetBN.__name__:
+    elif model == models.ResNet.__name__:
+        epochs = {'cifar10': 40, 'mnist': 10, 'fashion_mnist': 12}
+    elif model == models.FFNet.__name__:
         epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 8}
     else:
         raise ValueError(f"Model \"{model}\" does not exist.")
 
-    n = len(t)
-    if n > np.e:
-        factor = 1.1 * np.log(n)
+    # scale by log(#transformations)
+    m = len(t)
+    if m > np.e:
+        factor = 1.1 * np.log(m)
     else:
         factor = 1
 
-    if not model.endswith("BN"):
-        factor *= 1.5
+    # if not model_config.bn:
+    #     factor *= 1.5
 
     return int(epochs[dataset] * factor)
 

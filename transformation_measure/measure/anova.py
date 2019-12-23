@@ -35,8 +35,11 @@ class AnovaMeasure(Measure):
         f_critical=zip(layers,critical_values)
         layers=[ f>critical_value for (f,critical_value) in f_critical]
         return MeasureResult(layers,f_result.layer_names,self,f_result.extra_values)
+
     def name(self):
         return "ANOVA"
+    def abbreviation(self):
+        return self.name()
 
 class AnovaFMeasure(Measure):
     def __init__(self):
@@ -149,4 +152,5 @@ class AnovaFMeasure(Measure):
 
     def name(self):
         return "ANOVA F-score"
-
+    def abbreviation(self):
+        return "ANOVAF"

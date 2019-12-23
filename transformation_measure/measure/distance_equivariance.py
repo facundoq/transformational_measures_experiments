@@ -27,10 +27,10 @@ class DistanceSameEquivarianceMeasure(Measure):
 
 
     def get_valid_layers(self, activations: [np.ndarray], layer_names: [str], x_shape: np.ndarray):
-        # get indices of layers with the same shape as x
+        # get indices of layers with the same number of dims as x
         # (criteria to declare valid for transformation, we assume if the shapes are the same
         # then the transformation applies)
-        indices=[i for i,a in enumerate(activations) if a.shape == x_shape]
+        indices=[i for i,a in enumerate(activations) if len(a.shape) == len(x_shape)]
         # keep layers and generate mean_variances_running only for these layers
         layer_names = list_get_all(layer_names,indices)
         n_layers = len(layer_names)
@@ -100,3 +100,5 @@ class DistanceSameEquivarianceMeasure(Measure):
 
     def name(self)->str:
         return "Distance Same-Equivariance"
+    def abbreviation(self):
+        return "DSE"

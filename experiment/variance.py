@@ -55,6 +55,7 @@ class Options:
         self.adapt_dataset=adapt_dataset
 
 class VarianceExperimentResult:
+    #TODO change name to MeasureExperimentResult
     def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult):
         self.parameters=parameters
         self.measure_result=measure_result

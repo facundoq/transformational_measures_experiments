@@ -1,25 +1,40 @@
 params = {
     # 'text.latex.preamble': ['\\usepackage{gensymb}'],
+    'sans-serif': ['computer modern sans-serif'],
     # 'image.origin': 'lower',
     # 'image.interpolation': 'nearest',
     'image.cmap': 'gray',
-    'axes.grid': False,
     # 'savefig.dpi': 150,  # to adjust notebook inline plot size
-    'axes.labelsize': 8, # fontsize for x and y labels (was 10)
+    'axes.labelsize': 10, # fontsize for x and y labels (was 10)
     'axes.titlesize': 8,
     'font.size': 8, # was 10
-    'legend.fontsize': 6, # was 10
+    'legend.fontsize': 9.5, # was 10
     'xtick.labelsize': 8,
     'ytick.labelsize': 8,
     # 'text.usetex': True,
     # 'figure.figsize': [3.39, 2.10],
     'font.family': 'sans',
+    'axes.spines.bottom': False,
+    'axes.spines.left': False,
+    'axes.spines.right': False,
+    'axes.spines.top': False,
+    'axes.axisbelow' :  True,
+    'axes.grid'      : True,
+    'axes.grid.axis' : "y",
+    #'axes.grid.color' : "gray",
+    #'axes.grid.linewidth' : 0.5,
 }
+
+
+
 import matplotlib
 matplotlib.rcParams.update(params)
+import matplotlib.pyplot as plt
+plt.rc('grid', c='0.5', ls='-', lw=0.5)
+
 
 import numpy as np
-import matplotlib.pyplot as plt
+
 import os
 from typing import List
 from pytorch.numpy_dataset import NumpyDataset
@@ -28,7 +43,7 @@ import transformation_measure as tm
 from pathlib import Path
 from experiment import variance
 from transformation_measure.measure.stats_running import  RunningMeanAndVariance
-
+from matplotlib.lines import Line2D
 
 def plot_heatmap(m:MeasureResult,filepath:Path,title:str, vmin=0, vmax=None):
 
@@ -114,30 +129,31 @@ def outlier_range(stds,iqr_away):
 
 
 
-def plot_collapsing_layers_different_models(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None,title="",linestyles=None,color=None,legend_location=None):
-
+def plot_collapsing_layers_different_models(results:List[variance.VarianceExperimentResult], filepath:Path, labels=None, title="", linestyles=None, colors=None, legend_location=None, markers:[[int]]=None):
+    f=plt.figure(dpi=300)
     n = len(results)
     if n == 0:
         raise ValueError(f"`results` is an empty list.")
-    if color is None:
+    if colors is None:
         if n==2:
-            color = np.array([[1,0,0],[0,0,1]])
+            colors = np.array([[1, 0, 0], [0, 0, 1]])
         else:
-            color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
+            colors = plt.cm.hsv(np.linspace(0.1, 0.9, n))
 
     f, ax = plt.subplots(dpi=min(350, max(150, n * 15)))
     f.suptitle(title)
 
     result_layers = np.array([len(r.measure_result.layer_names) for r in results])
     min_n, max_n = result_layers.min(), result_layers.max()
-    x_result_most_layers=np.zeros(1)
+    max_value=0
+    # x_result_most_layers=np.zeros(1)
     for i, result in enumerate(results):
         n_layers = len(result.measure_result.layers)
         x = np.linspace(0,100,n_layers,endpoint=True)
-        if n_layers>=x_result_most_layers.size:
-            x_result_most_layers=x
+        # if n_layers>=x_result_most_layers.size:
+        #     x_result_most_layers=x
         y = result.measure_result.per_layer_average()
-
+        max_value = max(max_value, y.max())
         if labels is None:
             label = None
         else:
@@ -146,28 +162,45 @@ def plot_collapsing_layers_different_models(results:List[variance.VarianceExperi
             linestyle = "-"
         else:
             linestyle = linestyles[i]
-        ax.plot(x, y, label=label, linestyle=linestyle, color=color[i, :] * 0.7)
+        color=colors[i, :]
+        ax.plot(x, y, label=label, linestyle=linestyle, color=color,marker="o",markersize=3)
+
+        if not markers is None:
+            mark_layers = markers[i]
+            x_mark = x[mark_layers]
+            y_mark = y[mark_layers]
+            ax.plot(x_mark, y_mark, linestyle="", color=color, marker="s")
 
     ax.set_ylabel("Measure values")
     ax.set_xlabel("Layer (%)")
+    ax.set_ylim(0, max(max_value * 1.1, 1.2))
 
-    x_result_most_layers_int = x_result_most_layers.astype(int)
-    ax.set_xticks(x_result_most_layers_int)
-    x_result_most_layers_str = [str(x) for x in x_result_most_layers_int]
-    ax.set_xticklabels(x_result_most_layers_str,rotation=45)
+    ticks = list(range(0, 110, 10,))
+    ax.set_xticks(ticks)
+
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
 
-    # Put legend below current axis
-    if legend_location is None:
-        loc, pos = ['lower center', np.array((0.5, 0))]
-    else:
-        loc, pos = legend_location
 
-    ax.legend(loc=loc, bbox_to_anchor=pos,
-              fancybox=True, shadow=True)
+    if not labels is None:
+        # Put legend below current axis
+        handles, labels = ax.get_legend_handles_labels()
+        handles_new=[Line2D([0],[0]) for h in handles]
+
+        for h,h_new in zip(handles,handles_new):
+            h_new.update_from(h)
+            h_new.set_marker("")
+
+        if legend_location is None:
+            # loc, pos = ['lower center', np.array((0.5, 0))]
+            ax.legend(handles_new,labels,fancybox=True, )
+        else:
+            loc, pos = legend_location
+            ax.legend(handles_new,labels,loc=loc, bbox_to_anchor=pos,
+                      fancybox=True)
+
     plt.savefig(filepath, bbox_inches="tight")
     plt.close()
 
@@ -197,10 +230,12 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
 
 
     mean_and_variance = RunningMeanAndVariance()
+    max_value=0
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
         x= np.arange(n_layers)+1
         y= result.measure_result.per_layer_average()
+        max_value = max(max_value,y.max())
         if plot_mean:
             mean_and_variance.update(y)
         label = get_default(labels,i,None)
@@ -209,7 +244,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
         if plot_mean:
             color*=0.7
 
-        ax.plot(x, y, label=label, linestyle=linestyle, color=color)
+        ax.plot(x, y, label=label, linestyle=linestyle, color=color,marker="o",markersize=3)
 
         if not mark_layers is None:
             x_mark = x[mark_layers]
@@ -228,27 +263,34 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
 
     ax.set_ylabel("Variance")
     ax.set_xlabel("Layer")
-    # ax.set_ylim(max_measure)
+    ax.set_ylim(0,max(max_value*1.1,1.2))
 
-    if max_n < 32:
+    if max_n < 60:
         labels = results[0].measure_result.layer_names
         x = np.arange(max_n) + 1
         ax.set_xticks(x)
-
         ax.set_xticklabels(labels, rotation=45,fontsize=6)
+        ax.tick_params(axis='both', which='both', length=0)
 
     box = ax.get_position()
     ax.set_position([box.x0, box.y0 + box.height * 0.1,
                      box.width, box.height * 0.9])
     if not labels is None:
         # Put legend below current axis
+        handles, labels = ax.get_legend_handles_labels()
+        handles_new=[Line2D([0],[0]) for h in handles]
+
+        for h,h_new in zip(handles,handles_new):
+            h_new.update_from(h)
+            h_new.set_marker("")
+
         if legend_location is None:
             # loc, pos = ['lower center', np.array((0.5, 0))]
-            ax.legend(fancybox=True, shadow=True)
+            ax.legend(handles_new,labels,fancybox=True)
         else:
             loc, pos = legend_location
-            ax.legend(loc=loc, bbox_to_anchor=pos,
-                      fancybox=True, shadow=True)
+            ax.legend(handles_new,labels,loc=loc, bbox_to_anchor=pos,
+                      fancybox=True)
 
     plt.savefig(filepath, bbox_inches="tight")
     plt.close()
@@ -446,6 +488,7 @@ def labels_for_measures(ms:[MeasureResult]):
 
 def plot_accuracies(plot_filepath:Path,accuracies_by_transformation:[[float]],transformation_names:[str],model_names:[str]):
     # set width of bar
+    f=plt.figure(dpi=300)
     barWidth = 0.25
     cmap = default_discrete_colormap()
     # Set position of bar on X axis
@@ -456,12 +499,21 @@ def plot_accuracies(plot_filepath:Path,accuracies_by_transformation:[[float]],tr
         pos+=barWidth
     plt.gca().set_ylim(0,1)
 
+    plt.gca().yaxis.grid(which="major", color='gray', linestyle='-', linewidth=0.5)
     # Add xticks on the middle of the group bars
     plt.xlabel('Model')
     plt.ylabel('Accuracy')
     plt.xticks([r + barWidth for r in range(len(model_names))], model_names)
+    plt.tick_params(axis='both', which='both', length=0)
+    #plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='on', labelbottom='on')
 
     # Create legend & save
-    plt.legend()
-    plt.savefig(plot_filepath, bbox_inches="tight")
+    plt.legend(fontsize=8)
+    plt.savefig(plot_filepath)
     plt.close()
+
+
+def get_sequential_colors(values):
+    cmap= plt.cm.get_cmap("plasma",len(values))
+    colors = cmap(values)
+    return colors

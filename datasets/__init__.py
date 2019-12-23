@@ -18,7 +18,7 @@ class ClassificationDataset:
         self.labels = labels
         self.dataformat = dataformat
 
-    def reduce_size_subset_stratified(self, percentage, x, y):
+    def reduce_size_subset_stratified(self, percentage, x, y,random=False):
         x1=[]
         y1=[]
         x2=[]
@@ -28,8 +28,10 @@ class ClassificationDataset:
             class_x=x[class_indices,:]
             class_y=y[class_indices]
             class_n=len(class_y)
-
-            indices = np.random.permutation(class_n)
+            if random:
+                indices = np.random.permutation(class_n)
+            else:
+                indices = list(range(class_n))
             limit=int(class_n * percentage)
 
             indices1 = indices[:limit]
@@ -51,7 +53,6 @@ class ClassificationDataset:
             return self
         x_train, y_train, _, _ = self.reduce_size_subset_stratified(percentage, self.x_train, self.y_train)
         x_test, y_test, _, _ = self.reduce_size_subset_stratified(percentage, self.x_test, self.y_test)
-
         return ClassificationDataset(self.name, x_train, x_test, y_train, y_test
                                      , self.num_classes, self.input_shape, self.labels, self.dataformat)
 
