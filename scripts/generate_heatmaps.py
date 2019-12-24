@@ -77,7 +77,7 @@ for f in sorted(folder.iterdir()):
         continue
     model_folderpath = heatmaps_folder / result.parameters.model_name()
     model_folderpath.mkdir(exist_ok=True,parents=True)
-    filepath= model_folderpath / f"{result.id()}.png"
+    filepath= model_folderpath / f"{result.id()}.jpg"
     visualization.plot_heatmap(result.measure_result,filepath,"Heatmap")
 
     #if result.parameters.stratified:
@@ -89,7 +89,7 @@ for f in sorted(folder.iterdir()):
         n = len(measure_result.class_labels)
         for i,class_name,measure in zip(range(n),measure_result.class_labels,measure_result.class_measures):
             title = f"{i:02}_{class_name}"
-            filepath = stratified_folderpath / f"{title}.png"
+            filepath = stratified_folderpath / f"{title}.jpg"
             visualization.plot_heatmap(measure,filepath,title)
 
 

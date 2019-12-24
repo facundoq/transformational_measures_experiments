@@ -52,10 +52,9 @@ venv_path = ""
 common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
                           tm.SimpleAffineTransformationGenerator(s=4),
                           tm.SimpleAffineTransformationGenerator(t=3),
-                          tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3),
                           ]
 
-
+common_transformations_hard = common_transformations+[tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3),]
 
 import abc
 
@@ -667,6 +666,7 @@ class DuringTraining(Experiment):
         model_generators = simple_models_generators
         combinations = itertools.product(
             model_generators, dataset_names, common_transformations, measures)
+
         for model_config_generator, dataset, transformation, measure in combinations:
 
             # train
@@ -1027,7 +1027,7 @@ class Stratified(Experiment):
         # model_names=["ResNet"]
 
         model_names = simple_models_generators
-        transformations = common_transformations
+        transformations = common_transformations_hard
 
         combinations = itertools.product(model_names, dataset_names, transformations, measures)
         for (model_config_generator, dataset, transformation, measure) in combinations:
@@ -1041,8 +1041,7 @@ class Stratified(Experiment):
             p = config.dataset_size_for_measure(measure)
             p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
             p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
-            p_variance_stratified = variance.Parameters(p_training.id(), p_dataset, transformation, measure,
-                                                        stratified=True)
+            p_variance_stratified = variance.Parameters(p_training.id(), p_dataset, transformation, measure,stratified=True)
             # evaluate variance
             model_path = config.model_path(p_training)
             self.experiment_variance(p_variance, model_path)
@@ -1177,9 +1176,7 @@ def parse_args(experiments: [Experiment]) -> ([Experiment], Options):
                         help=f'Choose an experiment to run',
                         type=str,
                         default=None,
-                        required=False,
-
-    `5`6`5                    choices=experiment_names, )
+                        required=False,choices=experiment_names, )
     parser.add_argument('-force',
                         help=f'Force experiments to rerun even if they have already finished',
                         action="store_true")

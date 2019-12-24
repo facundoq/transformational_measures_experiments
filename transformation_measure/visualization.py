@@ -1,6 +1,7 @@
 params = {
     # 'text.latex.preamble': ['\\usepackage{gensymb}'],
-    'sans-serif': ['computer modern sans-serif'],
+
+    'font.family': ['computer modern','cm','serif'],
     # 'image.origin': 'lower',
     # 'image.interpolation': 'nearest',
     'image.cmap': 'gray',
@@ -13,7 +14,6 @@ params = {
     'ytick.labelsize': 8,
     # 'text.usetex': True,
     # 'figure.figsize': [3.39, 2.10],
-    'font.family': 'sans',
     'axes.spines.bottom': False,
     'axes.spines.left': False,
     'axes.spines.right': False,
@@ -31,7 +31,8 @@ import matplotlib
 matplotlib.rcParams.update(params)
 import matplotlib.pyplot as plt
 plt.rc('grid', c='0.5', ls='-', lw=0.5)
-
+# plt.rc('font', **{'family': 'cmu', 'serif': ['cm']})
+plt.rc('text', usetex=False)
 
 import numpy as np
 
@@ -73,7 +74,7 @@ def plot_heatmap(m:MeasureResult,filepath:Path,title:str, vmin=0, vmax=None):
             ax.set_title(name, fontsize=4,rotation = 45)
 
         # logging.debug(f"plotting stats of layer {name} of class {class_id}, shape {stat.mean().shape}")
-    f.suptitle(f"{title}", fontsize=10)
+    # f.suptitle(f"{title}", fontsize=10)
     f.subplots_adjust(right=0.8)
     cbar_ax = f.add_axes([0.85, 0.15, 0.05, 0.7])
     cbar=f.colorbar(mappable, cax=cbar_ax, extend='max')
@@ -267,6 +268,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
 
     if max_n < 60:
         labels = results[0].measure_result.layer_names
+        #labels = [f"${l}$" for l in labels]
         x = np.arange(max_n) + 1
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=45,fontsize=6)
