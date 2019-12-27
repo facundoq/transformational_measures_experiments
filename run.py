@@ -893,7 +893,7 @@ class CompareModels(Experiment):
                 p_training = training.Parameters(model_config, dataset, transformation, epochs)
                 self.experiment_training(p_training)
                 # generate variance params
-                p = 0.1 # config.dataset_size_for_measure(measure)
+                p = config.dataset_size_for_measure(measure)
                 p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
                 p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)

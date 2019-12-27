@@ -9,7 +9,7 @@ def common_transformations_without_identity()-> [TransformationSet]:
     transformations = [SimpleAffineTransformationGenerator(r=360),
                        SimpleAffineTransformationGenerator(s=4),
                        SimpleAffineTransformationGenerator(t=3),
-                       # SimpleAffineTransformationGenerator(r=360, s=4, t=3),
+                       SimpleAffineTransformationGenerator(r=360, s=4, t=3),
                        ]
     return transformations
 

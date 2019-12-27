@@ -8,7 +8,8 @@
 
 import datasets
 import torch,config
-from experiment import training, variance, util
+from experiment import training, variance
+from utils import profiler
 
 
 def experiment(p: variance.Parameters, o: variance.Options):
@@ -49,6 +50,9 @@ def experiment(p: variance.Parameters, o: variance.Options):
     else:
         raise ValueError(p.dataset.subset)
 
+    p.transformations.set_input_shape(dataset.input_shape)
+    p.transformations.set_pytorch(True)
+    p.transformations.set_cuda(use_cuda)
 
     if not p.stratified:
         iterator = tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size)
@@ -66,7 +70,7 @@ def experiment(p: variance.Parameters, o: variance.Options):
     return variance.VarianceExperimentResult(p, measure_result)
 
 if __name__ == "__main__":
-    profiler= util.Profiler()
+    profiler= profiler.Profiler()
     p, o = variance.parse_parameters()
     profiler.event("start")
     if o.verbose:

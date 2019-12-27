@@ -5,7 +5,7 @@
 import config
 import torch
 import datasets
-from experiment import  training,util
+from experiment import  training
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple
@@ -119,7 +119,9 @@ if __name__ == "__main__":
     def do_train():
         dataset = datasets.get(p.dataset)
         model,optimizer = p.model.make_model(dataset.input_shape, dataset.num_classes, o.use_cuda)
-
+        p.transformations.set_input_shape(dataset.input_shape)
+        p.transformations.pytorch(True)
+        p.transformations.use_cuda(o.use_cuda)
         # an="\n".join(model.activation_names())
         # print("Activation names: "+an)
         if o.verbose:
@@ -157,7 +159,7 @@ if __name__ == "__main__":
             scores = training.eval_scores(model, dataset, p, o)
             print(f"Saving model {model.name} at epoch {0} (before training).")
             training.save_model(p, o, model, scores, config.model_path(p, 0))
-        profiler = util.Profiler()
+        profiler = profiler.Profiler()
         profiler.event("start")
         scores,history= training.run(p, o, model, optimizer, dataset,epochs_callbacks=epochs_callbacks)
         profiler.event("end")

@@ -1,4 +1,4 @@
-from testing.utils import plot_image_grid
+from testing.util import plot_image_grid
 import datasets
 
 dataset="mnist"

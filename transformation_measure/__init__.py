@@ -11,7 +11,7 @@ from .measure.quotient import QuotientMeasure,divide_activations
 from .iterators.activations_iterator import ActivationsIterator
 from .iterators.pytorch_activations_iterator import PytorchActivationsIterator,ObservableLayersModule
 
-from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationCV
+from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationNumpy,AffineTransformationPytorch
 
 from .measure.multithreaded_layer_measure import PerLayerMeasure,LayerMeasure,SamplesFirstPerLayerMeasure,TransformationsFirstPerLayerMeasure
 
@@ -24,4 +24,6 @@ from .measure.distance_equivariance import DistanceSameEquivarianceMeasure
 
 from .measure.goodfellow import GoodfellowMeasure
 from .measure.goodfellow_prob import GoodfellowNormalMeasure
+
+from .adapters import TransformationAdapter,PytorchNumpyImageTransformationAdapter,NumpyPytorchImageTransformationAdapter
 

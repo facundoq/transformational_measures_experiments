@@ -1,43 +1,50 @@
-import models
 import datasets
 import torch
-from experiment import util
-from testing import utils
+import utils
 from pytorch.numpy_dataset import NumpyDataset
-from experiment import model_loading
+from testing import util
 import os
 import transformation_measure as tm
 import matplotlib
+import config
 from transformation_measure.iterators.pytorch_activations_iterator import ImageDataset
 matplotlib.use('Agg')
 
 
 dataset_name="cifar10"
-model_name= models.ResNet.__name__
+model_config=config.SimpleConvConfig()
 
-print(f"### Loading dataset {dataset_name} and model {model_name}....")
+print(f"### Loading dataset {dataset_name} and model {model_config.name}....")
 
-use_cuda=torch.cuda.is_available()
+use_cuda=True
 dataset = datasets.get(dataset_name)
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
 image_dataset=ImageDataset(numpy_dataset)
-model, optimizer = model_loading.get_model(model_name, dataset, use_cuda)
-p= util.Profiler()
+model,optimizer = model_config.make_model(dataset.input_shape,dataset.num_classes,use_cuda)
+p= utils.Profiler()
 p.event("start")
 
-transformations=tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3)
+#transformations=tm.SimpleAffineTransformationGenerator(r=360, s=3, t=2,n_rotations=4)
+transformations=tm.SimpleAffineTransformationGenerator(r=360,n_rotations=4)
+transformations.set_input_shape(dataset.input_shape)
+transformations.set_pytorch(True)
+transformations.set_cuda(use_cuda)
 
-iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=64,num_workers=8)
+iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=64,num_workers=0,use_cuda=use_cuda)
+adapter = tm.PytorchNumpyImageTransformationAdapter(use_cuda=use_cuda)
+folderpath = config.testing_path() / "activations_iterator"
+folderpath.mkdir(exist_ok=True,parents=True)
 
 p.event("start")
 i=0
 for transformation,batch_activations in iterator.transformations_first():
     print(transformation)
     for x,batch_activation in batch_activations:
-        x=x.transpose(0,2,3,1)
-        filepath = os.path.expanduser(f"~/variance/test/transformation_first{i}.png")
-        utils.plot_image_grid(x, torch.zeros((x.shape[0])),show=False,save=filepath)
+        x = adapter.pre_adapt(x)
+        filepath = folderpath / f"transformation_first{i}.png"
+
+        util.plot_image_grid(x, x.shape[0], show=False, save=filepath)
         i=i+1
         break
 p.event("end")
-#print(p.summary())
+print(p.summary(human=True))
