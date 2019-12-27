@@ -232,6 +232,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
 
     mean_and_variance = RunningMeanAndVariance()
     max_value=0
+    handles=[]
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
         x= np.arange(n_layers)+1
@@ -245,8 +246,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
         if plot_mean:
             color*=0.7
 
-        ax.plot(x, y, label=label, linestyle=linestyle, color=color,marker="o",markersize=3)
-
+        h=ax.plot(x, y, label=label, linestyle=linestyle, color=color,marker="o",markersize=3)
         if not mark_layers is None:
             x_mark = x[mark_layers]
             y_mark = y[mark_layers]
@@ -254,13 +254,11 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
 
 
     if plot_mean:
-
         x = np.arange(max_n)+1
         y,error=mean_and_variance.mean(),mean_and_variance.std()
         label="Mean and deviation" #μ  σ
         linestyle="--"
         ax.errorbar(x, y,yerr=error, label=label, linewidth=1.5, linestyle=linestyle, color=(0,0,0))
-
 
     ax.set_ylabel("Variance")
     ax.set_xlabel("Layer")
@@ -279,7 +277,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
                      box.width, box.height * 0.9])
     if not labels is None:
         # Put legend below current axis
-        handles, labels = ax.get_legend_handles_labels()
+        # handles, labels = ax.get_legend_handles_labels()
         handles_new=[Line2D([0],[0]) for h in handles]
 
         for h,h_new in zip(handles,handles_new):

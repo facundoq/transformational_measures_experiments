@@ -291,7 +291,7 @@ class DatasetSize(Experiment):
         model_names = simple_models_generators
         measures = normalized_measures
         combinations = list(itertools.product(
-            model_names, dataset_names, common_transformations, measures))
+            model_names, dataset_names, common_transformations_hard, measures))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
             model_config = model.for_dataset(dataset)
@@ -328,7 +328,7 @@ class DatasetSubset(Experiment):
         model_names = simple_models_generators
         measures = normalized_measures
         combinations = list(itertools.product(
-            model_names, dataset_names, common_transformations, measures))
+            model_names, dataset_names, common_transformations_hard, measures))
 
         for i, (model_config_generator, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
@@ -489,7 +489,7 @@ class AggregationBeforeAfter(Experiment):
         after_functions = [ca_sum,ca_mean, ca_max]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations)
+            simple_models_generators, dataset_names, common_transformations_hard)
 
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
@@ -531,7 +531,7 @@ class AggregationFunctionsVariance(Experiment):
         before_functions = [ca_mean, ca_max]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations)
+            simple_models_generators, dataset_names, common_transformations_hard)
 
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
@@ -565,7 +565,7 @@ class SameEquivarianceNormalization(Experiment):
         ]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations)
+            simple_models_generators, dataset_names, common_transformations_hard)
         for model_config_generator, dataset, transformation in combinations:
             # train
             model_config = model_config_generator.for_dataset(dataset)
@@ -802,7 +802,7 @@ class DatasetTransfer(Experiment):
         measures =normalized_measures
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations, measures)
+            simple_models_generators, dataset_names, common_transformations_hard, measures)
         for (model_config_generator, dataset, transformation, measure) in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
@@ -834,7 +834,7 @@ class ModelAccuracies(Experiment):
 
     def run(self):
         models = common_models_generators
-        transformations = common_transformations
+        transformations = common_transformations_hard
         model_names = [m.for_dataset("mnist").name for m in models]
         transformation_labels = ["Rotation","Scale","Translation","Combination"]
         for dataset in dataset_names:
@@ -877,7 +877,7 @@ class CompareModels(Experiment):
         ]
         # transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
 
-        transformations = common_transformations
+        transformations = common_transformations_hard
 
         combinations = itertools.product(dataset_names, transformations, measures)
         for (dataset, transformation, measure) in combinations:
