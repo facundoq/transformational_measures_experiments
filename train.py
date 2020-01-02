@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
-
+from utils.profiler import Profiler
 import config
 import torch
 import datasets
@@ -120,8 +120,8 @@ if __name__ == "__main__":
         dataset = datasets.get(p.dataset)
         model,optimizer = p.model.make_model(dataset.input_shape, dataset.num_classes, o.use_cuda)
         p.transformations.set_input_shape(dataset.input_shape)
-        p.transformations.pytorch(True)
-        p.transformations.use_cuda(o.use_cuda)
+        # p.transformations.set_pytorch(True)
+        # p.transformations.set_cuda(o.use_cuda)
         # an="\n".join(model.activation_names())
         # print("Activation names: "+an)
         if o.verbose:
@@ -159,11 +159,11 @@ if __name__ == "__main__":
             scores = training.eval_scores(model, dataset, p, o)
             print(f"Saving model {model.name} at epoch {0} (before training).")
             training.save_model(p, o, model, scores, config.model_path(p, 0))
-        profiler = profiler.Profiler()
-        profiler.event("start")
+        pr = Profiler()
+        pr.event("start")
         scores,history= training.run(p, o, model, optimizer, dataset,epochs_callbacks=epochs_callbacks)
-        profiler.event("end")
-        print(profiler.summary(human=True))
+        pr.event("end")
+        print(pr.summary(human=True))
 
         training.print_scores(scores)
         return model,history,scores

@@ -1,7 +1,7 @@
 from .base import Measure,MeasureResult
 import numpy as np
 from .layer_transformation import ConvAggregation
-from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
 import transformation_measure as tm
 from multiprocessing import Queue
 from transformation_measure import MeasureFunction
@@ -19,7 +19,7 @@ class VarianceLayerMeasure(LayerMeasure):
 
         m = RunningMean()
         for iteration_info in self.queue_as_generator(q):
-            inner_m = RunningMeanAndVariance()
+            inner_m = RunningMeanAndVarianceWellford()
 
             for activations in self.queue_as_generator(inner_q):
                 activations = self.conv_aggregation.apply(activations)

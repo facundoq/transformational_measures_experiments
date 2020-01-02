@@ -1,5 +1,6 @@
+numpy --no-binary=numpy
+scipy --no-binary=scipy
 numba
-numpy
 protobuf
 six
 matplotlib
@@ -15,8 +16,6 @@ torchsummary
 requests
 nose
 nptyping
-
-scipy
 Pillow
 opencv-python
 imageio

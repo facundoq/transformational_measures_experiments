@@ -1,6 +1,6 @@
 from .base import Measure,MeasureResult,ActivationsByLayer
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
 import scipy.stats
 
 class AnovaMeasure(Measure):

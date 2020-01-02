@@ -1,7 +1,7 @@
 from transformation_measure import ConvAggregation
 from transformation_measure import MeasureFunction, QuotientMeasure
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-from transformation_measure.measure.stats_running import RunningMeanAndVariance, RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford, RunningMean,RunningMeanAndVarianceNaive
 from .base import Measure, MeasureResult
 
 
@@ -24,7 +24,7 @@ class TransformationVariance(Measure):
         for x,transformation_activations  in activations_iterator.samples_first():
 
             #calculate the running mean/variance/std over all transformations of x
-            transformation_variances_running = [RunningMeanAndVariance() for i in range(n_layers)]
+            transformation_variances_running = [RunningMeanAndVarianceWellford() for i in range(n_layers)]
             for x_transformed, activations in transformation_activations:
                 for i, layer_activations in enumerate(activations):
                     # apply function to conv layers
@@ -62,7 +62,7 @@ class SampleVariance(Measure):
         mean_variances_running = [RunningMean() for i in range(n_layers)]
 
         for transformation, samples_activations_iterator in activations_iterator.transformations_first():
-            samples_variances_running = [RunningMeanAndVariance() for i in range(n_layers)]
+            samples_variances_running = [RunningMeanAndVarianceWellford() for i in range(n_layers)]
             # calculate the variance of all samples for this transformation
             for x, batch_activations in samples_activations_iterator:
                 for j, layer_activations in enumerate(batch_activations):

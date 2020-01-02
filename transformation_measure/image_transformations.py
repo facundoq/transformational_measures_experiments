@@ -35,15 +35,22 @@ class AffineTransformation(Transformation):
     def inverse(self):
         pass
 
+    @abc.abstractmethod
+    def numpy(self):
+        pass
+
 class AffineTransformationPytorch(AffineTransformation):
 
     def __init__(self,parameters,input_shape,use_cuda=torch.cuda.is_available()):
         super().__init__(parameters,input_shape)
         afcv=AffineTransformationNumpy(self.inverse_parameters(), input_shape)
         self.transformation_matrix=self.generate_pytorch_transformation(afcv.transformation_matrix, input_shape)
+        tm=self.transformation_matrix.unsqueeze(0)
+        self.grid = F.affine_grid(tm, [1,self.c,self.h,self.w])
         self.use_cuda=use_cuda
         if self.use_cuda:
             self.transformation_matrix=self.transformation_matrix.cuda()
+            self.grid=self.grid.cuda()
 
     def generate_pytorch_transformation(self, transformation_matrix, input_shape):
         h, w, c = input_shape
@@ -64,15 +71,19 @@ class AffineTransformationPytorch(AffineTransformation):
 
     def __call__(self, x: torch.FloatTensor):
         n, c, h, w = x.shape
-        tm = self.transformation_matrix
-        tm = tm.expand(n, *tm.shape)
+        # tm = self.transformation_matrix
+        # tm = tm.expand(n, *tm.shape)
         # TODO pregenerate grid
-        grid = F.affine_grid(tm, list(x.shape))  # TODO remove this cuda call?
+        # grid = F.affine_grid(tm, list(x.shape))  # TODO remove this cuda call?
+        grid = self.grid.expand(n,*self.grid.shape[1:])
         x = F.grid_sample(x, grid)
         return x
 
     def inverse(self):
         return AffineTransformationPytorch(self.inverse_parameters(), self.input_shape,self.use_cuda)
+
+    def numpy(self):
+        return AffineTransformationNumpy(self.parameters, self.input_shape)
 
 class AffineTransformationNumpy(AffineTransformation):
     def __init__(self,parameters,input_shape):
@@ -95,6 +106,8 @@ class AffineTransformationNumpy(AffineTransformation):
 
     def single(self,image:np.ndarray)->np.ndarray:
         image_size=tuple(self.input_shape[:2])
+        if self.input_shape[2] == 1:
+            image = image[:, :, 0]
         image= cv2.warpPerspective(image, self.transformation_matrix, image_size)
         if self.input_shape[2]==1:
            image= image[:, :, np.newaxis]
@@ -112,7 +125,8 @@ class AffineTransformationNumpy(AffineTransformation):
         return AffineTransformationNumpy(self.inverse_parameters(), self.input_shape)
 
 
-
+    def numpy(self):
+        return self
 
 TranslationParameter=Tuple[int,int]
 ScaleParameter=Tuple[float,float]
@@ -182,6 +196,13 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         self.affine_transformation_generator.use_cuda=use_cuda
     def set_pytorch(self,pytorch):
         self.affine_transformation_generator.pytorch=pytorch
+
+    def copy(self):
+        a = SimpleAffineTransformationGenerator(r=self.rotation_intensity,s=self.scale_intensity,t=self.translation_intensity,n_rotations=self.n_rotations,adapter=self.adapter)
+        a.set_pytorch(self.affine_transformation_generator.pytorch)
+        a.set_cuda(self.affine_transformation_generator.use_cuda)
+        a.set_input_shape(self.affine_transformation_generator.input_shape)
+        return a
 
     def __repr__(self):
         return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity})"

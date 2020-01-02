@@ -1,0 +1,52 @@
+import config
+import transformation_measure as tm
+from .base import Experiment
+
+from experiment import variance, training
+from transformation_measure import visualization
+from experiment.variance import VarianceExperimentResult
+import models
+import numpy as np
+import itertools
+from pathlib import Path
+import os
+
+default_dataset_percentage = 0.5
+
+common_models_generators = [
+    config.SimpleConvConfig,
+    config.AllConvolutionalConfig,
+    config.VGG16DConfig,
+    config.ResNetConfig
+]
+
+small_models_generators = [config.SimpleConvConfig,
+                           config.AllConvolutionalConfig, ]
+
+simple_models_generators = [config.SimpleConvConfig]
+# common_models_generators  = simple_models_generators
+
+ca_none, ca_mean, ca_sum,ca_max = tm.ConvAggregation.none, tm.ConvAggregation.mean, tm.ConvAggregation.sum, tm.ConvAggregation.max
+da = tm.DistanceAggregation(normalize=False,keep_feature_maps=False)
+da_normalize = tm.DistanceAggregation(normalize=True,keep_feature_maps=False)
+da_normalize_keep = tm.DistanceAggregation(normalize=True,keep_feature_maps=True)
+da_keep = tm.DistanceAggregation(normalize=False,keep_feature_maps=True)
+
+measures = config.common_measures()
+nv = tm.NormalizedVariance(ca_mean)
+nd = tm.NormalizedDistance(da_keep,ca_mean)
+se = tm.DistanceSameEquivarianceMeasure(da_normalize_keep)
+normalized_measures = [
+                        nv,
+                        # nd,
+                        # se
+                      ]
+dataset_names = ["mnist", "cifar10"]
+venv_path = ""
+
+common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
+                          tm.SimpleAffineTransformationGenerator(s=4),
+                          tm.SimpleAffineTransformationGenerator(t=3),
+                          ]
+
+common_transformations_hard = common_transformations+[tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3),]

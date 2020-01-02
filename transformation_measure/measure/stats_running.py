@@ -55,7 +55,7 @@ class RunningMean:
 
     def clear(self):
         self.n = 0
-        self.mu = np.zeros(1)
+        self.mu = np.zeros(1,dtype=np.float32)
 
     def update(self, x):
         self.n += 1
@@ -77,19 +77,70 @@ class RunningMean:
 
     def mean(self):
         return self.mu if self.n > 0 else np.zeros(1)
+import abc
 
+class RunningMeanAndVariance(abc.ABC):
+    @abc.abstractmethod
+    def mean(self):
+        pass
 
-class RunningMeanAndVariance:
+    @abc.abstractmethod
+    def std(self):
+        pass
+
+    @abc.abstractmethod
+    def var(self):
+        pass
+
+    @abc.abstractmethod
+    def clear(self):
+        pass
+
+    @abc.abstractmethod
+    def update(self,x):
+        pass
+
+    @abc.abstractmethod
+    def update_all(self,x):
+        pass
+class RunningMeanAndVarianceNaive(RunningMeanAndVariance):
+    def __repr__(self):
+        return f"RunningMeanAndVarianceNaive(n={self.n},mean={self.mean().shape})"
+    def __init__(self):
+        self.e=RunningMean()
+        self.e2=RunningMean()
+
+    @property
+    def n(self):
+        return self.e.n
+
+    def clear(self):
+        self.e.clear()
+        self.e2.clear()
+    def mean(self):
+        return self.e.mean()
+    def std(self):
+        return self.e2.mean() - self.e.mean()**2
+    def update(self,x):
+        self.e.update(x)
+        self.e2.update(x*x)
+    def var(self):
+        s=self.std()
+        return s*s
+    def update_all(self,x):
+        self.e.update_all(x)
+        self.e2.update_all(x*x)
+
+class RunningMeanAndVarianceWellford(RunningMeanAndVariance):
 
     def __repr__(self):
 
-        return f"RunningMeanAndVariance(n={self.n},mean={self.mean().shape})"
+        return f"RunningMeanAndVarianceWellford(n={self.n},mean={self.mean().shape})"
 
     def __init__(self):
         self.n = 0
-        self.m = np.array([0])
-        self.m = np.array([0])
-        self.s = np.array([0])
+        self.m = np.array([0],dtype=np.float32)
+        self.s = np.array([0],dtype=np.float32)
 
     def clear(self):
         self.n = 0
@@ -99,7 +150,7 @@ class RunningMeanAndVariance:
 
         if self.n == 1:
             self.m = x
-            self.s = np.zeros_like(self.m)
+            self.s = np.zeros_like(self.m,dtype=np.float32)
         else:
             # diff = x - self.old_m
             # self.new_m = self.old_m + (x - self.old_m) / self.n
@@ -109,6 +160,24 @@ class RunningMeanAndVariance:
             diff = x - self.m
             self.m += diff / self.n
             self.s +=  diff * (x - self.m)
+
+    # def update_all(self,x:np.ndarray):
+    # see https://stackoverflow.com/questions/56402955/whats-the-formula-for-welfords-algorithm-for-variance-std-with-batch-updates
+    #     k=x.shape[0]
+    #     self.n += 1
+    #
+    #     if self.n == 1:
+    #         self.m = x.mean(axis=0)
+    #         self.s = x.std(axis=0)
+    #     else:
+    #         # diff = x - self.old_m
+    #         # self.new_m = self.old_m + (x - self.old_m) / self.n
+    #         # self.s = self.s + diff * (x - self.new_m)
+    #         # self.old_m = self.new_m
+    #
+    #         diff = x - self.m
+    #         self.m += diff / self.n
+    #         self.s += diff * (x - self.m)
 
     def update_all(self,x:np.ndarray):
         for i in range(x.shape[0]):

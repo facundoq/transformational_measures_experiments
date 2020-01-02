@@ -1,7 +1,7 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
-from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
 from typing import List
 from enum import Enum
 
@@ -17,13 +17,12 @@ def list_get_all(list:[],indices:[int])->[]:
     return [list[i] for i in indices]
 
 class DistanceSameEquivarianceMeasure(Measure):
-    def __init__(self, distance_aggregation:DistanceAggregation,normalized=True):
+    def __init__(self, distance_aggregation:DistanceAggregation):
         super().__init__()
         self.distance_aggregation=distance_aggregation
-        self.normalized = normalized
 
     def __repr__(self):
-        return f"DSE(da={self.distance_aggregation.value},n={self.normalized})"
+        return f"DSE(da={self.distance_aggregation.name})"
 
 
     def get_valid_layers(self, activations: [np.ndarray], layer_names: [str], x_shape: np.ndarray):
@@ -38,7 +37,11 @@ class DistanceSameEquivarianceMeasure(Measure):
         return layer_names,mean_variances_running,indices
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
-        transformations = list(activations_iterator.get_transformations())
+        transformations = activations_iterator.get_transformations()
+        transformations=transformations.copy()
+        transformations.set_pytorch(False)
+        transformations = list(transformations)
+
         first_iteration = True
         mean_variances_running= None
         layer_names = None
@@ -69,15 +72,19 @@ class DistanceSameEquivarianceMeasure(Measure):
         return MeasureResult(mean_variances,layer_names,self)
 
     def inverse_trasform_feature_maps(self,activations:[np.ndarray],transformations:tm.TransformationSet)->[np.ndarray]:
+
         transformations = list(transformations)
         inverses = [t.inverse() for t in transformations]
 
         for j,layer in enumerate(activations):
-
             for i,inverse in enumerate(inverses):
                 # ax[0, i].imshow(layer[i,0,:,:],cmap="gray")
                 # ax[0, i].axis("off")
-                layer[i,:] = inverse(layer[i,:])
+                fm=layer[i:i+1,:].transpose(0,2,3,1)
+                inverse_fm=inverse(fm)
+                inverse_fm=inverse_fm.transpose(0,3,1,2)
+                layer[i,:] = inverse_fm[0,:]
+
 
             if self.normalized:
                 layer-=layer.min(axis=1,keepdims=True)
@@ -85,17 +92,22 @@ class DistanceSameEquivarianceMeasure(Measure):
                 max_values[max_values==0]=1
                 layer/=max_values
 
-            # if len(layer.shape)==4:
-                # n,c,h,w=layer.shape
-                # f,ax=plt.subplots(2,n)
-                # ax[1, i].imshow(layer[i,0,:,:],cmap="gray")
-                # ax[1, i].axis("off")
-                # path = Path("testing/dsem/")
-                # path.mkdir(parents=True,exist_ok=True)
-                # now=strftime("%Y-%m-%d %H:%M:%S", gmtime())
-                # filepath=path / (f"{now}_{j}.png")
-                # plt.savefig(filepath)
-                # plt.close(f)
+            self.plot_debug(layer, j)
+
+    def plot_debug(self,layer,j):
+
+            if len(layer.shape)==4:
+                n, c, h, w = layer.shape
+                for i in  range(n):
+                    f,ax=plt.subplots(2,n)
+                    ax[1, i].imshow(layer[i,0,:,:],cmap="gray")
+                    ax[1, i].axis("off")
+                    path = Path("testing/dsem/")
+                    path.mkdir(parents=True,exist_ok=True)
+                    now=strftime("%Y-%m-%d %H:%M:%S", gmtime())
+                    filepath=path / (f"{now}_{j}.png")
+                    plt.savefig(filepath)
+                    plt.close(f)
 
 
     def name(self)->str:

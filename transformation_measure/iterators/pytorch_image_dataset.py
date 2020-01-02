@@ -50,9 +50,9 @@ class ImageDataset(Dataset):
 
         xf = x.float()
         if dataformat == "NCHW":
-            dims = (0, 2, 3)
-        elif dataformat == "NHWC":
             dims = (0, 1, 2)
+        elif dataformat == "NHWC":
+            dims = (0, 2, 3)
         else:
             raise ValueError()
 
@@ -71,19 +71,19 @@ class ImageDataset(Dataset):
         # print(y.shape)
         return x[0,],y
 
-    def transform_nchw(self,x):
-        if self.dataformat == "NCHW":
+    def transform_after(self, x):
+        if self.dataformat == "NHWC":
             pass
-        elif self.dataformat == "NHWC":
+        elif self.dataformat == "NCHW":
             x = x.permute([0, 3, 1, 2])
         else:
             raise ValueError()
         return x
 
-    def transform_nhwc(self,x):
-        if self.dataformat == "NCHW":
+    def transform_before(self, x):
+        if self.dataformat == "NHWC":
             pass
-        elif self.dataformat == "NHWC":
+        elif self.dataformat == "NCHW":
             x = x.permute(0,2,3,1)
         else:
             raise ValueError()
@@ -92,16 +92,18 @@ class ImageDataset(Dataset):
     # TODO convert to pure pytorch
     def transform_batch(self,x):
         nt = len(self.transformations)
+        #x = (x - torch.from_numpy(self.mu)) / torch.from_numpy(self.std){
+        #x = (x-self.mu) /self.std
         # to NHWC order
-        x = self.transform_nhwc(x).float()
+        x = self.transform_before(x).float()
         for i in range(x.shape[0]):
             sample_np=x[i,:].numpy()
             sample_np = (sample_np - self.mu) / self.std
             t = self.transformations[np.random.randint(0, nt)]
-            transformed_np = t(sample_np)
-            x[i,:] = torch.from_numpy(transformed_np)
+            transformed_np = t(sample_np[np.newaxis,:])
+            x[i,:] = torch.from_numpy(transformed_np[0,:])
         # To NCHW order
-        x = self.transform_nchw(x)
+        x = self.transform_after(x)
         return x
 
     def get_batch(self,idx):

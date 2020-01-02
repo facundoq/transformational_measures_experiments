@@ -11,9 +11,7 @@ from os.path import expanduser
 
 # Dataset from: http://www.iro.umontreal.ca/~lisa/twiki/bin/view.cgi/Public/MnistVariations
 
-LSA16_w = 32
-LSA16_h = 32
-LSA16_class = 16
+
 
 
 def load_images(folderpath):

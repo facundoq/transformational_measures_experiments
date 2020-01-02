@@ -1,7 +1,7 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
-from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
 from typing import List
 from enum import Enum
 

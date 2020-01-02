@@ -17,6 +17,7 @@ class DatasetParameters:
         self.name=name
         self.subset=subset
         self.percentage=percentage
+
     def __repr__(self):
         return f"{self.name}({self.subset.value},p={self.percentage:.2})"
     def id(self):

@@ -9,12 +9,6 @@ class Transformation:
         pass
 
 
-    def apply_pytorch(self,x:torch.FloatTensor):
-        raise NotImplementedError(f"Transformation {self.__class__.__name__} does not have a PyTorch implementation")
-
-    def apply_pytorch_batch(self,x:torch.FloatTensor):
-        raise NotImplementedError(f"Transformation {self.__class__.__name__} does not have a PyTorch implementation")
-
 class TransformationSet(Sized, Iterable[Transformation]):
 
     @abc.abstractmethod
@@ -28,14 +22,7 @@ class TransformationSet(Sized, Iterable[Transformation]):
     def id(self):
         pass
 
-    def pytorch(self):
-        return False
-
-
 class IdentityTransformation(Transformation):
 
     def __call__(self, x:np.ndarray)->np.ndarray:
-        return x
-
-    def apply_pytorch(self,x:torch.FloatTensor):
         return x

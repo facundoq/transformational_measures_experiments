@@ -38,7 +38,7 @@ class PytorchActivationsIterator(ActivationsIterator):
     '''
     def transformations_first(self):
         for transformation in self.transformations:
-            dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0, drop_last=True,pin_memory=True)
+            dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers, drop_last=True,pin_memory=True)
             yield transformation, self.samples_activation(transformation,dataloader)
 
     def samples_activation(self,transformation,dataloader):
@@ -56,7 +56,7 @@ class PytorchActivationsIterator(ActivationsIterator):
      '''
 
     def samples_first(self):
-        dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=0,drop_last=True)
+        dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False, num_workers=self.num_workers,drop_last=True)
 
         with torch.no_grad():
             for batch, y_true in dataloader:

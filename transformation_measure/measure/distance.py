@@ -1,73 +1,22 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
+from transformation_measure import ConvAggregation
 import numpy as np
-from transformation_measure.measure.stats_running import RunningMeanAndVariance,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
 from typing import List
 from enum import Enum
-
+from .quotient import divide_activations
 from sklearn.metrics.pairwise import euclidean_distances
 import sklearn
-import scipy.spatial.distance
+from .aggregation import DistanceAggregation
 
-
-
-class DistanceAggregation(Enum):
-    max = "max"
-    mean = "mean"
-
-    def apply(self,x:np.ndarray,normalize=False):
-        l = len(x.shape)
-        if l == 4:
-            n, c, h, w = x.shape
-            x = x.reshape((n, c, h * w))
-            return self.apply_features(x,normalize)
-        elif l == 2:
-            x = x[:, :, np.newaxis]
-            return self.apply_features(x,normalize)
-        else:
-            raise ValueError(f"Activation shape not supported {x.shape}")
-
-    def apply_feature_maps(self,x:np.ndarray):
-        n,c,h,w=x.shape
-        x = x.reshape((n,c,h*w))
-        result=np.zeros(c)
-        for i in range(c):
-            sample = x[:,i,:]
-            d = scipy.spatial.distance.pdist(sample, 'euclidean')
-            #d = euclidean_distances(sample)
-            result[i] = self.aggregate(d)
-        return result
-
-    def apply_features(self,x:np.ndarray,normalize:bool):
-        n, c, d = x.shape
-        result = np.zeros(c)
-        for i in range(c):
-            sample = x[:, i,:]
-            if normalize:
-                sample/=sample.sum()
-            d = scipy.spatial.distance.pdist(sample, 'euclidean')
-            #d = euclidean_distances(sample)
-            result[i] = self.aggregate(d)
-        return result
-
-    def aggregate(self,d:np.ndarray):
-        if self == DistanceAggregation.max:
-            return d.max()
-        elif self == DistanceAggregation.mean:
-            return d.mean()
-        else:
-            raise ValueError(f"Unknown distance aggregation {self}")
-
-
-
-
-class DistanceTransformationMeasure(Measure):
+class TransformationDistance(Measure):
     def __init__(self, distance_aggregation:DistanceAggregation):
         super().__init__()
         self.distance_aggregation=distance_aggregation
 
     def __repr__(self):
-        return f"DTM(da={self.distance_aggregation.value})"
+        return f"TD(da={self.distance_aggregation.name})"
 
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
@@ -86,19 +35,20 @@ class DistanceTransformationMeasure(Measure):
         # calculate the final mean over all samples (and layers)
         mean_variances = [b.mean() for b in mean_running]
         return MeasureResult(mean_variances,layer_names,self)
+
     def name(self):
         return "Transformation Distance"
     def abbreviation(self):
         return "TD"
 
 
-class DistanceSampleMeasure(Measure):
+class SampleDistance(Measure):
     def __init__(self, distance_aggregation: DistanceAggregation):
         super().__init__()
         self.distance_aggregation = distance_aggregation
 
     def __repr__(self):
-        return f"DSM(da={self.distance_aggregation.value})"
+        return f"SD(da={self.distance_aggregation.name})"
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         layer_names = activations_iterator.activation_names()
@@ -121,19 +71,29 @@ class DistanceSampleMeasure(Measure):
         return "SD"
 
 
-from transformation_measure import QuotientMeasure
-class DistanceMeasure(QuotientMeasure):
-    def __init__(self, distance_aggregation: DistanceAggregation):
+
+
+class NormalizedDistance(Measure):
+    def __init__(self, distance_aggregation: DistanceAggregation,conv_aggregation:ConvAggregation):
 
         self.distance_aggregation = distance_aggregation
+        self.td= TransformationDistance(distance_aggregation),
+        self.sd=SampleDistance(distance_aggregation)
 
-        super().__init__(DistanceTransformationMeasure(distance_aggregation),
-                         DistanceSampleMeasure(distance_aggregation))
+        self.conv_aggregation=conv_aggregation
 
+    def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
+        td_result = self.td.eval(activations_iterator)
+        sd_result = self.sd.eval(activations_iterator)
 
+        td_result = td_result.collapse_convolutions(self.conv_aggregation)
+        sd_result = sd_result.collapse_convolutions(self.conv_aggregation)
+
+        result = divide_activations(td_result.layers, sd_result.layers)
+        return MeasureResult(result, activations_iterator.activation_names(), self)
 
     def __repr__(self):
-        return f"DM(da={self.distance_aggregation.value})"
+        return f"ND(ca={self.conv_aggregation.value},da={self.distance_aggregation.name})"
 
 
     def name(self):

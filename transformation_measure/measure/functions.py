@@ -1,4 +1,4 @@
-from transformation_measure.measure.stats_running import RunningMeanAndVariance
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMeanAndVariance
 from enum import Enum
 import numpy as np
 
@@ -7,7 +7,7 @@ class MeasureFunction(Enum):
     std = "std"
     mean = "mean"
 
-    def apply_running(self,rm:RunningMeanAndVariance):
+    def apply_running(self, rm:RunningMeanAndVariance):
         if self == MeasureFunction.var:
             return rm.var()
         elif self == MeasureFunction.std:

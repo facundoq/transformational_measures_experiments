@@ -5,6 +5,9 @@
 ## NOTE:
 ## You should run "train.py" before this script to generate and train the model for
 ## a given dataset/model/transformation combination
+#
+# import ray
+# ray.init()
 
 import datasets
 import torch,config

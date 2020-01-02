@@ -43,7 +43,7 @@ from transformation_measure.measure.base import MeasureResult
 import transformation_measure as tm
 from pathlib import Path
 from experiment import variance
-from transformation_measure.measure.stats_running import  RunningMeanAndVariance
+from transformation_measure.measure.stats_running import  RunningMeanAndVarianceWellford
 from matplotlib.lines import Line2D
 
 def plot_heatmap(m:MeasureResult,filepath:Path,title:str, vmin=0, vmax=None):
@@ -230,9 +230,8 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
         assert min_n==max_n,"To plot the mean values all results must have the same number of layers."
 
 
-    mean_and_variance = RunningMeanAndVariance()
+    mean_and_variance = RunningMeanAndVarianceWellford()
     max_value=0
-    handles=[]
     for i, result in enumerate(results):
         n_layers= len(result.measure_result.layers)
         x= np.arange(n_layers)+1
@@ -246,30 +245,31 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
         if plot_mean:
             color*=0.7
 
-        h=ax.plot(x, y, label=label, linestyle=linestyle, color=color,marker="o",markersize=3)
+        ax.plot(x, y, label=label, linestyle=linestyle, color=color,marker="o",markersize=3)
+
         if not mark_layers is None:
             x_mark = x[mark_layers]
             y_mark = y[mark_layers]
             ax.plot(x_mark,y_mark,linestyle="",color=color,marker="s")
-
-
+    if not labels is None:
+        handles, labels = ax.get_legend_handles_labels()
     if plot_mean:
         x = np.arange(max_n)+1
         y,error=mean_and_variance.mean(),mean_and_variance.std()
-        label="Mean and deviation" #μ  σ
+        label="Mean and deviation" #μσ
         linestyle="--"
         ax.errorbar(x, y,yerr=error, label=label, linewidth=1.5, linestyle=linestyle, color=(0,0,0))
 
-    ax.set_ylabel("Variance")
+    ax.set_ylabel("Measure values")
     ax.set_xlabel("Layer")
     ax.set_ylim(0,max(max_value*1.1,1.2))
 
     if max_n < 60:
-        labels = results[0].measure_result.layer_names
+        tick_labels = results[0].measure_result.layer_names
         #labels = [f"${l}$" for l in labels]
         x = np.arange(max_n) + 1
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=45,fontsize=6)
+        ax.set_xticklabels(tick_labels, rotation=45,fontsize=6)
         ax.tick_params(axis='both', which='both', length=0)
 
     box = ax.get_position()
@@ -277,7 +277,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
                      box.width, box.height * 0.9])
     if not labels is None:
         # Put legend below current axis
-        # handles, labels = ax.get_legend_handles_labels()
+        handles, labels = ax.get_legend_handles_labels()
         handles_new=[Line2D([0],[0]) for h in handles]
 
         for h,h_new in zip(handles,handles_new):
