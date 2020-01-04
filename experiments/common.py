@@ -34,12 +34,13 @@ da_keep = tm.DistanceAggregation(normalize=False,keep_feature_maps=True)
 
 measures = config.common_measures()
 nv = tm.NormalizedVariance(ca_mean)
-nd = tm.NormalizedDistance(da_keep,ca_mean)
+nd = tm.NormalizedDistance(da_keep,ca_mean) # TODO change to ca_none, its the same because of da_keep but still..
 se = tm.DistanceSameEquivarianceMeasure(da_normalize_keep)
+
+normalized_measures_validation = [nv,nd,se]
 normalized_measures = [
                         nv,
-                        # nd,
-                        # se
+                        se
                       ]
 dataset_names = ["mnist", "cifar10"]
 venv_path = ""
@@ -48,5 +49,5 @@ common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
                           tm.SimpleAffineTransformationGenerator(s=4),
                           tm.SimpleAffineTransformationGenerator(t=3),
                           ]
-
-common_transformations_hard = common_transformations+[tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3),]
+combined=tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3,n_rotations=6,n_translations=2,n_scales=3),
+common_transformations_hard = common_transformations#+[combined]

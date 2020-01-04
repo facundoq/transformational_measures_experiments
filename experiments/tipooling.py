@@ -6,12 +6,9 @@ class TIPooling(Experiment):
         return """Compare SimpleConv with the TIPooling SimpleConv Network"""
 
     def run(self):
-        measures = [nv
-                    #nd
-                    ] #normalized_measures
+        measures = normalized_measures
 
-        model_config_generators = [config.TIPoolingSimpleConvConfig, config.SimpleConvConfig]
-        #transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
+
 
         transformations =common_transformations
 

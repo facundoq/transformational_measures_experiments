@@ -36,11 +36,24 @@ class DistanceSameEquivarianceMeasure(Measure):
         mean_variances_running = [RunningMean() for i in range(n_layers)]
         return layer_names,mean_variances_running,indices
 
+    def get_inverse_transformations(self, activations:[np.ndarray], indices:[int], transformation_set:tm.TransformationSet):
+        valid_activations=[activations[i] for i in indices]
+        shapes = [a.shape for a in valid_activations]
+        inverse_transformation_sets=[]
+
+        for s in shapes:
+            n,c,h,w=s
+            layer_transformation_set:tm.TransformationSet = transformation_set.copy()
+            layer_transformation_set.set_pytorch(False)
+            layer_transformation_set.set_input_shape((h, w, c))
+            layer_transformation_set_list = [l.inverse() for l in layer_transformation_set]
+            inverse_transformation_sets.append(layer_transformation_set_list)
+        return inverse_transformation_sets
+
+
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         transformations = activations_iterator.get_transformations()
-        transformations=transformations.copy()
-        transformations.set_pytorch(False)
-        transformations = list(transformations)
+
 
         first_iteration = True
         mean_variances_running= None
@@ -54,16 +67,16 @@ class DistanceSameEquivarianceMeasure(Measure):
                 if first_iteration:
                     # find out which layers can be transformed (ones with same dims as x)
                     layer_names,mean_variances_running,indices = self.get_valid_layers(activations,activations_iterator.activation_names(),x_transformed.shape)
+                    inverse_transformation_sets = self.get_inverse_transformations(activations,indices,transformations)
                     first_iteration = False
                 # keep only those activations valid for the transformation
                 activations = list_get_all(activations,indices)
                 n = x_transformed.shape[0]
                 t_end=t_start+n
 
-                self.inverse_trasform_feature_maps(activations, transformations[t_start:t_end])
+                self.inverse_trasform_feature_maps(activations,inverse_transformation_sets,t_start,t_end)
                 t_start=t_end
                 for j, layer_activations in enumerate(activations):
-                    # TODO change normalize to True
                     layer_measure= self.distance_aggregation.apply(layer_activations)
                     # update the mean over all transformation
                     mean_variances_running[j].update(layer_measure)
@@ -71,28 +84,29 @@ class DistanceSameEquivarianceMeasure(Measure):
         mean_variances = [b.mean() for b in mean_variances_running]
         return MeasureResult(mean_variances,layer_names,self)
 
-    def inverse_trasform_feature_maps(self,activations:[np.ndarray],transformations:tm.TransformationSet)->[np.ndarray]:
+    def inverse_trasform_feature_maps(self,activations:[np.ndarray],transformations:[tm.TransformationSet],t_start:int,t_end:int)->[np.ndarray]:
 
-        transformations = list(transformations)
-        inverses = [t.inverse() for t in transformations]
 
-        for j,layer in enumerate(activations):
-            for i,inverse in enumerate(inverses):
+
+        for layer,layer_transformations in zip(activations,transformations):
+            for i,inverse in enumerate(layer_transformations[t_start:t_end]):
                 # ax[0, i].imshow(layer[i,0,:,:],cmap="gray")
                 # ax[0, i].axis("off")
+                #print(inverse.__class__,layer.__class__)
                 fm=layer[i:i+1,:].transpose(0,2,3,1)
                 inverse_fm=inverse(fm)
                 inverse_fm=inverse_fm.transpose(0,3,1,2)
+                # print(fm.shape, inverse_fm.shape)
                 layer[i,:] = inverse_fm[0,:]
 
 
-            if self.normalized:
-                layer-=layer.min(axis=1,keepdims=True)
-                max_values=layer.max(axis=1,keepdims=True)
-                max_values[max_values==0]=1
-                layer/=max_values
+            # if self.normalized:
+            #     layer-=layer.min(axis=1,keepdims=True)
+            #     max_values=layer.max(axis=1,keepdims=True)
+            #     max_values[max_values==0]=1
+            #     layer/=max_values
 
-            self.plot_debug(layer, j)
+            # self.plot_debug(layer, j)
 
     def plot_debug(self,layer,j):
 

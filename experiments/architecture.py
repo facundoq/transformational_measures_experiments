@@ -1,4 +1,5 @@
 from .common import *
+from models.simple_conv import ActivationFunction as af
 
 class BatchNormalization(Experiment):
     def description(self):
@@ -48,10 +49,28 @@ class BatchNormalization(Experiment):
 
 class ActivationFunction(Experiment):
     def description(self):
-        return """Determine how the kernel sizes affect invariance"""
+        return """Determine how the activation function affects invariance"""
 
     def run(self):
-        pass
+        measures = normalized_measures
+        activation_functions = list(af)
+
+        combinations = itertools.product(dataset_names, common_transformations, measures)
+        for (dataset, transformation, measure) in combinations:
+
+            variance_parameters = []
+            for activation_function in activation_functions:
+                model_config = config.SimpleConvConfig.for_dataset(dataset, activation=activation_function)
+                p_training,p_variance,p_dataset=self.train_measure(model_config, dataset, transformation, measure)
+                variance_parameters.append(p_variance)
+
+            # plot results
+            results= config.load_results(config.results_paths(variance_parameters))
+            # single
+            experiment_name = f"{config.SimpleConvConfig.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            labels = [a.value for a in activation_functions]
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels)
 
 
 class KernelSize(Experiment):
@@ -59,7 +78,25 @@ class KernelSize(Experiment):
         return """Determine how the kernel sizes affect invariance"""
 
     def run(self):
-        pass
+        measures = normalized_measures
+        kernel_sizes = [3,5,7]
+
+        combinations = itertools.product(dataset_names, common_transformations, measures)
+        for (dataset, transformation, measure) in combinations:
+
+            variance_parameters = []
+            for k in kernel_sizes:
+                model_config = config.SimpleConvConfig.for_dataset(dataset, k=k)
+                p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
+                variance_parameters.append(p_variance)
+
+            # plot results
+            results = config.load_results(config.results_paths(variance_parameters))
+            # single
+            experiment_name = f"{config.SimpleConvConfig.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            labels = [f"k={k}" for k in kernel_sizes]
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
 class MaxPooling(Experiment):
@@ -67,5 +104,23 @@ class MaxPooling(Experiment):
         return """Determine wheter MaxPooling affects the invariance structure of the network or it is similar to a network with strided convolutions"""
 
     def run(self):
-        pass
+        measures = normalized_measures
+        max_pooling = [False,True]
+
+        combinations = itertools.product(dataset_names, common_transformations, measures)
+        for (dataset, transformation, measure) in combinations:
+
+            variance_parameters = []
+            for mp in max_pooling :
+                model_config = config.SimpleConvConfig.for_dataset(dataset, max_pooling=mp)
+                p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
+                variance_parameters.append(p_variance)
+
+            # plot results
+            results = config.load_results(config.results_paths(variance_parameters))
+            # single
+            experiment_name = f"{config.SimpleConvConfig.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            labels = ["Strided Convolutions","MaxPooling"]
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 

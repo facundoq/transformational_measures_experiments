@@ -71,24 +71,39 @@ class TIPoolingSimpleConvConfig(ModelConfig):
 class SimpleConvConfig(ModelConfig):
 
     @classmethod
-    def for_dataset(cls,dataset:str,bn:bool=False):
+    def for_dataset(cls,dataset:str,bn:bool=False,k=3, activation=models.ActivationFunction.ELU,max_pooling=True):
         conv = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
         fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
-        return SimpleConvConfig(conv=conv[dataset], fc=fc[dataset],bn=bn)
+        return SimpleConvConfig(conv=conv[dataset], fc=fc[dataset],bn=bn,k=k,activation=activation,max_pooling=max_pooling)
 
-    def __init__(self, conv=32, fc=128, bn=False):
+    def __init__(self, conv=32, fc=128, bn=False, k=3, activation=models.ActivationFunction.ELU,max_pooling=True):
         self.conv=conv
         self.fc=fc
         self.bn=bn
+        self.activation_function=activation
+        self.k=k
+        self.max_pooling=max_pooling
 
     def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
-        model = models.SimpleConv(input_shape, num_classes,self.conv, self.fc, self.bn)
+        model = models.SimpleConv(input_shape, num_classes, self.conv, self.fc, self.bn, self.k, self.activation_function,self.max_pooling)
         model, optimizer = self.default_optimizer(model,cuda,lr=5e-4)
         return model,optimizer
 
     def id(self):
-        bn = "(bn=True)" if self.bn else ""
-        return f"{models.SimpleConv.__name__}{bn}"
+        params=[]
+        if self.bn:
+            params.append("bn=True")
+        if self.k!=3:
+            params.append(f"k={self.k}")
+        if self.activation_function != models.ActivationFunction.ELU:
+            params.append(f"k={self.activation_function}")
+        if not self.max_pooling:
+            params.append(f"mp={self.max_pooling}")
+        params = ",".join(params)
+        if len(params)>0:
+            params=f"({params})"
+
+        return f"{models.SimpleConv.__name__}{params}"
         # TODO rerun all
         #return f"SimpleConv(conv={self.conv},fc={self.fc},bn={self.bn})"
 
@@ -174,11 +189,20 @@ class ResNetConfig(ModelConfig):
     def id(self):
         return f"{models.ResNet.__name__}(v={self.v},bn={self.bn})"
 
+from models.simple_conv import ActivationFunction
 def all_models()->[ModelConfig]:
-    combinations = itertools.product(datasets.names,[False,True])
+    kernel_sizes=[3,5,7]
+    mps=[False,True]
+    bns=[False,True]
+    activation_functions=list(ActivationFunction)
+    combinations = itertools.product(datasets.names,bns)
+    simple_conv_combinations=itertools.product(mps,kernel_sizes,activation_functions)
     models_configs:[ModelConfig]=[]
+
+
     for dataset,bn in combinations:
-        models_configs.append(SimpleConvConfig.for_dataset(dataset,bn))
+        for mp,k,af in simple_conv_combinations:
+            models_configs.append(SimpleConvConfig.for_dataset(dataset,bn,k,af,mp))
         models_configs.append(AllConvolutionalConfig.for_dataset(dataset, bn))
         models_configs.append(VGG16DConfig.for_dataset(dataset, bn))
         models_configs.append(ResNetConfig.for_dataset(dataset, bn))

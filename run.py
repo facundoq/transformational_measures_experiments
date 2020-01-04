@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
 
-
 import argparse
 
 import os
@@ -78,11 +77,10 @@ if __name__ == '__main__':
 
     all_experiments = [
         TrainModels(),# run this first or you'll need to retrain some models
-        DuringTraining(),
+        ModelAccuracies(),
+
         CompareMeasures(),
         Stratified(),
-
-        VisualizeInvariantFeatureMaps(),
 
         DatasetSize(),
         DatasetSubset(),
@@ -91,20 +89,24 @@ if __name__ == '__main__':
         AggregationFunctionsVariance(),
         AggregationBeforeAfter(),
         AggregationFunctionsDistance(),
+        SameEquivarianceNormalization(),
 
         TransformationDiversity(),
         TransformationComplexity(),
 
-        # BatchNormalization(),
-        SameEquivarianceNormalization(),
-
-        TIPooling(),
+        BatchNormalization(),
+        ActivationFunction(),
+        MaxPooling(),
+        KernelSize(),
 
         RandomInitialization(),
         RandomWeights(),
+        DuringTraining(),
+        VisualizeInvariantFeatureMaps(),
 
-        # CompareModels(),
-        ModelAccuracies(),
+        TIPooling(),
+        CompareModels(),
+
 
         # ValidateMeasure(),
     ]

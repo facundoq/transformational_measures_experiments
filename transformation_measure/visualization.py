@@ -6,10 +6,10 @@ params = {
     # 'image.interpolation': 'nearest',
     'image.cmap': 'gray',
     # 'savefig.dpi': 150,  # to adjust notebook inline plot size
-    'axes.labelsize': 10, # fontsize for x and y labels (was 10)
+    'axes.labelsize': 12, # fontsize for x and y labels (was 10)
     'axes.titlesize': 8,
     'font.size': 8, # was 10
-    'legend.fontsize': 9.5, # was 10
+    'legend.fontsize': 10, # was 10
     'xtick.labelsize': 8,
     'ytick.labelsize': 8,
     # 'text.usetex': True,
@@ -20,7 +20,7 @@ params = {
     'axes.spines.top': False,
     'axes.axisbelow' :  True,
     'axes.grid'      : True,
-    'axes.grid.axis' : "y",
+    'axes.grid.axis' : "y", #or "both" or "x" or "none"
     #'axes.grid.color' : "gray",
     #'axes.grid.linewidth' : 0.5,
 }
@@ -489,10 +489,12 @@ def labels_for_measures(ms:[MeasureResult]):
 def plot_accuracies(plot_filepath:Path,accuracies_by_transformation:[[float]],transformation_names:[str],model_names:[str]):
     # set width of bar
     f=plt.figure(dpi=300)
-    barWidth = 0.25
+    n_models=len(model_names)
+    n_transformations=len(transformation_names)
+    barWidth = 1/(n_transformations+1)
     cmap = default_discrete_colormap()
     # Set position of bar on X axis
-    pos = np.arange(len(model_names),dtype=float)
+    pos = np.arange(n_models,dtype=float)
     for i,(accuracies,transformation_name) in enumerate(zip(accuracies_by_transformation,transformation_names)):
     # Make the plot
         plt.bar(pos, accuracies, color=cmap(i), width=barWidth, edgecolor='white', label=transformation_name)

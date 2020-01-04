@@ -1,5 +1,6 @@
 from .common import *
 
+
 class DatasetSize(Experiment):
 
     def description(self):
@@ -8,7 +9,7 @@ class DatasetSize(Experiment):
     def run(self):
         dataset_sizes = [0.01, 0.05, 0.1, 0.5, 1.0]
         model_names = simple_models_generators
-        measures = normalized_measures
+        measures = normalized_measures_validation
         combinations = list(itertools.product(
             model_names, dataset_names, common_transformations_hard, measures))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
@@ -34,7 +35,7 @@ class DatasetSize(Experiment):
             values.reverse()
             colors = visualization.get_sequential_colors(values)
 
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,colors =colors )
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels, colors=colors)
 
 
 class DatasetSubset(Experiment):
@@ -43,10 +44,10 @@ class DatasetSubset(Experiment):
         return '''Vary the test dataset subset (either train o testing) and see how it affects the measure's value.'''
 
     def run(self):
-        dataset_subsets = [variance.DatasetSubset.test,variance.DatasetSubset.train]
+        dataset_subsets = [variance.DatasetSubset.test, variance.DatasetSubset.train]
 
         model_names = simple_models_generators
-        measures = normalized_measures
+        measures = normalized_measures_validation
         combinations = list(itertools.product(
             model_names, dataset_names, common_transformations_hard, measures))
 
@@ -61,7 +62,7 @@ class DatasetSubset(Experiment):
 
             p_datasets = []
             for subset in dataset_subsets:
-                p = config.dataset_size_for_measure(measure,subset)
+                p = config.dataset_size_for_measure(measure, subset)
                 p_datasets.append(variance.DatasetParameters(dataset, subset, p))
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
@@ -80,7 +81,7 @@ class DatasetTransfer(Experiment):
         return """Measure invariance with a different dataset than the one used to train the model."""
 
     def run(self):
-        measures =normalized_measures
+        measures = normalized_measures_validation
 
         combinations = itertools.product(
             simple_models_generators, dataset_names, common_transformations_hard, measures)

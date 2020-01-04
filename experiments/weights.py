@@ -12,7 +12,7 @@ class RandomWeights(Experiment):
         random_models_folderpath = config.models_folder() / "random"
         random_models_folderpath.mkdir(exist_ok=True, parents=True)
         o = training.Options(False, False, False, 32, 4, torch.cuda.is_available(), False, 0)
-        measures = normalized_measures
+        measures = normalized_measures_validation
 
         # number of random models to generate
         random_model_n = 10
@@ -68,13 +68,13 @@ class RandomWeights(Experiment):
 
 
 class DuringTraining(Experiment):
-    savepoints_percentages = [0, 1, 3, 4, 5, 10, 20, 30, 40, 50, 100]
+    savepoints_percentages = [0, 1, 3, 5, 10, 30, 50, 100]
 
     def description(self):
         return """Analyze the evolution of invariance in models while they are trained."""
 
     def run(self):
-        measures = normalized_measures
+        measures = normalized_measures_validation
 
 
         model_generators = simple_models_generators
@@ -148,7 +148,7 @@ class RandomInitialization(Experiment):
         return """Test measures with various instances of the same architecture/transformation/dataset to see if the measure is dependent on the random initialization in the training or simply on the architecture"""
 
     def run(self):
-        measures = normalized_measures
+        measures = normalized_measures_validation
         repetitions = 8
 
         model_generators = simple_models_generators

@@ -78,11 +78,11 @@ class AggregationFunctionsDistance(Experiment):
         return """Test different Convolutional Aggregation strategies for Distance-based invariance measures."""
 
     def run(self):
-        before_functions = [ca_mean, ca_none]
         measures = [  tm.NormalizedDistance(da, ca_none)
                     , tm.NormalizedDistance(da, ca_mean)
                     , tm.NormalizedDistance(da_keep, ca_none)
                     ]
+        labels = ["Normal", "Feature map aggregation", "Feature map distance measure"]
 
         combinations = itertools.product(
             simple_models_generators, dataset_names, common_transformations_hard)
@@ -101,8 +101,9 @@ class AggregationFunctionsDistance(Experiment):
             for p_variance in variance_parameters:
                 self.experiment_variance(p_variance, model_path)
             results = config.load_results(config.results_paths(variance_parameters))
+            results[0].measure_result=results[0].measure_result.collapse_convolutions(ca_mean)
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            labels = ["Normal", "Feature map aggregation", "Feature map distance measure"]
+
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)

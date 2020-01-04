@@ -32,9 +32,9 @@ class ModelAccuracies(Experiment):
 
     def run(self):
         models = common_models_generators
-        transformations = common_transformations_hard
+        transformations = common_transformations+[tm.SimpleAffineTransformationGenerator(r=360,s=4,t=3)]
         model_names = [m.for_dataset("mnist").name for m in models]
-        transformation_labels = ["Rotation","Scale","Translation","Combined`2`2"]
+        transformation_labels = ["Rotation","Scale","Translation","Combined"]
         for dataset in dataset_names:
             transformation_scores = []
             for transformation in transformations:

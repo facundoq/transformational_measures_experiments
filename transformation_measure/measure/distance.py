@@ -75,14 +75,15 @@ class SampleDistance(Measure):
 
 class NormalizedDistance(Measure):
     def __init__(self, distance_aggregation: DistanceAggregation,conv_aggregation:ConvAggregation):
-
         self.distance_aggregation = distance_aggregation
-        self.td= TransformationDistance(distance_aggregation),
-        self.sd=SampleDistance(distance_aggregation)
-
+        self.td = TransformationDistance(distance_aggregation)
+        self.sd = SampleDistance(distance_aggregation)
         self.conv_aggregation=conv_aggregation
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
+        if self.distance_aggregation.keep_feature_maps and self.conv_aggregation != ConvAggregation.none:
+            print("Warning: ConvAggregation strategies dot not have any effect when keep_feature_maps is True.")
+
         td_result = self.td.eval(activations_iterator)
         sd_result = self.sd.eval(activations_iterator)
 
