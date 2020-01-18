@@ -11,6 +11,11 @@ ActivationsByLayer = [np.ndarray]
 
 class MeasureResult:
     def __init__(self,layers:ActivationsByLayer,layer_names:List[str],measure:'Measure',extra_values=dict()):
+        # if len(layers) != len(layer_names):
+            # print(len(layers),len(layer_names))
+            # print(layer_names)
+            # for l in layers:
+                # print(l.shape)
         assert (len(layers) == len(layer_names))
         self.layers=layers
         self.layer_names=layer_names
@@ -121,7 +126,10 @@ class Measure():
         '''
         variance_per_class = [self.eval(iterator) for iterator in classes_iterators]
         stratified_measure_layers = self.mean_variance_over_classes(variance_per_class)
-        layer_names=classes_iterators[0].activation_names()
+        # TODO think of a better way to do this; parameter?
+        # think of a "filter layers" function that selects on which layers to calculate the measure
+        # then the layer names of the results is the same as that of the activations_iterator
+        layer_names= variance_per_class[0].layer_names
 
         return StratifiedMeasureResult(stratified_measure_layers,layer_names,self,variance_per_class,class_labels)
 

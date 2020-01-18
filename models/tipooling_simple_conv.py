@@ -22,6 +22,10 @@ class TIPoolingSimpleConv(ObservableLayersModule):
         h, w, channels = input_shape
 
         self.transformations=transformations
+        self.transformations.set_input_shape(input_shape)
+        self.transformations.set_pytorch(True)
+        self.transformations.set_cuda(torch.cuda.is_available())
+
         conv_filters2=conv_filters*2
         conv_filters4 = conv_filters * 4
         conv_layers=[nn.Conv2d(channels, conv_filters, 3, padding=1),
@@ -70,7 +74,7 @@ class TIPoolingSimpleConv(ObservableLayersModule):
     def forward(self, x):
         results=[]
         for t in self.transformations:
-            transformed_x = t.apply_pytorch_batch(x)
+            transformed_x = t(x)
             feature_maps = self.conv(transformed_x)
             flattened_feature_maps = feature_maps.view(feature_maps.shape[0], -1)
             results.append(flattened_feature_maps)
@@ -84,7 +88,7 @@ class TIPoolingSimpleConv(ObservableLayersModule):
         conv_intermediates = []
 
         for t in self.transformations:
-            transformed_x = t.apply_pytorch_batch(x)
+            transformed_x = t(x)
             feature_maps,intermediates = self.conv.forward_intermediates(transformed_x)
             conv_intermediates.extend(intermediates)
             flattened_feature_maps = feature_maps.view(feature_maps.shape[0], -1)

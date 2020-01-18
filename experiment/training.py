@@ -40,7 +40,6 @@ class Parameters:
         return f"Model: {self.model.id()}, Dataset={self.dataset}, Transformations=({self.transformations}), Epochs={self.epochs}{notransform_message}"
 
     def id(self,savepoint:float=None):
-
         result = f"{self.model.id()}_{self.dataset}_{self.transformations.id()}"
 
         if self.notransform_epochs > 0:

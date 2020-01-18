@@ -46,7 +46,7 @@ class AffineTransformationPytorch(AffineTransformation):
         afcv=AffineTransformationNumpy(self.inverse_parameters(), input_shape)
         self.transformation_matrix=self.generate_pytorch_transformation(afcv.transformation_matrix, input_shape)
         tm=self.transformation_matrix.unsqueeze(0)
-        self.grid = F.affine_grid(tm, [1,self.c,self.h,self.w])
+        self.grid = F.affine_grid(tm, [1,self.c,self.h,self.w])#,align_corners=True)
         self.use_cuda=use_cuda
         if self.use_cuda:
             self.transformation_matrix=self.transformation_matrix.cuda()
@@ -72,7 +72,7 @@ class AffineTransformationPytorch(AffineTransformation):
     def __call__(self, x: torch.FloatTensor):
         n, c, h, w = x.shape
         grid = self.grid.expand(n,*self.grid.shape[1:])
-        x = F.grid_sample(x, grid)
+        x = F.grid_sample(x, grid)#,align_corners=True)
         return x
 
     def inverse(self):
@@ -170,18 +170,25 @@ class AffineTransformationGenerator(TransformationSet):
 
 #TODO move this class to Config
 class SimpleAffineTransformationGenerator(TransformationSet):
+    default_n_rotations = 16
 
-    def __init__(self, r:int=None, s:int=None, t:int=None,n_rotations=16,n_translations=None,n_scales=None):
+    def __init__(self, r:int=None, s:int=None, t:int=None,n_rotations=None,n_translations=None,n_scales=None):
         if r is None:
             r = 0
         if s is None:
             s = 0
         if t is None:
             t = 0
+        if n_rotations is None:
+            n_rotations = self.default_n_rotations
         if n_translations is None:
-            n_translations=0
+            n_translations=t
         if n_scales is None:
-            n_scales=0
+            n_scales=s
+        assert 0 <= n_scales <= s
+        assert  0 <= n_translations <= t
+        assert 0 <= n_rotations
+
         self.rotation_intensity=r
         self.translation_intensity=t
         self.scale_intensity=s
@@ -202,26 +209,34 @@ class SimpleAffineTransformationGenerator(TransformationSet):
 
     def copy(self):
         a = SimpleAffineTransformationGenerator(r=self.rotation_intensity,s=self.scale_intensity,t=self.translation_intensity,n_rotations=self.n_rotations,n_translations=self.n_translations)
+
         a.set_pytorch(self.affine_transformation_generator.pytorch)
         a.set_cuda(self.affine_transformation_generator.use_cuda)
         a.set_input_shape(self.affine_transformation_generator.input_shape)
         return a
 
     def __repr__(self):
-        nr= "" if self.n_rotations==16 else f",nr={self.n_rotations}"
-        ns = "" if self.n_scales== self.scale_intensity else f",nt={self.n_scales}"
-        nt = "" if self.n_translations == self.translation_intensity else f",nt={self.n_translations}"
+        nr= "" if self.n_rotations == self.default_n_rotations else f",nr={self.n_rotations}"
+        ns = "" if self.n_scales == self.scale_intensity else f",ns={self.n_scales}"
+        nt = "" if self.n_translations ==self.translation_intensity else f",nt={self.n_translations}"
 
-        return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity},nr={self.n_rotations}{nr}{ns}{nt})"
+        return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity}{nr}{ns}{nt})"
+
     def __eq__(self, other):
         if isinstance(other,self.__class__):
-            return self.rotation_intensity == other.rotation_intensity and self.scale_intensity == other.scale_intensity and self.translation_intensity == other.translation_intensity
+            other:SimpleAffineTransformationGenerator = other
+            return self.rotation_intensity == other.rotation_intensity \
+                   and self.scale_intensity == other.scale_intensity \
+                   and self.translation_intensity == other.translation_intensity \
+                   and self.n_rotations == other.n_rotations \
+                   and self.n_scales == other.n_scales \
+                   and self.n_translations == other.n_translations
 
     def __len__(self):
         return len(self.affine_transformation_generator)
 
     def id(self):
-        return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity})"
+        return str(self)
 
     def __iter__(self)->Iterator[Transformation]:
         return self.affine_transformation_generator.__iter__()
@@ -229,23 +244,25 @@ class SimpleAffineTransformationGenerator(TransformationSet):
     def generate_transformation_values(self):
 
         if self.rotation_intensity>0:
+            # rotation range in radians
             range_rotations= np.pi*(self.rotation_intensity / (360.0 * 2.0))
-            n_rotations= max(self.rotation_intensity*self.n_rotations//360,1)
-            rotations = list(np.linspace(-range_rotations, range_rotations, n_rotations, endpoint=False))
+            rotations = list(np.linspace(-range_rotations, range_rotations, self.n_rotations, endpoint=False))
         else:
             rotations = [0.0]
 
 
         scales = [(1.0,1.0)]
         r=1.0
-        for i in range(self.n_scales,self.scale_intensity):
+        start_scale = self.scale_intensity-self.n_scales
+        for i in range(start_scale ,self.scale_intensity):
             r_upsample = r + i * 0.05
             r_downsample = r - i * 0.10
             scales.append((r_upsample,r_upsample))
             scales.append((r_downsample,r_downsample))
 
         translations=[(0,0)]
-        for t in range(self.n_translations,self.translation_intensity):
+        start_translation = self.translation_intensity - self.n_translations
+        for t in range(start_translation ,self.translation_intensity):
             d= 2**(t)
             translations.append( (0,d) )
             translations.append((0, -d))

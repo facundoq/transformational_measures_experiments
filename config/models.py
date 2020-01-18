@@ -49,7 +49,7 @@ class TIPoolingSimpleConvConfig(ModelConfig):
     @classmethod
     def for_dataset(cls, dataset: str, bn: bool,t:tm.TransformationSet):
         # TODO different from SimpleConv, half the filters
-        conv = {"mnist": 16, "cifar10": 64, "fashion_mnist": 64}
+        conv = {"mnist": 16, "cifar10": 64, "fashion_mnist": 32}
         fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
         return TIPoolingSimpleConvConfig(t, conv[dataset], fc[dataset], bn)
 
@@ -92,11 +92,11 @@ class SimpleConvConfig(ModelConfig):
     def id(self):
         params=[]
         if self.bn:
-            params.append("bn=True")
+            params.append(f"bn={self.bn}")
         if self.k!=3:
             params.append(f"k={self.k}")
         if self.activation_function != models.ActivationFunction.ELU:
-            params.append(f"k={self.activation_function}")
+            params.append(f"act={self.activation_function.value}")
         if not self.max_pooling:
             params.append(f"mp={self.max_pooling}")
         params = ",".join(params)
@@ -105,7 +105,7 @@ class SimpleConvConfig(ModelConfig):
 
         return f"{models.SimpleConv.__name__}{params}"
         # TODO rerun all
-        #return f"SimpleConv(conv={self.conv},fc={self.fc},bn={self.bn})"
+        #return f"SimpleConv(conv={self.conv},fc={self.fc},bn={self.bn},k={self.k},act={self.activation_function.value},mp={self.mp})"
 
 class AllConvolutionalConfig(ModelConfig):
 

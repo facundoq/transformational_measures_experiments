@@ -1,7 +1,7 @@
 import config
 import transformation_measure as tm
 from .base import Experiment
-
+from .language import l
 from experiment import variance, training
 from transformation_measure import visualization
 from experiment.variance import VarianceExperimentResult
@@ -38,10 +38,7 @@ nd = tm.NormalizedDistance(da_keep,ca_mean) # TODO change to ca_none, its the sa
 se = tm.DistanceSameEquivarianceMeasure(da_normalize_keep)
 
 normalized_measures_validation = [nv,nd,se]
-normalized_measures = [
-                        nv,
-                        se
-                      ]
+normalized_measures = [nv,se]
 dataset_names = ["mnist", "cifar10"]
 venv_path = ""
 
@@ -49,5 +46,5 @@ common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
                           tm.SimpleAffineTransformationGenerator(s=4),
                           tm.SimpleAffineTransformationGenerator(t=3),
                           ]
-combined=tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3,n_rotations=6,n_translations=2,n_scales=3),
-common_transformations_hard = common_transformations#+[combined]
+combined=tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3,n_rotations=6,n_translations=1,n_scales=1)
+common_transformations_hard = common_transformations+[combined]

@@ -25,6 +25,7 @@ def experiment(p: variance.Parameters, o: variance.Options):
 
     model, training_parameters, training_options, scores = training.load_model(p.model_path, use_cuda)
 
+
     if training_parameters.dataset != p.dataset.name:
         if o.adapt_dataset:
             if o.verbose:

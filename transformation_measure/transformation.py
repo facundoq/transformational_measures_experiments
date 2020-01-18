@@ -5,7 +5,7 @@ import abc
 class Transformation:
 
     @abc.abstractmethod
-    def __call__(self, x:np.ndarray)->np.ndarray:
+    def __call__(self, x):
         pass
 
 
@@ -24,5 +24,5 @@ class TransformationSet(Sized, Iterable[Transformation]):
 
 class IdentityTransformation(Transformation):
 
-    def __call__(self, x:np.ndarray)->np.ndarray:
+    def __call__(self, x):
         return x

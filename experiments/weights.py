@@ -1,7 +1,7 @@
-from .common import *
-
 import torch
+
 import datasets
+from .common import *
 
 
 class RandomWeights(Experiment):
@@ -12,7 +12,7 @@ class RandomWeights(Experiment):
         random_models_folderpath = config.models_folder() / "random"
         random_models_folderpath.mkdir(exist_ok=True, parents=True)
         o = training.Options(False, False, False, 32, 4, torch.cuda.is_available(), False, 0)
-        measures = normalized_measures_validation
+        measures = normalized_measures
 
         # number of random models to generate
         random_model_n = 10
@@ -56,15 +56,14 @@ class RandomWeights(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             n = len(results)
-            labels = [f"Random models ({n} samples)."] + ([None] * (n - 1))
+            labels = [f"{l.random_models} ({n} {l.samples})."] + ([None] * (n - 1))
             # get alpha colors
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
 
-            # visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True,labels=labels, colors=color)
-
-
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True, labels=labels,
+                                                            colors=color)
 
 
 class DuringTraining(Experiment):
@@ -76,34 +75,32 @@ class DuringTraining(Experiment):
     def run(self):
         measures = normalized_measures_validation
 
-
         model_generators = simple_models_generators
         combinations = itertools.product(
-            model_generators, dataset_names, common_transformations, measures)
+            model_generators, dataset_names, common_transformations_hard, measures)
 
         for model_config_generator, dataset, transformation, measure in combinations:
-
             # train
             model_config = model_config_generator.for_dataset(dataset)
             epochs = config.get_epochs(model_config, dataset, transformation)
             savepoints = [sp * epochs // 100 for sp in self.savepoints_percentages]
             savepoints = sorted(list(set(savepoints)))
 
-
             # Training
             p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
             self.experiment_training(p_training)
 
             # #Measures
-            variance_parameters, model_paths = self.measure(p_training,config,dataset,measure,transformation,savepoints)
+            variance_parameters, model_paths = self.measure(p_training, config, dataset, measure, transformation,
+                                                            savepoints)
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
-            self.plot(results,plot_filepath,model_paths,savepoints,epochs,)
+            self.plot(results, plot_filepath, model_paths, savepoints, epochs, )
 
-    def measure(self,p_training,config,dataset,measure,transformation,savepoints):
+    def measure(self, p_training, config, dataset, measure, transformation, savepoints):
         variance_parameters = []
         model_paths = []
         p = config.dataset_size_for_measure(measure)
@@ -117,9 +114,9 @@ class DuringTraining(Experiment):
 
         for p_variance, model_path in zip(variance_parameters, model_paths):
             self.experiment_variance(p_variance, model_path)
-        return variance_parameters,model_paths
+        return variance_parameters, model_paths
 
-    def plot(self,results,plot_filepath,model_paths,savepoints,epochs):
+    def plot(self, results, plot_filepath, model_paths, savepoints, epochs):
         # TODO implement a heatmap where the x axis is the training time/epoch
         # and the y axis indicates the layer, and the color indicates the invariance
         # to see it evolve over time.
@@ -128,8 +125,8 @@ class DuringTraining(Experiment):
             _, p, _, score = training.load_model(model_path, False, False)
             loss, accuracy = score["test"]
             accuracies.append(accuracy)
-
-        labels = [f"Epoch {sp}  ({sp * 100 // epochs}%), accuracy {accuracy}" for (sp, accuracy) in
+        # ({sp * 100 // epochs}%)
+        labels = [f"{l.epoch} {sp}, {l.accuracy} {accuracy}" for (sp, accuracy) in
                   zip(savepoints, accuracies)]
         n = len(savepoints)
         values = list(range(n))
@@ -140,7 +137,6 @@ class DuringTraining(Experiment):
         # legend_location= None
         visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,
                                                         legend_location=legend_location, colors=colors)
-
 
 
 class RandomInitialization(Experiment):

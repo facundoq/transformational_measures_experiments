@@ -81,27 +81,26 @@ def print_table(experiments:[Experiment]):
 if __name__ == '__main__':
 
     todo = [
-
+        MaxPooling(),
+        KernelSize(),
 
     ]
     print("TODO implement ", ",".join([e.__class__.__name__ for e in todo]))
 
-
     all_experiments = [
         TrainModels(),# run this first or you'll need to retrain some models
-        SimpleConvAccuracies(),
         ModelAccuracies(),
 
         #CompareMeasures(),
         Stratified(),
 
-        # DatasetSize(),
+        DatasetSize(),
         DatasetSubset(),
         DatasetTransfer(),
 
         AggregationFunctionsVariance(),
         AggregationBeforeAfter(),
-        # AggregationFunctionsDistance(),
+        AggregationFunctionsDistance(),
         SameEquivarianceNormalization(),
 
         TransformationDiversity(),
@@ -114,14 +113,16 @@ if __name__ == '__main__':
 
         RandomInitialization(),
         RandomWeights(),
-        # DuringTraining(),
+        DuringTraining(),
         #VisualizeInvariantFeatureMaps(),
 
-        CompareModels(),
         TIPooling(),
+        CompareModels(),
+
 
         # ValidateMeasure(),
     ]
+
     experiments, o = parse_args(all_experiments)
     if o.show_list:
         print_table(experiments)
@@ -129,3 +130,4 @@ if __name__ == '__main__':
         for e in experiments:
             e.set_venv(o.venv)
             e(force=o.force)
+

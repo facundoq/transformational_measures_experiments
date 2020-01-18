@@ -6,15 +6,17 @@ import config
 import transformation_measure as tm
 import abc
 
+from .language import Spanish,English
 
 class Experiment(abc.ABC):
 
-    def __init__(self):
+    def __init__(self,language=Spanish()):
         self.plot_folderpath = config.plots_base_folder() / self.id()
         self.plot_folderpath.mkdir(exist_ok=True, parents=True)
         with open(self.plot_folderpath / "description.txt", "w") as f:
             f.write(self.description())
         self.venv = Path(".")
+        self.l=language
 
     def id(self):
         return self.__class__.__name__
@@ -74,7 +76,7 @@ class Experiment(abc.ABC):
         else:
             return False
 
-    def experiment_training(self, p: training.Parameters, min_accuracy=None):
+    def experiment_training(self, p: training.Parameters, min_accuracy=None,num_workers=0):
         if not min_accuracy:
             min_accuracy = config.min_accuracy(p.model, p.dataset)
         if self.experiment_finished(p):
@@ -85,7 +87,7 @@ class Experiment(abc.ABC):
             suffix = ""
 
         savepoints = ",".join([str(sp) for sp in p.savepoints])
-        python_command = f'train.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs}  -num_workers 4 -min_accuracy {min_accuracy} -max_restarts 5 -savepoints "{savepoints}" {suffix}'
+        python_command = f'train.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs}  -num_workers {num_workers} -min_accuracy {min_accuracy} -max_restarts 5 -savepoints "{savepoints}" {suffix}'
         utils_runner.run_python(self.venv, python_command)
 
     def experiment_variance(self, p: variance.Parameters, model_path: Path, batch_size: int = 64, num_workers: int = 0,

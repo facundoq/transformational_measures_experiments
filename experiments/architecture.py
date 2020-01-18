@@ -9,7 +9,7 @@ class BatchNormalization(Experiment):
         measures = normalized_measures
         models = simple_models_generators
         combinations = itertools.product(
-            models, dataset_names, common_transformations_hard, measures)
+            models, dataset_names, common_transformations, measures)
         for (model_config_generator, dataset, transformation, measure) in combinations:
             # train
 
@@ -43,7 +43,7 @@ class BatchNormalization(Experiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}_comparison"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             bn_result.measure_result = bn_result.measure_result.remove_layers(bn_indices)
-            labels = ["With BN", "Without BN"]
+            labels = [l.with_bn,l.without_bn]
             visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels)
 
 
@@ -67,7 +67,7 @@ class ActivationFunction(Experiment):
             # plot results
             results= config.load_results(config.results_paths(variance_parameters))
             # single
-            experiment_name = f"{config.SimpleConvConfig.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             labels = [a.value for a in activation_functions]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels)
@@ -93,7 +93,7 @@ class KernelSize(Experiment):
             # plot results
             results = config.load_results(config.results_paths(variance_parameters))
             # single
-            experiment_name = f"{config.SimpleConvConfig.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             labels = [f"k={k}" for k in kernel_sizes]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
@@ -105,7 +105,7 @@ class MaxPooling(Experiment):
 
     def run(self):
         measures = normalized_measures
-        max_pooling = [False,True]
+        max_pooling = [True,False]
 
         combinations = itertools.product(dataset_names, common_transformations, measures)
         for (dataset, transformation, measure) in combinations:
@@ -119,8 +119,8 @@ class MaxPooling(Experiment):
             # plot results
             results = config.load_results(config.results_paths(variance_parameters))
             # single
-            experiment_name = f"{config.SimpleConvConfig.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            labels = ["Strided Convolutions","MaxPooling"]
+            labels = [l.maxpooling,l.strided_convolution]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 

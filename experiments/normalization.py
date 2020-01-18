@@ -6,12 +6,12 @@ class SameEquivarianceNormalization(Experiment):
 
     def run(self):
         measures = [
-            tm.DistanceSameEquivarianceMeasure(da_simple, normalized=True),
-            tm.DistanceSameEquivarianceMeasure(da_simple, normalized=False)
+            tm.DistanceSameEquivarianceMeasure(da_normalize_keep),
+            tm.DistanceSameEquivarianceMeasure(da_keep)
         ]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations_hard)
+            simple_models_generators, dataset_names, common_transformations)
         for model_config_generator, dataset, transformation in combinations:
             # train
             model_config = model_config_generator.for_dataset(dataset)
@@ -25,10 +25,10 @@ class SameEquivarianceNormalization(Experiment):
             for p_variance in variance_parameters:
                 self.experiment_variance(p_variance, model_path)
 
-            experiment_name = f"{model_config.name}_{p_dataset.id()}_{transformation.id()}"
+            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
-            labels = ["Normalized", "Unnormalized"]
+            labels = [l.normalized,l.unnormalized]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 

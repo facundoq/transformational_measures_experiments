@@ -1,5 +1,5 @@
 from transformation_measure import *
-
+import itertools
 
 def common_transformations() -> [TransformationSet]:
     transformations = [SimpleAffineTransformationGenerator()]
@@ -32,7 +32,11 @@ def combined_transformations(rs=16,ss=5,ts=5):
         r = i * 360 //rs
         for s in range(ss+1):
             for t in range(ts+1):
-                transformations.append(SimpleAffineTransformationGenerator(r=r, s=s, t=t))
+                numbers = itertools.product(range(1,rs+1),range(s+1),range(t+1))
+                for nr,ns,nt in numbers:
+                    tg =SimpleAffineTransformationGenerator(r=r, s=s, t=t,n_rotations=nr,
+                                                        n_scales=ns,n_translations=nt)
+                    transformations.append(tg)
     return transformations
 
 def all_transformations():

@@ -1,5 +1,6 @@
 from .common import *
-
+import torch
+import datasets
 class VisualizeInvariantFeatureMaps(Experiment):
     def description(self):
         return """Visualize the output of invariant feature maps, to analyze qualitatively if they are indeed invariant."""
@@ -10,8 +11,9 @@ class VisualizeInvariantFeatureMaps(Experiment):
         conv_model_names = simple_models_generators  # [models.SimpleConv.__name__]
 
         transformations = [tm.SimpleAffineTransformationGenerator(r=360),
-                           tm.SimpleAffineTransformationGenerator(t=5),
-                           tm.SimpleAffineTransformationGenerator(s=5)]
+                           tm.SimpleAffineTransformationGenerator(s=4),
+                           tm.SimpleAffineTransformationGenerator(t=3),
+                           ]
         combinations = itertools.product(
             conv_model_names, dataset_names, transformations, measures)
         for (model_config_generator, dataset_name, transformation, measure) in combinations:
@@ -41,7 +43,5 @@ class VisualizeInvariantFeatureMaps(Experiment):
 
             plot_folderpath.mkdir(parents=True, exist_ok=True)
 
-            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath, model, dataset, transformation, result,
-                                                              images=2, most_invariant_k=4, least_invariant_k=4,
-                                                              conv_aggregation=tm.ConvAggregation.mean)
+            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath, model, dataset, transformation, result,images=2, most_invariant_k=4, least_invariant_k=4,conv_aggregation=ca_mean)
             finished.touch()

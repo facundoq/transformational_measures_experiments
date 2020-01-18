@@ -9,8 +9,9 @@ class TransformationDiversity(Experiment):
         measures = normalized_measures
 
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
-        transformations = [tm.SimpleAffineTransformationGenerator()] + common_transformations
+        transformations = common_transformations
 
+        labels = [l.rotation,l.scale,l.transformation]
         for model_config_generator, dataset, measure in combinations:
             for i, train_transformation in enumerate(transformations):
                 # transformation_plot_folderpath = self.plot_folderpath / name
@@ -18,8 +19,9 @@ class TransformationDiversity(Experiment):
                 model_config = model_config_generator.for_dataset(dataset)
 
                 variance_parameters = []
-                print(f"Train transformation {train_transformation}")
+                print(f"{l.train}: {train_transformation}")
                 epochs = config.get_epochs(model_config, dataset, train_transformation)
+
                 p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
                 self.experiment_training(p_training)
                 for i, test_transformation in enumerate(transformations):
@@ -30,32 +32,39 @@ class TransformationDiversity(Experiment):
                     self.experiment_variance(p_variance, model_path)
                     variance_parameters.append(p_variance)
                 results = config.load_results(config.results_paths(variance_parameters))
-                labels = [str(t.parameters.transformations) for t in results]
                 experiment_name = f"{model_config.name}_{dataset}_{train_transformation}_{measure.id()}"
                 plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-                title = f"Train transformation: {train_transformation.id()}"
-                visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,title=title)
+               # title = f"Train transformation: {train_transformation.id()}"
+                visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
 class TransformationComplexity(Experiment):
 
     def description(self):
-        return """Train a model/dataset with a transformation of scale X and then test with scales Y and Z of the same type, where Y<X and Z>X. Ie, train with 8 rotations, measure variance with 2, 4, 8 and 16. """
+        return """Train a model/dataset with a transformation of scale X and then test with scales Y and Z of the same type, where Y<X and Z>X. Ie, train with 16 rotations, measure variance with 2, 4, 8 and 16. """
 
     def run(self):
         measures = normalized_measures
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
-
-        test_sets = [config.rotation_transformations(4),
-                     [tm.SimpleAffineTransformationGenerator(s=i) for i in [1, 3, 5]],
-                     [tm.SimpleAffineTransformationGenerator(t=i) for i in [1, 3, 5]],
+        rotations=[90,180,270,360]
+        scaling= [1,3,5]
+        translation = [1, 2, 3, 4]
+        test_sets = [[tm.SimpleAffineTransformationGenerator(r=i,n_rotations=8) for i in rotations],
+                     [tm.SimpleAffineTransformationGenerator(s=i,n_scales=1) for i in scaling],
+                     [tm.SimpleAffineTransformationGenerator(t=i,n_translations=1) for i in translation],
                      ]
+        labels = [
+                 [f"0° {l.to} {d}°" for d in rotations],
+                 [f"{1 - i * 0.10} {l.to} {1 + i * 0.05}" for i in scaling],
+                 [f"0px {l.to} {2**i}px" for i in translation],
+        ]
+
         train_transformations = common_transformations
 
         for model_config_generator, dataset, measure in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
-            for train_transformation, transformation_set in zip(train_transformations, test_sets):
+            for train_transformation, transformation_set,set_labels in zip(train_transformations, test_sets,labels):
                 # TRAIN
                 epochs = config.get_epochs(model_config, dataset, train_transformation)
                 p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
@@ -71,11 +80,10 @@ class TransformationComplexity(Experiment):
                 # PLOT
                 experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
                 plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-                title = f"Train transformation: {train_transformation.id()}"
-                labels = [f"Test transformation: {t}" for t in transformation_set]
+                #title = f" transformation: {train_transformation.id()}"
 
                 results = config.load_results(config.results_paths(variance_parameters))
-                visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,title=title)
+                visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
 
 
 class TransformationComplexityDetailed(Experiment):
@@ -87,7 +95,7 @@ class TransformationComplexityDetailed(Experiment):
         measures = normalized_measures
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
 
-        names = ["rotation", "translation", "scale"]
+        names = [l.rotation,l.scale,l.translation]
         sets = [config.rotation_transformations(8),
                 config.translation_transformations(4),
                 config.scale_transformations(4)]

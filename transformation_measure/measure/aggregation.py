@@ -4,9 +4,10 @@ import numpy as np
 #
 # import multiprocessing
 # pool = multiprocessing.Pool(4)
-from joblib import Parallel,delayed
+# from joblib import Parallel,delayed
+#
+# parallel = Parallel(n_jobs=2,max_nbytes=1e32)
 
-parallel = Parallel(n_jobs=2,max_nbytes=1e32)
 class DistanceAggregation:
 
     def __init__(self,normalize:bool,keep_feature_maps:bool,distance="euclidean"):
@@ -17,7 +18,7 @@ class DistanceAggregation:
 
     @property
     def name(self):
-        return f"DA(normalize={self.normalize},keep_feature_maps={self.keep_feature_maps},distance={self.distance}"
+        return f"DA(normalize={self.normalize},keep_feature_maps={self.keep_feature_maps},distance={self.distance}" # TODO add parenthesis at the end
 
     def apply(self,x:np.ndarray):
         x = self.convert_to_cnd_format(x)

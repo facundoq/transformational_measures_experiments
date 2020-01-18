@@ -1,6 +1,7 @@
 from .common import *
 from .weights import DuringTraining
 
+
 class TrainModels(Experiment):
 
     def description(self):
@@ -11,19 +12,42 @@ class TrainModels(Experiment):
         combinations = itertools.product(
             model_generators, dataset_names, common_transformations)
         for model_config_generator, dataset, transformation in combinations:
-
             # train
             model_config = model_config_generator.for_dataset(dataset)
             epochs = config.get_epochs(model_config, dataset, transformation)
             savepoints = [sp * epochs // 100 for sp in DuringTraining.savepoints_percentages]
             savepoints = sorted(list(set(savepoints)))
 
-
             # Training
             p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
             self.experiment_training(p_training)
 
 
+class SimpleConvAccuracies(Experiment):
+    def description(self):
+        return """Compare the accuracies of the SimpleConv model for each set of transformations"""
+
+    def run(self):
+        transformations = common_transformations_hard
+        transformation_labels = ["Rotation", "Scale", "Translation", "Combined"]
+        for dataset in dataset_names:
+            transformation_scores = []
+            for transformation in transformations:
+                model_config = config.SimpleConvConfig.for_dataset(dataset)
+                # train
+                epochs = config.get_epochs(model_config, dataset, transformation)
+                p_training = training.Parameters(model_config, dataset, transformation, epochs)
+                self.experiment_training(p_training)
+                model, p, o, scores = training.load_model(config.model_path(p_training), load_state=False,
+                                                          use_cuda=False)
+                loss, acc = scores["test"]
+                transformation_scores.append(acc)
+
+            # plot results
+            experiment_name = f"{dataset}"
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+
+            visualization.plot_accuracies_single_model(plot_filepath, transformation_scores, transformation_labels )
 
 
 class ModelAccuracies(Experiment):
@@ -32,9 +56,9 @@ class ModelAccuracies(Experiment):
 
     def run(self):
         models = common_models_generators
-        transformations = common_transformations+[tm.SimpleAffineTransformationGenerator(r=360,s=4,t=3)]
+        transformations = common_transformations + [tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3)]
         model_names = [m.for_dataset("mnist").name for m in models]
-        transformation_labels = ["Rotation","Scale","Translation","Combined"]
+        transformation_labels = [l.rotation,l.scale,l.translation,l.combined]
         for dataset in dataset_names:
             transformation_scores = []
             for transformation in transformations:
@@ -56,7 +80,7 @@ class ModelAccuracies(Experiment):
             experiment_name = f"{dataset}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
-            visualization.plot_accuracies(plot_filepath, transformation_scores, transformation_labels , model_names)
+            visualization.plot_accuracies(plot_filepath, transformation_scores, transformation_labels, model_names)
 
 
 class CompareModels(Experiment):
@@ -104,16 +128,17 @@ class CompareModels(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [m.name for m in model_configs]
-            visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels,markers=self.fc_layers_indices(results))
+            visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels,
+                                                                  markers=self.fc_layers_indices(results))
 
-    def fc_layers_indices(self,results:[VarianceExperimentResult])->[[int]]:
-        indices=[]
+    def fc_layers_indices(self, results: [VarianceExperimentResult]) -> [[int]]:
+        indices = []
         for r in results:
             layer_names = r.measure_result.layer_names
-            n=len(layer_names)
+            n = len(layer_names)
             index = n
             for i in range(n):
                 if "fc" in layer_names[i] or "PoolOut" in layer_names[i] or "fc" in layer_names[i]:
-                    index=n
-            indices.append(list(range(index,n)))
+                    index = n
+            indices.append(list(range(index, n)))
         return indices

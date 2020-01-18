@@ -70,13 +70,26 @@ class CompareMeasures(Experiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure_set_name}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters_all))
-            labels = [m.name() + " (No data augmentation)" for m in measures] + [m.name() for m in measures]
+            labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [m.name() for m in measures]
             n = len(measures)
             #cmap = visualization.discrete_colormap(n=n)
             cmap = visualization.default_discrete_colormap()
             color = cmap(range(n))
             colors = np.vstack([color, color])
             linestyles = ["--" for i in range(n)] + ["-" for i in range(n)]
+            ylim= self.get_ylim(measure_set_name,dataset)
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,
                                                             linestyles=linestyles,
-                                                            colors=colors)
+                                                            colors=colors,ylim=ylim)
+    def get_ylim(self,measure_set_name,dataset):
+        if measure_set_name== "Distance":
+            return 100 if dataset == "mnist" else 2000
+        elif measure_set_name == "Variance":
+            return 100 if dataset == "mnist" else 175
+        elif measure_set_name=="HighLevel":
+            return 1.2 if dataset == "mnist" else 1.2
+        elif measure_set_name == "Equivariance":
+            return None
+            #return 8 if dataset == "mnist" else 8
+        else:
+            return None

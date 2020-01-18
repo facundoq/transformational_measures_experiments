@@ -29,7 +29,7 @@ class DatasetSize(Experiment):
             results = config.load_results(config.results_paths(variance_parameters))
             p_datasets = [r.parameters.dataset for r in results]
 
-            labels = [f"Size: {d.percentage * 100:2}%" for d in p_datasets]
+            labels = [f"{d.percentage * 100:2}%" for d in p_datasets]
             n = len(dataset_sizes)
             values = list(range(n))
             values.reverse()
@@ -72,7 +72,7 @@ class DatasetSubset(Experiment):
             for p_variance in variance_parameters:
                 self.experiment_variance(p_variance, model_path)
             results = config.load_results(config.results_paths(variance_parameters))
-            labels = [f"{d.subset.value.capitalize()} subset" for d in p_datasets]
+            labels = [f"{l.format_subset(d.subset)}" for d in p_datasets]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 

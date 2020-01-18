@@ -9,7 +9,7 @@ class AggregationBeforeAfter(Experiment):
         after_functions = [ca_sum,ca_mean, ca_max]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations_hard)
+            simple_models_generators, dataset_names, common_transformations)
 
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
@@ -38,8 +38,8 @@ class AggregationBeforeAfter(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
             all_results = normal_results + ca_none_results
-            labels = [f"Aggregation: {ca.value}, before normalization." for ca in before_functions] + [
-                f"Aggregation: {ca.value}, after normalization." for ca in after_functions ]
+            labels = [f"{l.aggregation}: {ca.value}, {l.after_normalization}." for ca in before_functions] + [
+                f"{l.aggregation}: {ca.value}, {l.before_normalization}." for ca in after_functions ]
             visualization.plot_collapsing_layers_same_model(all_results, plot_filepath, labels=labels)
 
 
@@ -51,7 +51,7 @@ class AggregationFunctionsVariance(Experiment):
         before_functions = [ca_mean, ca_max]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations_hard)
+            simple_models_generators, dataset_names, common_transformations)
 
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
@@ -70,7 +70,7 @@ class AggregationFunctionsVariance(Experiment):
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            labels = [f"Aggregation: {ca.value}, before normalization." for ca in before_functions]
+            labels = [f"{l.aggregation}: {ca.value}, {l.before_normalization}." for ca in before_functions]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 class AggregationFunctionsDistance(Experiment):
@@ -82,10 +82,10 @@ class AggregationFunctionsDistance(Experiment):
                     , tm.NormalizedDistance(da, ca_mean)
                     , tm.NormalizedDistance(da_keep, ca_none)
                     ]
-        labels = ["Normal", "Feature map aggregation", "Feature map distance measure"]
+        labels = [l.normal,l.feature_map_aggregation,l.feature_map_distance]
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations_hard)
+            simple_models_generators, dataset_names, common_transformations)
 
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)

@@ -60,7 +60,7 @@ class SimpleConv(ObservableLayersModule):
         # bn
         activation_class(),
         mp_generator(conv_filters2),
-        nn.Conv2d(conv_filters2, conv_filters4, 3, padding=same_padding ),
+        nn.Conv2d(conv_filters2, conv_filters4, 3, padding=1 ),
         # bn
         activation_class(),]
 
@@ -74,7 +74,7 @@ class SimpleConv(ObservableLayersModule):
 
         conv = SequentialWithIntermediates(*conv_layers)
 
-        self.linear_size = h * w * (conv_filters * 4) // 4 // 4
+        self.linear_size = h * w * (conv_filters4) // 4 // 4
 
         fc_layers=[
             Flatten(),
