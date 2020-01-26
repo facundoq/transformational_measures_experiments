@@ -107,13 +107,13 @@ class Experiment(abc.ABC):
             python_command = f"{python_command} -adapt_dataset True"
 
         utils_runner.run_python(self.venv, python_command)
-    def train_measure(self, model_config:config.ModelConfig, dataset:str, transformation:tm.TransformationSet, measure:tm.Measure):
+    def train_measure(self, model_config:config.ModelConfig, dataset:str, transformation:tm.TransformationSet, measure:tm.Measure,p=None):
 
         epochs = config.get_epochs(model_config, dataset, transformation)
         p_training = training.Parameters(model_config, dataset, transformation, epochs)
         self.experiment_training(p_training)
-
-        p = config.dataset_size_for_measure(measure)
+        if p is None:
+            p = config.dataset_size_for_measure(measure)
         p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
         p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
         model_path = config.model_path(p_training)

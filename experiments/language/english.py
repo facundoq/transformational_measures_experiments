@@ -43,5 +43,6 @@ class English(Language):
         self.to="to"
         self.random_models="Random models"
         self.samples="samples"
+        self.model="Model"
 
 

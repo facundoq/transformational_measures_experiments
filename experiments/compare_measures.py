@@ -9,24 +9,19 @@ class CompareMeasures(Experiment):
         measure_sets = {"Variance": [
             tm.TransformationVariance(),
             tm.SampleVariance(),
-            # tm.TransformationVarianceMeasure(mf, ca_none),
-            # tm.SampleVarianceMeasure(mf, ca_none),
         ],
-            "Distance": [
-                tm.TransformationDistance(da),
-                tm.SampleDistance(da),
-            ],
+            #"Distance": [
+            #    tm.TransformationDistance(da),
+            #    tm.SampleDistance(da),
+            #],
             "HighLevel": [
                 tm.AnovaMeasure(0.99, bonferroni=True),
                 tm.NormalizedVariance(ca_sum),
-                # tm.NormalizedVarianceMeasure(mf, ca_none),
-                tm.NormalizedDistance(da,ca_mean),
-                # tm.GoodfellowMeasure()
-                # tm.GoodfellowNormalMeasure(alpha=0.99)
+                tm.NormalizedDistance(da_keep,ca_mean),
+                tm.GoodfellowNormal(alpha=0.99),
             ],
             "Equivariance": [
                 tm.DistanceSameEquivarianceMeasure(da_normalize_keep),
-                # tm.DistanceTransformationMeasure(dmean),
             ]
         }
 
@@ -36,7 +31,7 @@ class CompareMeasures(Experiment):
         # model_generators = common_models_generators
         model_generators = simple_models_generators
         # model_names = ["SimpleConv"]
-        transformations = common_transformations_hard
+        transformations = common_transformations
 
         combinations = itertools.product(model_generators, dataset_names, transformations, measure_sets.items())
         for (model_config_generator, dataset, transformation, measure_set) in combinations:
@@ -70,7 +65,7 @@ class CompareMeasures(Experiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure_set_name}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters_all))
-            labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [m.name() for m in measures]
+            labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m in measures]
             n = len(measures)
             #cmap = visualization.discrete_colormap(n=n)
             cmap = visualization.default_discrete_colormap()
@@ -93,3 +88,32 @@ class CompareMeasures(Experiment):
             #return 8 if dataset == "mnist" else 8
         else:
             return None
+
+
+
+
+class CompareGoodfellowAlpha(Experiment):
+
+    def description(self):
+        return """Compare goodfellow alpha values"""
+
+    def run(self):
+
+        model_names = simple_models_generators
+        alphas = [0.5,0.9,0.95,0.99,0.999]
+        measures = [tm.GoodfellowNormal(alpha) for alpha in alphas]
+        # transformations=config.common_transformations()
+        combinations = itertools.product(model_names, dataset_names,  common_transformations_hard)
+        for model_config_generator, dataset,  transformation in combinations:
+            model_config = model_config_generator.for_dataset(dataset, bn=False)
+            # train
+            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
+            variance_parameters=[]
+            for measure in measures:
+                p_training,p_variance,p_dataset = self.train_measure(model_config,dataset,transformation,measure)
+                variance_parameters.append(p_variance)
+            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            results=config.load_results(config.results_paths(variance_parameters))
+            labels=[f"α={alpha}" for alpha in alphas]
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+

@@ -36,6 +36,8 @@ measures = config.common_measures()
 nv = tm.NormalizedVariance(ca_mean)
 nd = tm.NormalizedDistance(da_keep,ca_mean) # TODO change to ca_none, its the same because of da_keep but still..
 se = tm.DistanceSameEquivarianceMeasure(da_normalize_keep)
+gf = tm.GoodfellowNormal()
+
 
 normalized_measures_validation = [nv,nd,se]
 normalized_measures = [nv,se]
@@ -48,3 +50,14 @@ common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
                           ]
 combined=tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3,n_rotations=6,n_translations=1,n_scales=1)
 common_transformations_hard = common_transformations+[combined]
+
+
+def get_ylim_normalized(measure:tm.Measure):
+    if measure.__class__ == tm.DistanceSameEquivarianceMeasure:
+        return 8
+    elif measure.__class__ == tm.NormalizedVariance:
+        return 1.4
+    elif measure.__class__ == tm.NormalizedDistance:
+        return 1.4
+    else:
+        raise  ValueError(measure)

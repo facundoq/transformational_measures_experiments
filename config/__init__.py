@@ -71,7 +71,8 @@ def save_results(r:variance.VarianceExperimentResult, results_folder=results_fol
     pickle.dump(r,path.open(mode="wb"))
 
 def load_result(path:Path)->variance.VarianceExperimentResult:
-    return pickle.load(path.open(mode="rb"))
+    r:variance.VarianceExperimentResult=pickle.load(path.open(mode="rb"))
+    return r
 
 
 def load_results(filepaths:[Path])-> [variance.VarianceExperimentResult]:

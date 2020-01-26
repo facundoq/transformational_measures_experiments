@@ -6,6 +6,7 @@ class Spanish(Language):
         self.name="spanish"
         self.message = "hola"
         self.accuracy = "Aciertos"
+        self.model = "Modelo"
         self.layer = "Capa"
         self.layers = "Capas"
         self.transformation = "Transformación"
@@ -44,4 +45,12 @@ class Spanish(Language):
         self.to="a"
         self.samples="Muestras"
         self.random_models="Modelos aleatorios"
+        self.goodfellow="Goodfellow"
+        self.ANOVA="ANOVA"
+
+        self.mean = "Media"
+        self.max = "Máx."
+        self.min = "Min."
+        self.sum = "Suma"
+
 

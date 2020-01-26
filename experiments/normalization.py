@@ -29,6 +29,6 @@ class SameEquivarianceNormalization(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [l.normalized,l.unnormalized]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=400)
 
 

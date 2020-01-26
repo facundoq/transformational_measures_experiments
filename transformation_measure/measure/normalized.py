@@ -18,7 +18,7 @@ class TransformationVariance(Measure):
         return f"TV({mf})"
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
-        layer_names = activations_iterator.activation_names()
+        layer_names = activations_iterator.layer_names()
         n_layers = len(layer_names)
         mean_running = [RunningMean() for i in range(n_layers)]
         for x,transformation_activations  in activations_iterator.samples_first():
@@ -57,7 +57,7 @@ class SampleVariance(Measure):
 
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
-        layer_names = activations_iterator.activation_names()
+        layer_names = activations_iterator.layer_names()
         n_layers = len(layer_names)
         mean_variances_running = [RunningMean() for i in range(n_layers)]
 
@@ -98,7 +98,7 @@ class NormalizedVariance(Measure):
         sv_result = sv_result.collapse_convolutions(self.conv_aggregation)
 
         result=divide_activations(tv_result.layers,sv_result.layers)
-        return MeasureResult(result,activations_iterator.activation_names(),self)
+        return MeasureResult(result, activations_iterator.layer_names(), self)
 
     def __repr__(self):
         if self.measure_function == MeasureFunction.std:

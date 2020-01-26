@@ -9,7 +9,7 @@ params = {
     'axes.labelsize': 14, # fontsize for x and y labels (was 10)
     'axes.titlesize': 8,
     'font.size': 8, # was 10
-    'legend.fontsize': 12, # was 10
+    'legend.fontsize': 10, # was 10
     'xtick.labelsize': 12,
     'ytick.labelsize': 10,
     # 'text.usetex': True,
@@ -58,7 +58,7 @@ def plot_collapsing_layers_different_models(results:List[variance.VarianceExperi
     f.suptitle(title)
 
     if linestyles is None and n<=4:
-        linestyles=["-","--",".",".-"]
+        linestyles=["-","--",":","-."]
 
     result_layers = np.array([len(r.measure_result.layer_names) for r in results])
     min_n, max_n = result_layers.min(), result_layers.max()
@@ -75,10 +75,8 @@ def plot_collapsing_layers_different_models(results:List[variance.VarianceExperi
             label = None
         else:
             label = labels[i]
-        if linestyles is None:
-            linestyle = "-"
-        else:
-            linestyle = linestyles[i]
+        linestyle = get_default(linestyles,i,"-")
+
         color=colors[i, :]
         ax.plot(x, y, label=label, linestyle=linestyle, color=color,marker="o",markersize=3)
 
@@ -159,20 +157,23 @@ def shorten_layer_names(labels:[str])->[str]:
     result=[]
     for l in labels:
         i=0
+        # get the index of the first letter after the last _
         chars=[str(n) for n in range(9)]+["_"]
         while i<len(l) and l[i] in chars: i+=1
+        # remove all chars before the last _
         l=l[i:]
 
         # if l[1]=="_":
         #     l=l[2:]
         if l.startswith("fc"):
             l="lin"+l[2:]
-
+        if l=="c":
+            l="conv"
         if l.endswith("MaxPool2d"):
             l=l[:-9]+"mp"
             result.append(l)
         elif l.endswith("Flatten"):
-            l=l[:-7]+"flat"
+            l=l[:-7]+"vect"
             result.append(l)
         else:
             result.append(l)
@@ -233,14 +234,14 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
     if plot_mean:
         x = np.arange(max_n)+1
         y,error=mean_and_variance.mean(),mean_and_variance.std()
-        label="Mean and deviation" #μσ
+        label=l.meandeviation
         linestyle="--"
         ax.errorbar(x, y,yerr=error, label=label, linewidth=1.5, linestyle=linestyle, color=(0,0,0))
     else:
         handles, _ = ax.get_legend_handles_labels()
 
-    ax.set_ylabel("Measure values")
-    ax.set_xlabel("Layer")
+    ax.set_ylabel(l.measure)
+    ax.set_xlabel(l.layer)
     ax.set_ylim(0,max(max_value*1.1,ylim))
 
     if max_n < 60:

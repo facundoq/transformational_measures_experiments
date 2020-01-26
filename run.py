@@ -82,9 +82,9 @@ if __name__ == '__main__':
 
     todo = [
 
-
     ]
-    print("TODO implement ", ",".join([e.__class__.__name__ for e in todo]))
+    if len(todo)>0:
+        print("TODO implement experiments:", ",".join([e.__class__.__name__ for e in todo]))
 
 
     all_experiments = [
@@ -92,16 +92,17 @@ if __name__ == '__main__':
         SimpleConvAccuracies(),
         ModelAccuracies(),
 
-        #CompareMeasures(),
+        # CompareMeasures(),
+        CompareGoodfellowAlpha(),
         Stratified(),
 
-        # DatasetSize(),
+        DatasetSize(),
         DatasetSubset(),
         DatasetTransfer(),
 
         AggregationFunctionsVariance(),
         AggregationBeforeAfter(),
-        # AggregationFunctionsDistance(),
+        AggregationFunctionsDistance(),
         SameEquivarianceNormalization(),
 
         TransformationDiversity(),
@@ -114,13 +115,14 @@ if __name__ == '__main__':
 
         RandomInitialization(),
         RandomWeights(),
-        # DuringTraining(),
+        DuringTraining(),
         #VisualizeInvariantFeatureMaps(),
 
         CompareModels(),
         TIPooling(),
 
-        # ValidateMeasure(),
+        ValidateMeasure(),
+        ValidateGoodfellow(),
     ]
     experiments, o = parse_args(all_experiments)
     if o.show_list:

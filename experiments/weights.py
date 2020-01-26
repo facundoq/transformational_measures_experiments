@@ -98,7 +98,7 @@ class DuringTraining(Experiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
-            self.plot(results, plot_filepath, model_paths, savepoints, epochs, )
+            self.plot(results, plot_filepath, model_paths, savepoints, epochs,measure )
 
     def measure(self, p_training, config, dataset, measure, transformation, savepoints):
         variance_parameters = []
@@ -116,7 +116,7 @@ class DuringTraining(Experiment):
             self.experiment_variance(p_variance, model_path)
         return variance_parameters, model_paths
 
-    def plot(self, results, plot_filepath, model_paths, savepoints, epochs):
+    def plot(self, results, plot_filepath, model_paths, savepoints, epochs,measure:tm.Measure):
         # TODO implement a heatmap where the x axis is the training time/epoch
         # and the y axis indicates the layer, and the color indicates the invariance
         # to see it evolve over time.
@@ -126,7 +126,7 @@ class DuringTraining(Experiment):
             loss, accuracy = score["test"]
             accuracies.append(accuracy)
         # ({sp * 100 // epochs}%)
-        labels = [f"{l.epoch} {sp}, {l.accuracy} {accuracy}" for (sp, accuracy) in
+        labels = [f"{sp} ({int(accuracy*100)}%)" for (sp, accuracy) in
                   zip(savepoints, accuracies)]
         n = len(savepoints)
         values = list(range(n))
@@ -136,7 +136,7 @@ class DuringTraining(Experiment):
         legend_location = ("lower left", (0, 0))
         # legend_location= None
         visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,
-                                                        legend_location=legend_location, colors=colors)
+                                                        legend_location=legend_location, colors=colors,ylim=get_ylim_normalized(measure))
 
 
 class RandomInitialization(Experiment):
@@ -176,4 +176,4 @@ class RandomInitialization(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
 
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True,ylim=get_ylim_normalized(measure))

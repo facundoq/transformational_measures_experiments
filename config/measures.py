@@ -47,9 +47,9 @@ def all_measures()-> [Measure]:
             measures.append(NormalizedDistance(d,ca))
         measures.append(DistanceSameEquivarianceMeasure(d))
 
-    for percentage in [0.01,0.001,0.1]:
+    for percentage in [0.01,0.001,0.1,0.5,0.05]:
         measures.append(GoodfellowMeasure(activations_percentage=percentage))
-        measures.append(GoodfellowNormalMeasure(alpha=1-percentage))
+        measures.append(GoodfellowNormal(alpha=1 - percentage))
 
     measures.append(AnovaFMeasure())
     alphas=[0.90, 0.95, 0.99, 0.999]

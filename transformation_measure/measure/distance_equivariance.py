@@ -30,11 +30,11 @@ class DistanceSameEquivarianceMeasure(Measure):
         # (criteria to declare valid for transformation, we assume if the shapes are the same
         # then the transformation applies)
         indices=[i for i,a in enumerate(activations) if len(a.shape) == len(x_shape)]
-        # keep layers and generate mean_variances_running only for these layers
+        # keep layers and generate mean_running only for these layers
         layer_names = list_get_all(layer_names,indices)
         n_layers = len(layer_names)
-        mean_variances_running = [RunningMean() for i in range(n_layers)]
-        return layer_names,mean_variances_running,indices
+        mean_running = [RunningMean() for i in range(n_layers)]
+        return layer_names,mean_running,indices
 
     def get_inverse_transformations(self, activations:[np.ndarray], indices:[int], transformation_set:tm.TransformationSet):
         valid_activations=[activations[i] for i in indices]
@@ -56,9 +56,10 @@ class DistanceSameEquivarianceMeasure(Measure):
 
 
         first_iteration = True
-        mean_variances_running= None
+        mean_running= None
         layer_names = None
         indices = None
+        inverse_transformation_sets = None
 
         for x, transformation_activations_iterator in activations_iterator.samples_first():
             # transformation_activations_iterator can iterate over all transforms
@@ -66,7 +67,7 @@ class DistanceSameEquivarianceMeasure(Measure):
             for x_transformed, activations in transformation_activations_iterator:
                 if first_iteration:
                     # find out which layers can be transformed (ones with same dims as x)
-                    layer_names,mean_variances_running,indices = self.get_valid_layers(activations,activations_iterator.activation_names(),x_transformed.shape)
+                    layer_names,mean_running,indices = self.get_valid_layers(activations, activations_iterator.layer_names(), x_transformed.shape)
                     inverse_transformation_sets = self.get_inverse_transformations(activations,indices,transformations)
                     first_iteration = False
                 # keep only those activations valid for the transformation
@@ -79,10 +80,10 @@ class DistanceSameEquivarianceMeasure(Measure):
                 for j, layer_activations in enumerate(activations):
                     layer_measure= self.distance_aggregation.apply(layer_activations)
                     # update the mean over all transformation
-                    mean_variances_running[j].update(layer_measure)
+                    mean_running[j].update(layer_measure)
         # calculate the final mean over all samples (and layers)
-        mean_variances = [b.mean() for b in mean_variances_running]
-        return MeasureResult(mean_variances,layer_names,self)
+        means = [b.mean() for b in mean_running]
+        return MeasureResult(means,layer_names,self)
 
     def inverse_trasform_feature_maps(self,activations:[np.ndarray],transformations:[tm.TransformationSet],t_start:int,t_end:int)->[np.ndarray]:
 

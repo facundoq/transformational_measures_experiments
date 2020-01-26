@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plot_image_grid(x,samples=64,grid_cols=8,show=True,save=None):
+def plot_image_grid(x,samples=64,grid_cols=8,show=True,save=None,normalize=False):
     n=x.shape[0]
     initial_sample=0
     samples=min(samples,n)
@@ -29,9 +29,10 @@ def plot_image_grid(x,samples=64,grid_cols=8,show=True,save=None):
             ax.imshow(x[i_sample,:,:,0], cmap='gray')
         else:
             sample=x[i_sample, :, :,:]
-            mn,mx=sample.min(axis=(0,1)),sample.max(axis=(0,1))
-            sample = (sample - mn)
-            sample /= (mx-mn)
+            if normalize:
+                mn,mx=sample.min(axis=(0,1)),sample.max(axis=(0,1))
+                sample = (sample - mn)
+                sample /= (mx-mn)
             ax.imshow(sample)
         ax.get_xaxis().set_visible(False)
         ax.get_yaxis().set_visible(False)

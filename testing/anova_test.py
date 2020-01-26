@@ -46,7 +46,7 @@ class FakeActivationsIterator(tm.ActivationsIterator):
         n, t = self.data.shape
         yield np.zeros(t),[self.data[i,:]]
 
-    def activation_names(self) -> [str]:
+    def layer_names(self) -> [str]:
         return ["x"]
 
 activations_iterator=FakeActivationsIterator()

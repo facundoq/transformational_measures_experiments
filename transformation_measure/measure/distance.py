@@ -20,7 +20,7 @@ class TransformationDistance(Measure):
 
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
-        layer_names=activations_iterator.activation_names()
+        layer_names=activations_iterator.layer_names()
         n_intermediates = len(layer_names)
         mean_running= [RunningMean() for i in range(n_intermediates)]
         for x, transformation_activations_iterator in activations_iterator.samples_first():
@@ -51,7 +51,7 @@ class SampleDistance(Measure):
         return f"SD(da={self.distance_aggregation.name})"
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
-        layer_names = activations_iterator.activation_names()
+        layer_names = activations_iterator.layer_names()
         n_layers = len(layer_names)
         mean_running = [RunningMean() for i in range(n_layers)]
 
@@ -91,7 +91,7 @@ class NormalizedDistance(Measure):
         sd_result = sd_result.collapse_convolutions(self.conv_aggregation)
 
         result = divide_activations(td_result.layers, sd_result.layers)
-        return MeasureResult(result, activations_iterator.activation_names(), self)
+        return MeasureResult(result, activations_iterator.layer_names(), self)
 
     def __repr__(self):
         return f"ND(ca={self.conv_aggregation.value},da={self.distance_aggregation.name})"

@@ -44,7 +44,7 @@ class QuotientMeasure(Measure):
         v_samples=self.denominator_measure.eval(activations_iterator)
         v=divide_activations(v_transformations.layers, v_samples.layers)
 
-        layer_names = activations_iterator.activation_names()
+        layer_names = activations_iterator.layer_names()
         return MeasureResult(v,layer_names,self)
 
 

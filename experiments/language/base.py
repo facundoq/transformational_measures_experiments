@@ -24,7 +24,7 @@ class Language(abc.ABC):
         self.subset = ""
         self.maxpooling= ""
         self.strided_convolution = ""
-        self.measure="Measure"
+        self.measure=""
         self.with_bn = ""
         self.without_bn = ""
         self.aggregation=""
@@ -48,7 +48,11 @@ class Language(abc.ABC):
         self.to=""
         self.random_models = ""
         self.samples = ""
-
+        self.model=""
+        self.mean=""
+        self.max=""
+        self.min=""
+        self.sum=""
     def measure_name(self,m:tm.Measure):
         dict = {
             tm.NormalizedDistance: self.normalized_distance,
@@ -57,7 +61,7 @@ class Language(abc.ABC):
             tm.TransformationDistance: self.transformational_distance,
             tm.TransformationVariance: self.transformational_variance,
             tm.SampleVariance: self.sample_variance,
-            tm.GoodfellowNormalMeasure: self.goodfellow,
+            tm.GoodfellowNormal: self.goodfellow,
             tm.GoodfellowMeasure: self.goodfellow,
             tm.AnovaMeasure: self.ANOVA,
             tm.DistanceSameEquivarianceMeasure:self.distance_equivariance,
@@ -72,3 +76,15 @@ class Language(abc.ABC):
         else:
             raise ValueError(s)
 
+    def format_aggregation(self, ca:tm.ConvAggregation):
+
+        if ca == tm.ConvAggregation.mean:
+            return self.mean
+        elif ca == tm.ConvAggregation.max:
+            return self.max
+        elif ca == tm.ConvAggregation.sum:
+            return self.sum
+        elif ca == tm.ConvAggregation.min:
+            return self.min
+        else:
+            raise ValueError(ca)

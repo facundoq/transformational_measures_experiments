@@ -99,7 +99,7 @@ class CompareModels(Experiment):
         ]
         # transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
 
-        transformations = common_transformations_hard
+        transformations = common_transformations
 
         combinations = itertools.product(dataset_names, transformations, measures)
         for (dataset, transformation, measure) in combinations:
@@ -129,7 +129,7 @@ class CompareModels(Experiment):
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [m.name for m in model_configs]
             visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels,
-                                                                  markers=self.fc_layers_indices(results))
+                                                                  markers=self.fc_layers_indices(results),ylim=get_ylim_normalized(measure))
 
     def fc_layers_indices(self, results: [VarianceExperimentResult]) -> [[int]]:
         indices = []

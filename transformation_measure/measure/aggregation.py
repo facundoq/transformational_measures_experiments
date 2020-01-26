@@ -23,7 +23,9 @@ class DistanceAggregation:
     def apply(self,x:np.ndarray):
         x = self.convert_to_cnd_format(x)
         # x has size (c,n,d), where c is the feature dimension
+
         if self.normalize:
+            # TODO change to unit norm
             x -= x.min(axis=0, keepdims=True)
             max_values=x.max(axis=0,keepdims=True)
             max_values[max_values==0]=1

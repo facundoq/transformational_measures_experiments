@@ -29,7 +29,7 @@ class PytorchActivationsIterator(ActivationsIterator):
 
     def get_transformations(self):
         return self.transformations
-    def activation_names(self):
+    def layer_names(self):
         return self.model.activation_names()
 
     '''

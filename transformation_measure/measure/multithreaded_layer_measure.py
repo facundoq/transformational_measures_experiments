@@ -74,7 +74,7 @@ class PerLayerMeasure(Measure,abc.ABC):
             t.join()
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
-        names = activations_iterator.activation_names()
+        names = activations_iterator.layer_names()
         layers = len(names)
         layer_measures = [self.generate_layer_measure(i, name) for i, name in enumerate(names)]
 

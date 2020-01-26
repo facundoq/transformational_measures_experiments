@@ -48,18 +48,30 @@ class TIPooling(Experiment):
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             mark_layers = range(model.layer_before_pooling_each_transformation())
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,mark_layers=mark_layers)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,mark_layers=mark_layers,ylim=get_ylim_normalized(measure))
 
     def average_paths_tipooling(self, model: models.TIPoolingSimpleConv, result: tm.MeasureResult) -> tm.MeasureResult:
-        k = model.layer_before_pooling_each_transformation()
         # print(len(model.activation_names()),model.activation_names())
         # print(len(model.original_conv_names()),model.original_conv_names())
         # print(len(model.fc_names()), model.fc_names())
         # print(len(result.layers),len(result.layer_names))
         m = len(model.transformations)
 
-        # fix layer names
-        layer_names = model.original_conv_names()+model.activation_names()[m*k:]
+        names=result.layer_names
+        index=0
+        for i,name in enumerate(names):
+            if len(name)>5 and name[0]=="t" and name[4]=="_" :
+                index=i+1
+            else:
+                break
+        assert index>0
+        assert index % m == 0
+
+        k=index//m
+        conv_layer_names = [name[5:] for name in names[:k]]
+        other_layer_names = names[index:]
+        layer_names=conv_layer_names+other_layer_names
+
         # average layer values
         layers = result.layers
         means_per_original_layer = [RunningMean() for i in range(k)]
@@ -72,6 +84,7 @@ class TIPooling(Experiment):
         conv_layers = [m.mean() for m in means_per_original_layer]
         other_layers = layers[m * k:]
         layers = conv_layers + other_layers
-        # print(layer_names)
+
         # print(len(layers),len(layer_names))
+        # print(layer_names)
         return tm.MeasureResult(layers, layer_names, result.measure)

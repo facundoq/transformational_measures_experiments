@@ -44,7 +44,7 @@ class BatchNormalization(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             bn_result.measure_result = bn_result.measure_result.remove_layers(bn_indices)
             labels = [l.with_bn,l.without_bn]
-            visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels)
+            visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class ActivationFunction(Experiment):
@@ -70,7 +70,7 @@ class ActivationFunction(Experiment):
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             labels = [a.value for a in activation_functions]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class KernelSize(Experiment):
@@ -96,7 +96,7 @@ class KernelSize(Experiment):
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             labels = [f"k={k}" for k in kernel_sizes]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class MaxPooling(Experiment):
@@ -122,5 +122,5 @@ class MaxPooling(Experiment):
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             labels = [l.maxpooling,l.strided_convolution]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 

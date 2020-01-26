@@ -35,7 +35,8 @@ class DatasetSize(Experiment):
             values.reverse()
             colors = visualization.get_sequential_colors(values)
 
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels, colors=colors)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels, colors=colors,ylim=get_ylim_normalized(measure))
+
 
 
 class DatasetSubset(Experiment):
@@ -73,7 +74,7 @@ class DatasetSubset(Experiment):
                 self.experiment_variance(p_variance, model_path)
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [f"{l.format_subset(d.subset)}" for d in p_datasets]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class DatasetTransfer(Experiment):
@@ -107,4 +108,4 @@ class DatasetTransfer(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters))
             labels = dataset_names
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))

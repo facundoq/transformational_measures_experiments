@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-
+from experiments.language import l
 
 from . import default_discrete_colormap
 
@@ -22,8 +22,8 @@ def plot_accuracies(plot_filepath:Path,accuracies_by_transformation:[[float]],tr
 
     plt.gca().yaxis.grid(which="major", color='gray', linestyle='-', linewidth=0.5)
     # Add xticks on the middle of the group bars
-    plt.xlabel('Model')
-    plt.ylabel('Accuracy')
+    plt.xlabel(l.model)
+    plt.ylabel(l.accuracy)
     plt.xticks([r + barWidth for r in range(len(model_names))], model_names)
     plt.tick_params(axis='both', which='both', length=0)
     #plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='on', labelbottom='on')
@@ -50,8 +50,8 @@ def plot_accuracies_single_model(plot_filepath:Path,accuracies:[float],transform
 
     plt.gca().yaxis.grid(which="major", color='gray', linestyle='-', linewidth=0.5)
     # Add xticks on the middle of the group bars
-    plt.xlabel('Transformation')
-    plt.ylabel('Accuracy')
+    plt.xlabel(l.transformation)
+    plt.ylabel(l.accuracy)
 
     plt.xticks(x, transformation_names)
     plt.tick_params(axis='both', which='both', length=0)

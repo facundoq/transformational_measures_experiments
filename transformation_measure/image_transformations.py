@@ -216,9 +216,14 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         return a
 
     def __repr__(self):
-        nr= "" if self.n_rotations == self.default_n_rotations else f",nr={self.n_rotations}"
-        ns = "" if self.n_scales == self.scale_intensity else f",ns={self.n_scales}"
-        nt = "" if self.n_translations ==self.translation_intensity else f",nt={self.n_translations}"
+        nr,ns,nt = "","",""
+        # TODO quitar hasattr cuando se agreguen todos
+        if hasattr(self, 'n_rotations') and self.n_rotations != self.default_n_rotations:
+            nr=f",nr={self.n_rotations}"
+        if hasattr(self, 'n_scales') and self.n_scales != self.scale_intensity:
+            ns=f",ns={self.n_scales}"
+        if hasattr(self, 'n_translations') and self.n_translations != self.translation_intensity:
+            nt=f",nt={self.n_translations}"
 
         return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity}{nr}{ns}{nt})"
 

@@ -23,7 +23,7 @@ from .measure.distance_equivariance import DistanceSameEquivarianceMeasure
 
 
 from .measure.goodfellow import GoodfellowMeasure
-from .measure.goodfellow_prob import GoodfellowNormalMeasure
+from .measure.goodfellow_prob import GoodfellowNormal,GoodfellowLocalVarianceNormal,GoodfellowGlobalVarianceNormal
 
 from .adapters import TransformationAdapter,PytorchNumpyImageTransformationAdapter,NumpyPytorchImageTransformationAdapter
 

@@ -100,9 +100,9 @@ class SimpleConv(ObservableLayersModule):
         # return x,conv_intermediates+fc_intermediates
 
     def conv_layers(self):
-        return self.conv.activation_names()
+        return self.conv.layer_names()
     def fc_layers(self):
-        return self.fc.activation_names()
+        return self.fc.layer_names()
 
     def activation_names(self):
         return self.layers.activation_names()

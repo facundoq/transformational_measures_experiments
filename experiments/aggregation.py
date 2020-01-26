@@ -70,7 +70,7 @@ class AggregationFunctionsVariance(Experiment):
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            labels = [f"{l.aggregation}: {ca.value}, {l.before_normalization}." for ca in before_functions]
+            labels = [f"{l.aggregation}: {l.format_aggregation(ca)}, {l.before_normalization}." for ca in before_functions]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 class AggregationFunctionsDistance(Experiment):
