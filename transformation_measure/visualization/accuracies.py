@@ -5,26 +5,27 @@ from experiments.language import l
 
 from . import default_discrete_colormap
 
-def plot_accuracies(plot_filepath:Path,accuracies_by_transformation:[[float]],transformation_names:[str],model_names:[str]):
+def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[str], group_names:[str]):
     # set width of bar
     f=plt.figure(dpi=300)
-    n_models=len(model_names)
-    n_transformations=len(transformation_names)
-    barWidth = 1/(n_transformations+1)
+    n_groups=len(group_names)
+    n_labels=len(labels)
+    barWidth = 1/(n_labels+1)
     cmap = default_discrete_colormap()
     # Set position of bar on X axis
-    pos = np.arange(n_models,dtype=float)
-    for i,(accuracies,transformation_name) in enumerate(zip(accuracies_by_transformation,transformation_names)):
+    pos = np.arange(n_groups,dtype=float)
+    pad = barWidth*0.1
+    for i,(accuracies,label) in enumerate(zip(accuracies_by_label, labels)):
     # Make the plot
-        plt.bar(pos, accuracies, color=cmap(i), width=barWidth, edgecolor='white', label=transformation_name)
-        pos+=barWidth
+        plt.bar(pos, accuracies, color=cmap(i), width=barWidth, edgecolor='white', label=label)
+        pos+=barWidth+pad
     plt.gca().set_ylim(0,1)
 
     plt.gca().yaxis.grid(which="major", color='gray', linestyle='-', linewidth=0.5)
     # Add xticks on the middle of the group bars
     plt.xlabel(l.model)
     plt.ylabel(l.accuracy)
-    plt.xticks([r + barWidth for r in range(len(model_names))], model_names)
+    plt.xticks([r + barWidth for r in range(len(group_names))], group_names)
     plt.tick_params(axis='both', which='both', length=0)
     #plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='on', labelbottom='on')
 
@@ -33,11 +34,11 @@ def plot_accuracies(plot_filepath:Path,accuracies_by_transformation:[[float]],tr
     plt.savefig(plot_filepath)
     plt.close()
 
-def plot_accuracies_single_model(plot_filepath:Path,accuracies:[float],transformation_names:[str]):
+def plot_accuracies_single_model(plot_filepath:Path, accuracies:[float], labels:[str]):
     # set width of bar
     f=plt.figure(dpi=300)
-
-    n=len(transformation_names)
+    n=len(labels)
+    assert len(accuracies)==n, f"Different number of labels {n} and accuracies {len(accuracies)} "
     cmap = default_discrete_colormap()
     # Set position of bar on X axis
     x = np.arange(n,dtype=float)
@@ -53,7 +54,7 @@ def plot_accuracies_single_model(plot_filepath:Path,accuracies:[float],transform
     plt.xlabel(l.transformation)
     plt.ylabel(l.accuracy)
 
-    plt.xticks(x, transformation_names)
+    plt.xticks(x, labels)
     plt.tick_params(axis='both', which='both', length=0)
     #plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='on', labelbottom='on')
 

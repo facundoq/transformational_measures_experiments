@@ -9,6 +9,7 @@ from experiment import  training
 import argparse,argcomplete
 import transformation_measure as tm
 from typing import Tuple
+from transformation_measure.iterators.pytorch_image_dataset import TransformationStrategy
 
 def list_parser(s:str):
     s=s.strip()
@@ -133,7 +134,7 @@ if __name__ == "__main__":
             epochs_callbacks=[]
             for epoch in p.savepoints:
                 def callback(epoch=epoch):
-                    scores=training.eval_scores(model,dataset,p,o)
+                    scores=training.eval_scores(model,dataset,p.transformations,TransformationStrategy.random_sample,o.get_eval_options())
                     if o.verbose:
                         print(f"Saving model {model.name} at epoch {epoch}/{p.epochs}.")
                     training.save_model(p, o, model, scores, config.model_path(p, epoch))
@@ -156,7 +157,7 @@ if __name__ == "__main__":
 
         # TRAINING
         if 0 in p.savepoints:
-            scores = training.eval_scores(model, dataset, p, o)
+            scores = training.eval_scores(model, dataset, p.transformations,TransformationStrategy.random_sample, o.get_eval_options())
             print(f"Saving model {model.name} at epoch {0} (before training).")
             training.save_model(p, o, model, scores, config.model_path(p, 0))
         pr = Profiler()

@@ -11,7 +11,7 @@ class DatasetSize(Experiment):
         model_names = simple_models_generators
         measures = normalized_measures_validation
         combinations = list(itertools.product(
-            model_names, dataset_names, common_transformations_hard, measures))
+            model_names, dataset_names, common_transformations_combined, measures))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
             model_config = model.for_dataset(dataset)
@@ -50,7 +50,7 @@ class DatasetSubset(Experiment):
         model_names = simple_models_generators
         measures = normalized_measures_validation
         combinations = list(itertools.product(
-            model_names, dataset_names, common_transformations_hard, measures))
+            model_names, dataset_names, common_transformations_combined, measures))
 
         for i, (model_config_generator, dataset, transformation, measure) in enumerate(combinations):
             print(f"{i}/{len(combinations)}", end=", ")
@@ -85,7 +85,7 @@ class DatasetTransfer(Experiment):
         measures = normalized_measures_validation
 
         combinations = itertools.product(
-            simple_models_generators, dataset_names, common_transformations_hard, measures)
+            simple_models_generators, dataset_names, common_transformations_combined, measures)
         for (model_config_generator, dataset, transformation, measure) in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 

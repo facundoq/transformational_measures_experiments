@@ -8,6 +8,7 @@ import numpy as np
 
 from transformation_measure import TransformationSet
 from transformation_measure.adapters import TransformationAdapter
+
 class PytorchActivationsIterator(ActivationsIterator):
 
     def __init__(self, model:nn.Module, dataset, transformations:TransformationSet, batch_size=32,num_workers=0,adapter:TransformationAdapter=None,use_cuda=torch.cuda.is_available()):

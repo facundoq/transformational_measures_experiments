@@ -1,6 +1,3 @@
-import torch
-
-import datasets
 from .common import *
 
 
@@ -36,7 +33,7 @@ class RandomWeights(Experiment):
                 model_path = Path(f"{name}{ext}")
                 if not model_path.exists():
                     model, optimizer = model_config.make_model(dataset.input_shape, dataset.num_classes, o.use_cuda)
-                    scores = training.eval_scores(model, dataset, p_training, o)
+                    scores = training.eval_scores(model, dataset, p_training.transformations,  TransformationStrategy.random_sample, o.get_eval_options())
                     training.save_model(p_training, o, model, scores, model_path)
                     del model
                 models_paths.append(model_path)
@@ -77,7 +74,7 @@ class DuringTraining(Experiment):
 
         model_generators = simple_models_generators
         combinations = itertools.product(
-            model_generators, dataset_names, common_transformations_hard, measures)
+            model_generators, dataset_names, common_transformations_combined, measures)
 
         for model_config_generator, dataset, transformation, measure in combinations:
             # train

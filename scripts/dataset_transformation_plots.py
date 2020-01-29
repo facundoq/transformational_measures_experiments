@@ -31,13 +31,13 @@ samples = {
     "cifar10":Path("testing/samples/cifar1.png"),
     "mnist":Path("testing/samples/mnist.png"),
 }
-from experiments.common import common_transformations_hard
+from experiments.common import common_transformations_combined
 from testing.util import plot_image_grid
 
 rows,cols=3,3
 for sample_id,sample_path in samples.items():
     image = get_image(sample_path)
-    transformations_sets=common_transformations_hard
+    transformations_sets=common_transformations_combined
     for transformation_set in transformations_sets:
         n,h,w,c=image.shape
         transformation_set.set_input_shape((h,w,c))

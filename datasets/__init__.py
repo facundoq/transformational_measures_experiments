@@ -3,6 +3,13 @@ from typing import List
 
 import numpy as np
 import os
+from enum import Enum
+
+class DatasetSubset(Enum):
+    train="train"
+    test="test"
+    values=[train,test]
+
 
 class ClassificationDataset:
     def __init__(self, name: str,
@@ -17,6 +24,14 @@ class ClassificationDataset:
         self.input_shape = input_shape
         self.labels = labels
         self.dataformat = dataformat
+
+    def size(self,subset:DatasetSubset):
+        if subset==DatasetSubset.test:
+            return self.y_test.shape[0]
+        elif subset==DatasetSubset.train:
+            return self.y_train.shape[0]
+        else:
+            raise ValueError(subset)
 
     def reduce_size_subset_stratified(self, percentage, x, y,random=False):
         x1=[]

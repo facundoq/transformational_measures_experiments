@@ -103,7 +103,7 @@ class CompareGoodfellowAlpha(Experiment):
         alphas = [0.5,0.9,0.95,0.99,0.999]
         measures = [tm.GoodfellowNormal(alpha) for alpha in alphas]
         # transformations=config.common_transformations()
-        combinations = itertools.product(model_names, dataset_names,  common_transformations_hard)
+        combinations = itertools.product(model_names, dataset_names, common_transformations_combined)
         for model_config_generator, dataset,  transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset, bn=False)
             # train

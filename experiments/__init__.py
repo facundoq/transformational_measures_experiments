@@ -10,3 +10,4 @@ from .aggregation import *
 from .normalization import *
 from .feature_maps import *
 from .test import *
+from .data_augmentation import *

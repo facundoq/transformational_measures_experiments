@@ -7,7 +7,7 @@ from .datasets import *
 from .measures import *
 from .transformations import *
 
-from experiment import variance, training
+from experiment import variance, training,accuracy
 
 
 
@@ -55,7 +55,10 @@ def heatmaps_folder()->Path:
 def results_folder()->Path:
     return base_path() / "results"
 
+def accuracies_folder()->Path:
+    return base_path() / "accuracies"
 
+########## TRANSFORMATIONAL MEASURES EXPERIMENTS #######################
 
 def results_paths(ps:[variance.Parameters], results_folder=results_folder())->[Path]:
     variance_paths= [results_path(p,results_folder) for p in ps]
@@ -94,6 +97,33 @@ def results_filepaths_for_model(training_parameters)->[variance.VarianceExperime
     results_filepaths = [f for f in all_results_filepaths if f.name.startswith(model_id)]
     return results_filepaths
 
+########## PLOTS EXPERIMENTS #######################
 
 def plots_base_folder():
     return base_path() /"plots"
+
+########## ACCURACY EXPERIMENTS #######################
+
+def accuracy_path(p:accuracy.Parameters, accuracies_folder=accuracies_folder())-> Path:
+    return  accuracies_folder / f"{p.id()}.pickle"
+
+def save_accuracy(r:accuracy.AccuracyExperimentResult, accuracy_folder=accuracies_folder()):
+    path = accuracy_path(r.parameters, accuracy_folder)
+    basename: Path = path.parent
+    basename.mkdir(exist_ok=True, parents=True)
+    pickle.dump(r, path.open(mode="wb"))
+
+def load_accuracy(path:Path)->accuracy.AccuracyExperimentResult:
+    r:accuracy.AccuracyExperimentResult=pickle.load(path.open(mode="rb"))
+    return r
+
+def accuracies_paths(ps:[accuracy.Parameters], accuracy_folder=accuracies_folder())->[Path]:
+    variance_paths= [accuracy_path(p, accuracy_folder) for p in ps]
+    return variance_paths
+
+def load_accuracies(filepaths:[Path])-> [accuracy.AccuracyExperimentResult]:
+    results = []
+    for filepath in filepaths:
+        result = load_accuracy(filepath)
+        results.append(result)
+    return results

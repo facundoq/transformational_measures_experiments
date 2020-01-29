@@ -28,8 +28,8 @@ class SimpleConvAccuracies(Experiment):
         return """Compare the accuracies of the SimpleConv model for each set of transformations"""
 
     def run(self):
-        transformations = common_transformations_hard
-        transformation_labels = ["Rotation", "Scale", "Translation", "Combined"]
+        transformations = common_transformations_combined
+        transformation_labels = [l.rotation,l.scale,l.translation,l.combined]#["Rotation", "Scale", "Translation", "Combined"]
         for dataset in dataset_names:
             transformation_scores = []
             for transformation in transformations:

@@ -15,6 +15,10 @@ import config
 import datasets
 from typing import *
 
+from torch.utils.data import DataLoader
+from transformation_measure.iterators.pytorch_image_dataset import ImageDataset,TransformationStrategy
+from pytorch.numpy_dataset import NumpyDataset
+
 class Parameters:
     def __init__(self,model:config.ModelConfig,dataset:str
                  ,transformations:tm.TransformationSet
@@ -69,6 +73,8 @@ class Options:
         self.plots=plots
         self.use_cuda=use_cuda
         self.max_restarts=max_restarts
+    def get_eval_options(self):
+        return EvalOptions(self.use_cuda,self.batch_size,self.num_workers)
 
     def __repr__(self):
         return f"batch_size={self.batch_size}, num_workers={self.num_workers}, verbose={self.verbose}, train_verbose={self.train_verbose}," \
@@ -80,8 +86,8 @@ class Options:
 
 def do_run(model:nn.Module,dataset:datasets.ClassificationDataset,t:tm.TransformationSet,o:Options, optimizer:Optimizer,epochs:int,loss_function:torch.nn.Module,epochs_callbacks:{int:Callable}):
 
-    train_dataset = get_data_generator(dataset.x_train, dataset.y_train, t, o.batch_size, o.num_workers)
-    test_dataset = get_data_generator(dataset.x_test, dataset.y_test, t, o.batch_size, o.num_workers)
+    train_dataset = get_data_generator(dataset.x_train, dataset.y_train, t, o.batch_size, o.num_workers,TransformationStrategy.random_sample)
+    test_dataset = get_data_generator(dataset.x_test, dataset.y_test, t, o.batch_size, o.num_workers,TransformationStrategy.random_sample)
 
     history = train(model, epochs, optimizer, o.use_cuda, train_dataset, test_dataset, loss_function,verbose=o.train_verbose,epochs_callbacks=epochs_callbacks)
     return history
@@ -102,17 +108,28 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
     history =do_run(model,dataset,p.transformations,o,optimizer,p.epochs,loss_function,epochs_callbacks)
     if o.train_verbose:
         print("### Testing models on dataset...",flush=True)
-    scores=eval_scores(model,dataset,p,o,loss_function)
+    scores=eval_scores(model, dataset, p.transformations, TransformationStrategy.random_sample, o.get_eval_options(), loss_function)
 
     return scores,history
 
+class EvalOptions:
+    def __init__(self,use_cuda:torch.cuda.is_available(),batch_size=32,num_workers=0):
+        self.use_cuda=use_cuda
+        self.batch_size=batch_size
+        self.num_workers=num_workers
 
-def eval_scores(m:nn.Module,dataset:datasets.ClassificationDataset,p:Parameters,o:Options,loss_function=torch.nn.NLLLoss()):
 
-    train_dataset = get_data_generator(dataset.x_train, dataset.y_train, p.transformations, o.batch_size, o.num_workers)
-    test_dataset = get_data_generator(dataset.x_test, dataset.y_test, p.transformations, o.batch_size, o.num_workers)
+def eval_scores(m:nn.Module, dataset:datasets.ClassificationDataset, transformations:tm.TransformationSet, transformation_strategy:TransformationStrategy, o:EvalOptions, loss_function=torch.nn.NLLLoss(), subsets=["train", "test"].copy()):
 
-    datasets = {"train": train_dataset, "test": test_dataset}
+    train_dataset = get_data_generator(dataset.x_train, dataset.y_train, transformations, o.batch_size, o.num_workers,transformation_strategy)
+    test_dataset = get_data_generator(dataset.x_test, dataset.y_test, transformations, o.batch_size, o.num_workers,transformation_strategy)
+
+    datasets = {}
+    if "train" in subsets:
+        datasets["train"]= train_dataset
+    if "test" in subsets:
+        datasets["test"] = test_dataset
+
     scores = {}
     for k, dataset in datasets.items():
         loss, accuracy, correct, n = test(m, dataset, o.use_cuda, loss_function)
@@ -121,15 +138,13 @@ def eval_scores(m:nn.Module,dataset:datasets.ClassificationDataset,p:Parameters,
     return scores
 
 
-from torch.utils.data import DataLoader
-from transformation_measure.iterators.pytorch_activations_iterator import ImageDataset
-from pytorch.numpy_dataset import NumpyDataset
+
 
 def get_data_generator(x:np.ndarray, y:np.ndarray,
-                       transformation:tm.TransformationSet, batch_size:int,num_workers:int)->DataLoader:
+                       transformation:tm.TransformationSet, batch_size:int, num_workers:int, transformation_strategy:TransformationStrategy)->DataLoader:
 
     dataset=NumpyDataset(x,y)
-    image_dataset=ImageDataset(dataset,transformation)
+    image_dataset=ImageDataset(dataset,transformation,transformation_strategy)
     dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=False,)
 
     return dataloader

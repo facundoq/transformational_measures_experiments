@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 from datetime import datetime
-from experiment import variance, training, utils_runner
+from experiment import variance, training, accuracy,utils_runner
 import config
 import transformation_measure as tm
 import abc
@@ -107,6 +107,18 @@ class Experiment(abc.ABC):
             python_command = f"{python_command} -adapt_dataset True"
 
         utils_runner.run_python(self.venv, python_command)
+    import torch
+
+    default_accuracy_options=accuracy.Options(False,64,0,torch.cuda.is_available())
+    def experiment_accuracy(self, p: accuracy.Parameters, o=default_accuracy_options):
+        results_path = config.accuracy_path(p)
+        if results_path.exists():
+            return
+        python_command = f'accuracy.py -mo "{p.model_path}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose {o.verbose} -batchsize {o.batch_size} -num_workers {o.num_workers}'
+
+        utils_runner.run_python(self.venv, python_command)
+
+
     def train_measure(self, model_config:config.ModelConfig, dataset:str, transformation:tm.TransformationSet, measure:tm.Measure,p=None):
 
         epochs = config.get_epochs(model_config, dataset, transformation)
@@ -119,3 +131,4 @@ class Experiment(abc.ABC):
         model_path = config.model_path(p_training)
         self.experiment_variance(p_variance, model_path)
         return p_training,p_variance,p_dataset
+

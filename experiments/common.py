@@ -1,8 +1,11 @@
 import config
+import torch
 import transformation_measure as tm
 from .base import Experiment
 from .language import l
-from experiment import variance, training
+from transformation_measure.iterators.pytorch_image_dataset import TransformationStrategy
+import datasets
+from experiment import variance, training,accuracy
 from transformation_measure import visualization
 from experiment.variance import VarianceExperimentResult
 import models
@@ -49,8 +52,9 @@ common_transformations = [tm.SimpleAffineTransformationGenerator(r=360),
                           tm.SimpleAffineTransformationGenerator(t=3),
                           ]
 combined=tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3,n_rotations=6,n_translations=1,n_scales=1)
-common_transformations_hard = common_transformations+[combined]
-
+common_transformations_combined = common_transformations + [combined]
+hard = tm.SimpleAffineTransformationGenerator(r=360,s=4,t=3)
+common_transformations_hard = common_transformations + [hard]
 
 def get_ylim_normalized(measure:tm.Measure):
     if measure.__class__ == tm.DistanceSameEquivarianceMeasure:
