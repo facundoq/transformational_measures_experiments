@@ -23,20 +23,21 @@ class DatasetParameters:
         return str(self)
 
 class Parameters:
-    def __init__(self, model_path:Path, dataset:DatasetParameters, transformations:tm.TransformationSet):
+    def __init__(self, model_path:Path, dataset:DatasetParameters, transformations:tm.TransformationSet,transformation_strategy:TransformationStrategy=TransformationStrategy.random_sample):
         self.model_path=model_path
         self.dataset=dataset
         self.transformations=transformations
+        self.transformation_strategy=transformation_strategy
 
     def model_name(self):
         return self.model_path.stem
 
     def id(self):
-        return f"{self.model_name()}_{self.dataset}_{self.transformations.id()}"
+        return f"{self.model_name()}_{self.dataset}_{self.transformations.id()}_{self.transformation_strategy.value}"
 
     def __repr__(self):
 
-        return f"AccuracyExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}"
+        return f"AccuracyExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, transformation strategy={self.transformation_strategy.value}"
 
 class Options:
     def __init__(self,verbose:bool,batch_size:int,num_workers:int,use_cuda:bool):
@@ -78,12 +79,15 @@ def possible_experiment_parameters()->[]:
             for dataset_percentage in dataset_percentages:
                 dataset_parameters.append(DatasetParameters(dataset,dataset_subset,dataset_percentage))
 
+    transformation_strategies=list(TransformationStrategy)
+    transformation_strategies={t.value:t for t in transformation_strategies}
     parameters=[dataset_parameters, transformations]
+
     def list2dict(list):
         return {x.id(): x for x in list}
     parameters=[ list2dict(p) for p in parameters ]
 
-    return parameters
+    return parameters+[transformation_strategies]
 
 import argcomplete, argparse
 
@@ -105,7 +109,7 @@ def experiment(p: Parameters, o: Options):
         print(dataset.summary())
 
     p.transformations.set_input_shape(dataset.input_shape)
-    p.transformations.set_pytorch(False)
+    p.transformations.set_pytorch(True)
     #p.transformations.set_cuda(use_cuda)
 
     if o.verbose:
@@ -117,7 +121,7 @@ def experiment(p: Parameters, o: Options):
 
 def measure(model:nn.Module,dataset:datasets.ClassificationDataset,transformations:tm.TransformationSet,o:Options,subset:datasets.DatasetSubset)-> float:
 
-    scores = training.eval_scores(model,dataset,transformations,TransformationStrategy.iterate_all,o.get_eval_options(),subsets=subset.value)
+    scores = training.eval_scores(model,dataset,transformations,TransformationStrategy.random_sample,o.get_eval_options(),subsets=subset.value)
     loss, accuracy = scores[subset.value]
     return accuracy
 
@@ -131,12 +135,13 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
         else:
             return filepath
 
-    datasets,  transformations=possible_experiment_parameters()
+    datasets,  transformations,transformation_strategies=possible_experiment_parameters()
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-model", metavar="mo",type=is_valid_file,required=True)
     parser.add_argument("-dataset", metavar="d", choices=datasets.keys(),required=True)
     parser.add_argument("-transformation", metavar="t", choices=transformations.keys(),required=True)
+    parser.add_argument("-transformation_strategy", metavar="s", choices=transformation_strategies,default="random_sample")
     parser.add_argument('-verbose', metavar='v',type=bool_parser, default=True,
                         help=f'Print info about dataset/models/transformations')
     parser.add_argument('-num_workers', metavar='nw'
@@ -155,6 +160,6 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
 
     p = Parameters(args.model,
                    datasets[args.dataset],
-                   transformations[args.transformation])
+                   transformations[args.transformation],transformation_strategies[args.transformation_strategy])
     o = Options(args.verbose,args.batchsize,args.num_workers,torch.cuda.is_available())
     return p,o

@@ -45,7 +45,7 @@ def all_measures()-> [Measure]:
         measures.append(TransformationDistance(d))
         for ca in cas:
             measures.append(NormalizedDistance(d,ca))
-        measures.append(DistanceSameEquivarianceMeasure(d))
+        measures.append(NormalizedDistanceSameEquivarianceMeasure(d))
 
     for percentage in [0.01,0.001,0.1,0.5,0.05]:
         measures.append(GoodfellowMeasure(activations_percentage=percentage))
@@ -72,6 +72,6 @@ def common_measures()-> [Measure]:
         ,AnovaMeasure(alpha=0.99,bonferroni=True)
         ,NormalizedDistance(da,ca_mean)
         ,NormalizedDistance(da_keep, ca_none)
-        ,DistanceSameEquivarianceMeasure(da_normalize_keep)
+        ,NormalizedDistanceSameEquivarianceMeasure(da_normalize_keep)
     ]
     return measures

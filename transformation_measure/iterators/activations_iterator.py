@@ -33,11 +33,14 @@ class ActivationsIterator(abc.ABC):
     def layer_names(self) -> List[str]:
         pass
 
+    @abc.abstractmethod
+    def set_invert_transformations(self,invert:bool) -> List[str]:
+        pass
 
     def row_from_iterator(self,transformation_activations_iterator)->([np.ndarray],np.ndarray):
         '''
         Get a row of the ST matrix from the :param transformation_activations_iterator
-        :return: row of the ST matrix wit the  activations for all the transformations of sample, and also the transformed samples
+        :return: row of the ST matrix with the  activations for all the transformations of sample, and also the transformed samples
         '''
         activations=[[] for i in range(len(self.layer_names()))]
         x_transformed=[]

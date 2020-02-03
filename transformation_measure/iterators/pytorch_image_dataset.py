@@ -14,14 +14,13 @@ class TransformationStrategy(Enum):
 
 class ImageDataset(Dataset):
 
-    def __init__(self, image_dataset, transformations:tm.TransformationSet=None, transformation_scheme:TransformationStrategy=None, dataformat="NCHW", ):
+    def __init__(self, image_dataset, transformations:tm.TransformationSet=None, transformation_scheme:TransformationStrategy=None ):
 
         if transformation_scheme is None:
             transformation_scheme = TransformationStrategy.random_sample
         self.transformation_strategy = transformation_scheme
 
         self.dataset=image_dataset
-        self.dataformat=dataformat
 
         if transformations is None:
             self.transformations=[tm.IdentityTransformation()]
@@ -34,20 +33,11 @@ class ImageDataset(Dataset):
 
     def setup_transformation_pipeline(self,):
         x, y = self.dataset.get_all()
-
-        if self.dataformat=="NCHW":
-            n, c, w, h = x.shape
-
-        elif self.dataformat=="NHWC":
-            n, w, h, c = x.shape
-        else:
-            raise ValueError(f"Unsupported data format: {self.dataformat}.")
+        n, c, w, h = x.shape
         self.h = h
         self.w = w
         self.c=c
-        self.mu, self.std = self.calculate_mu_std(x, self.dataformat)
-        self.mu=self.mu[:,np.newaxis,np.newaxis]
-        self.std=self.std[:,np.newaxis,np.newaxis]
+        self.mu, self.std = self.calculate_mu_std(x)
 
         # transformations = [transforms.ToPILImage(), ]
         #
@@ -55,24 +45,16 @@ class ImageDataset(Dataset):
         # transformations.append(transforms.Normalize(mu, std))
         # return transforms.Compose(transformations)
 
-    def calculate_mu_std(self,x,dataformat):
-
-        # mu = image_dataset.mean()/255
-        # std = image_dataset.std()/255
+    def calculate_mu_std(self,x:torch.Tensor):
 
         xf = x.float()
-        if dataformat == "NCHW":
-            dims = (0, 1, 2)
-        elif dataformat == "NHWC":
-            dims = (0, 2, 3)
-        else:
-            raise ValueError()
+        dims = (0, 2, 3)
 
-        mu = xf.mean(dim=dims)
-        std = xf.std(dim=dims)
+        mu = xf.mean(dim=dims,keepdim=True)
+        std = xf.std(dim=dims,keepdim=True)
 
         std[std == 0] = 1
-        return mu.numpy(), std.numpy()
+        return mu,std
 
     def __len__(self):
         if self.transformation_strategy==TransformationStrategy.random_sample:
@@ -88,39 +70,14 @@ class ImageDataset(Dataset):
         # print(y.shape)
         return x[0,],y
 
-    def transform_after(self, x):
-        if self.dataformat == "NHWC":
-            pass
-        elif self.dataformat == "NCHW":
-            x = x.permute([0, 3, 1, 2])
-        else:
-            raise ValueError()
-        return x
 
-    def transform_before(self, x):
-        if self.dataformat == "NHWC":
-            pass
-        elif self.dataformat == "NCHW":
-            x = x.permute(0,2,3,1)
-        else:
-            raise ValueError()
-        return x
-
-    # TODO convert to pure pytorch
     def transform_batch(self,x,i_transformation):
-        nt = len(self.transformations)
-        #x = (x - torch.from_numpy(self.mu)) / torch.from_numpy(self.std){
-        #x = (x-self.mu) /self.std
-        # to NHWC order
-        x = self.transform_before(x).float()
+        x = x.float()
+        x = (x-self.mu)/self.std
         for i in range(x.shape[0]):
-            sample_np=x[i,:].numpy()
-            sample_np = (sample_np - self.mu) / self.std
+            sample=x[i:i+1,:]
             t = self.transformations[i_transformation[i]]
-            transformed_np = t(sample_np[np.newaxis,:])
-            x[i,:] = torch.from_numpy(transformed_np[0,:])
-        # To NCHW order
-        x = self.transform_after(x)
+            x[i,:] = t(sample)
         return x
 
     def get_batch(self,idx):
@@ -138,7 +95,6 @@ class ImageDataset(Dataset):
         x,y=self.dataset.get_batch(i_sample)
         x=self.transform_batch(x,i_transformation)
         y=y.type(dtype=torch.LongTensor)
-        # return x.cuda(),y.cuda()
         return x, y
 
 

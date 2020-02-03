@@ -19,7 +19,7 @@ from .measure.multithreaded_variance import TransformationVarianceMeasure,Sample
 from .measure.normalized import NormalizedVariance,SampleVariance,TransformationVariance
 from .measure.anova import AnovaMeasure,AnovaFMeasure
 from .measure.distance import NormalizedDistance,SampleDistance,TransformationDistance,DistanceAggregation
-from .measure.distance_equivariance import DistanceSameEquivarianceMeasure
+from .measure.distance_equivariance import NormalizedDistanceSameEquivarianceMeasure
 
 
 from .measure.goodfellow import GoodfellowMeasure

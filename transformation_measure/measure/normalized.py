@@ -3,7 +3,7 @@ from transformation_measure import MeasureFunction, QuotientMeasure
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford, RunningMean,RunningMeanAndVarianceNaive
 from .base import Measure, MeasureResult
-
+from .quotient import divide_activations
 
 class TransformationVariance(Measure):
     def __init__(self, measure_function:MeasureFunction=MeasureFunction.std):
@@ -81,7 +81,7 @@ class SampleVariance(Measure):
     def abbreviation(self):
         return "SV"
 
-from .quotient import divide_activations
+
 
 class NormalizedVariance(Measure):
     def __init__(self, conv_aggregation: ConvAggregation,measure_function: MeasureFunction=MeasureFunction.std):

@@ -9,7 +9,7 @@ from transformation_measure.iterators.pytorch_activations_iterator import ImageD
 matplotlib.use('Agg')
 
 
-dataset_name="cifar10"
+dataset_name="rwth"
 
 print(f"### Loading dataset {dataset_name} ....")
 

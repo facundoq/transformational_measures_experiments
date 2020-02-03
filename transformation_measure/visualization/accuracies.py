@@ -8,6 +8,9 @@ from . import default_discrete_colormap
 def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[str], group_names:[str]):
     # set width of bar
     f=plt.figure(dpi=300)
+    patterns = ["...","**","\\\\\\","///",  "+" , "x", "o", "O", ".", "*" ,"/" , "\\" , "|" , "-" ,]
+
+    accuracies_by_label= accuracies_by_label.T
     n_groups=len(group_names)
     n_labels=len(labels)
     barWidth = 1/(n_labels+1)
@@ -16,8 +19,12 @@ def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[s
     pos = np.arange(n_groups,dtype=float)
     pad = barWidth*0.1
     for i,(accuracies,label) in enumerate(zip(accuracies_by_label, labels)):
+        if n_labels <= len(patterns):
+            hatch=patterns[i]
+        else:
+            hatch=None
     # Make the plot
-        plt.bar(pos, accuracies, color=cmap(i), width=barWidth, edgecolor='white', label=label)
+        plt.bar(pos, accuracies, color=cmap(i), width=barWidth, edgecolor='white', label=label,hatch=hatch)
         pos+=barWidth+pad
     plt.gca().set_ylim(0,1)
 

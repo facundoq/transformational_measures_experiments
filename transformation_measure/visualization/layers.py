@@ -39,6 +39,7 @@ from typing import List
 from pathlib import Path
 from experiment import variance
 from transformation_measure.measure.stats_running import  RunningMeanAndVarianceWellford
+import transformation_measure as tm
 from matplotlib.lines import Line2D
 
 from experiments.language import l
@@ -191,6 +192,10 @@ def get_dpi(n:int):
     return min(350, max(150, n * 15))
 
 def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentResult], filepath:Path, labels:[str]=None, title="", linestyles=None, plot_mean=False, colors=None, legend_location=None, mark_layers:[int]=None,ylim=None):
+    results=[r.measure_result for r in results]
+    plot_collapsing_layers_same_model_mr(results,filepath,labels,title,linestyles,plot_mean,colors,legend_location,mark_layers,ylim)
+
+def plot_collapsing_layers_same_model_mr(results:List[tm.MeasureResult], filepath:Path, labels:[str]=None, title="", linestyles=None, plot_mean=False, colors=None, legend_location=None, mark_layers:[int]=None,ylim=None):
     if ylim is None:
         ylim = default_y_lim
 
@@ -202,7 +207,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
     f, ax = plt.subplots(dpi=get_dpi(n))
     f.suptitle(title)
 
-    result_layers=np.array([len(r.measure_result.layer_names) for r in results])
+    result_layers=np.array([len(r.layer_names) for r in results])
     min_n,max_n = result_layers.min(),result_layers.max()
     if plot_mean:
         assert min_n==max_n,"To plot the mean values all results must have the same number of layers."
@@ -213,9 +218,9 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
     mean_and_variance = RunningMeanAndVarianceWellford()
     max_value=0
     for i, result in enumerate(results):
-        n_layers= len(result.measure_result.layers)
+        n_layers= len(result.layers)
         x= np.arange(n_layers)+1
-        y= result.measure_result.per_layer_average()
+        y= result.per_layer_average()
         max_value = max(max_value,y.max())
         if plot_mean:
             mean_and_variance.update(y)
@@ -245,7 +250,7 @@ def plot_collapsing_layers_same_model(results:List[variance.VarianceExperimentRe
     ax.set_ylim(0,max(max_value*1.1,ylim))
 
     if max_n < 60:
-        tick_labels = results[0].measure_result.layer_names
+        tick_labels = results[0].layer_names
         tick_labels = shorten_layer_names(tick_labels)
         #labels = [f"${l}$" for l in labels]
         x = np.arange(max_n) + 1

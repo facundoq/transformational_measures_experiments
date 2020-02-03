@@ -72,6 +72,8 @@ def test(model, dataset, use_cuda,loss_function):
     return loss,accuracy,correct,n
 
 def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose):
+    n=len(train_dataset)
+    update_every_n_batches= max(n // 5,1)
     if verbose:
         widgets = ["Epoch {}: ".format(epoch), progressbar.Percentage()
                    ,progressbar.FormatLabel(' (batch %(value)d/%(max_value)d) ')
@@ -106,7 +108,7 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbo
         losses[batch_idx] = loss.cpu().item()
 
         # UPDATE UI
-        if batch_idx % 20 == 0 and verbose:
+        if (batch_idx % update_every_n_batches == 0 or batch_idx+1 == n) and verbose:
             progress_bar.update(batch_idx+1,loss=losses[:batch_idx+1].mean(),accuracy=accuracies[:batch_idx+1].mean())
     if verbose:
         progress_bar.finish()

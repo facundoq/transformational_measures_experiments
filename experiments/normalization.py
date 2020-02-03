@@ -6,8 +6,8 @@ class SameEquivarianceNormalization(Experiment):
 
     def run(self):
         measures = [
-            tm.DistanceSameEquivarianceMeasure(da_normalize_keep),
-            tm.DistanceSameEquivarianceMeasure(da_keep)
+            tm.NormalizedDistanceSameEquivarianceMeasure(da_normalize_keep),
+            tm.NormalizedDistanceSameEquivarianceMeasure(da_keep)
         ]
 
         combinations = itertools.product(

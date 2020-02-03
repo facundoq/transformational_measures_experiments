@@ -26,6 +26,7 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
     transformations=config.all_transformations()
     transformations={t.id():t for t in transformations}
 
+
     model_configs = config.all_models()
     parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
 
@@ -114,22 +115,25 @@ def parse_args()->Tuple[training.Parameters, training.Options,float]:
     min_accuracy = args.min_accuracy
     return p,o,min_accuracy
 
+def main(p:training.Parameters,o:training.Options,min_accuracy:float):
 
-if __name__ == "__main__":
-    p,o,min_accuracy = parse_args()
+    dataset = datasets.get(p.dataset)
+    p.transformations.set_input_shape(dataset.input_shape)
+    p.transformations.set_pytorch(True)
+    if o.verbose:
+        print("Parameters: ",p)
+        print("Options: ",o)
+        print("Min accuracy: ",min_accuracy)
+        print(f"Dataset {p.dataset}.")
+        print(dataset.summary())
+        print(f"Model {p.model}.")
+
+        if len(p.savepoints):
+            epochs_str= ", ".join([ str(sp) for sp in p.savepoints])
+            print(f"Savepoints at epochs {epochs_str}.")
+
     def do_train():
-        dataset = datasets.get(p.dataset)
         model,optimizer = p.model.make_model(dataset.input_shape, dataset.num_classes, o.use_cuda)
-        p.transformations.set_input_shape(dataset.input_shape)
-        # p.transformations.set_pytorch(True)
-        # p.transformations.set_cuda(o.use_cuda)
-        # an="\n".join(model.activation_names())
-        # print("Activation names: "+an)
-        if o.verbose:
-            print("Parameters: ",p)
-            print("Options: ",o)
-            print("Min accuracy: ",min_accuracy)
-
         def generate_epochs_callbacks():
             epochs_callbacks=[]
             for epoch in p.savepoints:
@@ -144,18 +148,8 @@ if __name__ == "__main__":
 
         epochs_callbacks=generate_epochs_callbacks()
 
-        if o.verbose:
-            print(f"Experimenting with dataset {p.dataset}.")
-            print(dataset.summary())
-            print(f"Training with models {p.model}.")
-            print(model)
-            if len(p.savepoints):
-                epochs_str= ", ".join([ str(sp) for sp in p.savepoints])
-                print(f"Savepoints at epochs {epochs_str}.")
 
-
-
-        # TRAINING
+    # TRAINING
         if 0 in p.savepoints:
             scores = training.eval_scores(model, dataset, p.transformations,TransformationStrategy.random_sample, o.get_eval_options())
             print(f"Saving model {model.name} at epoch {0} (before training).")
@@ -193,7 +187,17 @@ if __name__ == "__main__":
             print(f"Model saved to {path}")
         else:
             print(f"Model was not saved since it did not reach minimum accuracy. Accuracy={test_accuracy}<{min_accuracy}.")
+    # delete model and empty cuda cache
 
+    del model
+    del dataset
+    torch.cuda.empty_cache()
+if __name__ == "__main__":
+    print("starting")
+    p,o,min_accuracy = parse_args()
+    print("parsed")
+
+    main(p,o,min_accuracy)
 
 
 

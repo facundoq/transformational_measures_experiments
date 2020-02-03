@@ -49,8 +49,9 @@ class TIPoolingSimpleConvConfig(ModelConfig):
     @classmethod
     def for_dataset(cls, dataset: str, bn: bool,t:tm.TransformationSet):
         # TODO different from SimpleConv, half the filters
-        conv = {"mnist": 16, "cifar10": 64, "fashion_mnist": 32}
-        fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
+        conv = {"mnist": 16, "cifar10": 64, "fashion_mnist": 32,"lsa16":16,"rwth":32}
+        fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128,"lsa16":64,"rwth":128}
+
         return TIPoolingSimpleConvConfig(t, conv[dataset], fc[dataset], bn)
 
     def __init__(self, transformations:tm.TransformationSet, conv=32, fc=128, bn=False):
@@ -72,8 +73,9 @@ class SimpleConvConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False,k=3, activation=models.ActivationFunction.ELU,max_pooling=True):
-        conv = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
-        fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128}
+        conv = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64,"lsa16":128,"rwth":128}
+        fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128,"lsa16":64,"rwth":256}
+
         return SimpleConvConfig(conv=conv[dataset], fc=fc[dataset],bn=bn,k=k,activation=activation,max_pooling=max_pooling)
 
     def __init__(self, conv=32, fc=128, bn=False, k=3, activation=models.ActivationFunction.ELU,max_pooling=True):
@@ -111,7 +113,7 @@ class AllConvolutionalConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False):
-        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32}
+        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32,"lsa16":128,"rwth":128}
         return AllConvolutionalConfig(conv=conv[dataset], dropout=False, bn=bn)
 
     def __init__(self, conv=32, dropout=False, bn=False):
@@ -130,8 +132,8 @@ class FFNetConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False):
-        h1 = {"mnist": 64, "cifar10": 256, "fashion_mnist": 128}
-        h2 = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64}
+        h1 = {"mnist": 64, "cifar10": 256, "fashion_mnist": 128,"lsa16":64,"rwth":256}
+        h2 = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64,"lsa16":32,"rwth":128}
         return FFNetConfig(h1=h1[dataset], h2=h2[dataset],bn=bn)
 
     def __init__(self, h1:int,h2:int, bn=False):
@@ -151,8 +153,8 @@ class VGG16DConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False):
-        conv = {"mnist": 16, "cifar10": 64, }
-        fc = {"mnist": 64, "cifar10": 512, }
+        conv = {"mnist": 16, "cifar10": 64,"lsa16":64,"rwth":64, }
+        fc = {"mnist": 64, "cifar10": 512,"lsa16":32,"rwth":512, }
         return VGG16DConfig(conv=conv[dataset], fc=fc[dataset],bn=bn)
 
     def __init__(self, conv=32, fc=128, bn=False):
@@ -220,23 +222,23 @@ def all_models()->[ModelConfig]:
 def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet) -> int:
     model = model_config.name
     if model.startswith('SimpleConv'):
-        epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12}
+        epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     elif model.startswith('SimpleConvLargeKernel'):
-        epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12}
+        epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     elif model == models.SimplestConv.__name__:
-        epochs = {'cifar10': 40, 'mnist': 5, 'fashion_mnist': 12}
+        epochs = {'cifar10': 40, 'mnist': 5, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     elif model == models.TIPoolingSimpleConv.__name__ :
-        epochs = {'cifar10': 20, 'mnist': 5, 'fashion_mnist': 12}
+        epochs = {'cifar10': 20, 'mnist': 5, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     elif model == models.AllConvolutional.__name__ :
-        epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12}
+        epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     # elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:
     #     epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12, }
     elif model == models.VGG16D.__name__ :
-        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12, }
+        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12,"lsa16":25,"rwth":25, }
     elif model == models.ResNet.__name__:
-        epochs = {'cifar10': 40, 'mnist': 10, 'fashion_mnist': 12}
+        epochs = {'cifar10': 40, 'mnist': 10, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     elif model == models.FFNet.__name__:
-        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 8}
+        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 8,"lsa16":25,"rwth":15}
     else:
         raise ValueError(f"Model \"{model}\" does not exist.")
 
@@ -253,12 +255,15 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
     return int(epochs[dataset] * factor)
 
 def min_accuracy(model: str, dataset: str) -> float:
-    min_accuracies = {"mnist": .90, "cifar10": .5}
+    min_accuracies = {"mnist": .90, "cifar10": .5,"lsa16":.6,"rwth":.45}
     min_accuracy = min_accuracies[dataset]
 
-    if dataset == "mnist" and model == models.FFNet.__name__:
-        min_accuracy = 0.85
-    if dataset == "cifar10" and model == models.FFNet.__name__:
-        min_accuracy = 0.45
+    if model == models.FFNet.__name__:
+        if dataset == "mnist" :
+            min_accuracy = 0.85
+        elif dataset == "cifar10":
+            min_accuracy = 0.45
+        else:
+            min_accuracy=min_accuracy*0.8
 
     return min_accuracy

@@ -83,6 +83,39 @@ class DatasetLoader(ABC):
 
 
 import numpy as np
+
+def reduce_size_subset_stratified(percentage, x, y,random=False):
+    x1=[]
+    y1=[]
+    x2=[]
+    y2=[]
+    num_classes= y.max()+1
+    for i in range(num_classes):
+        class_indices = y == i
+        class_x=x[class_indices,:]
+        class_y=y[class_indices]
+        class_n=len(class_y)
+        if random:
+            indices = np.random.permutation(class_n)
+        else:
+            indices = list(range(class_n))
+        limit=int(class_n * percentage)
+
+        indices1 = indices[:limit]
+        x1.append(class_x[indices1,:])
+        y1.append(class_y[indices1])
+
+        indices2 = indices[limit:]
+        x2.append(class_x[indices2, :])
+        y2.append(class_y[indices2])
+
+
+    x1 = np.vstack(x1)
+    y1 = np.hstack(y1)
+    x2 = np.vstack(x2)
+    y2 = np.hstack(y2)
+    return x1, y1, x2, y2
+
 def split_data(x,y,subject,test_subjects):
     if test_subjects=="subject_dependent":
         x_test=x[::2,:,:,:]

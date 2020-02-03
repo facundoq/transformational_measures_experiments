@@ -13,6 +13,7 @@ import datasets
 import torch,config
 from experiment import training, variance
 from utils import profiler
+from transformation_measure.iterators.pytorch_image_dataset import ImageDataset
 
 
 def experiment(p: variance.Parameters, o: variance.Options):
@@ -53,15 +54,15 @@ def experiment(p: variance.Parameters, o: variance.Options):
         numpy_dataset = NumpyDataset(dataset.x_train, dataset.y_train)
     else:
         raise ValueError(p.dataset.subset)
-
+    image_dataset = ImageDataset(numpy_dataset)
     p.transformations.set_input_shape(dataset.input_shape)
     p.transformations.set_pytorch(True)
     p.transformations.set_cuda(use_cuda)
 
     if not p.stratified:
-        iterator = tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size)
+        iterator = tm.PytorchActivationsIterator(model, image_dataset, p.transformations, batch_size=o.batch_size)
         if o.verbose:
-            print(f"Calculating measure {p.measure} dataset size {len(numpy_dataset)}...")
+            print(f"Calculating measure {p.measure} dataset size {len(image_dataset)}...")
 
         measure_result = p.measure.eval(iterator)
     else:
@@ -73,9 +74,9 @@ def experiment(p: variance.Parameters, o: variance.Options):
 
     return variance.VarianceExperimentResult(p, measure_result)
 
-if __name__ == "__main__":
+
+def main(p:variance.Parameters,o:variance.Options):
     profiler= profiler.Profiler()
-    p, o = variance.parse_parameters()
     profiler.event("start")
     if o.verbose:
         print(f"Experimenting with parameters: {p}")
@@ -83,6 +84,10 @@ if __name__ == "__main__":
     profiler.event("end")
     print(profiler.summary(human=True))
     config.save_results(measures_results)
+if __name__ == "__main__":
+
+    p, o = variance.parse_parameters()
+    main(p,o)
 
 
 

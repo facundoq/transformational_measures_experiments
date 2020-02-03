@@ -40,5 +40,9 @@ def combined_transformations(rs=16,ss=5,ts=5):
     return transformations
 
 def all_transformations():
-    return combined_transformations() #common_transformations()+rotation_transformations(16)+scale_transformations(6)+translation_transformations(6) +
+    return combined_transformations(ss=6,ts=6) #common_transformations()+rotation_transformations(16)+scale_transformations(6)+translation_transformations(6) +
 
+
+def parse_transformation(t:str)->SimpleAffineTransformationGenerator:
+
+    pass

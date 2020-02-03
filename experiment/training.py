@@ -103,6 +103,8 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
         if o.train_verbose:
             print(f"### Pretraining models |{p.model}| with untransformed dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=tm.SimpleAffineTransformationGenerator()
+        t.set_input_shape(dataset.input_shape)
+        t.set_pytorch(True)
         pre_history =do_run(model,dataset,t,o,optimizer,p.epochs,loss_function,epochs_callbacks)
 
     history =do_run(model,dataset,p.transformations,o,optimizer,p.epochs,loss_function,epochs_callbacks)

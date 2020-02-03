@@ -26,7 +26,10 @@ def get_sequential_colors(values):
     colors = cmap(values)
     return colors
 
-from .layers import plot_collapsing_layers_same_model,plot_collapsing_layers_different_models
+from .layers import plot_collapsing_layers_same_model,plot_collapsing_layers_same_model_mr,plot_collapsing_layers_different_models
 from .heatmaps import plot_heatmap
 from .accuracies import plot_accuracies,plot_accuracies_single_model
 from .features import plot_invariant_feature_maps_pytorch,plot_invariant_feature_maps
+
+
+
