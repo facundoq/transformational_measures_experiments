@@ -1,13 +1,11 @@
 import datasets
-import torch
 from utils import profiler
-import os
 from pytorch.numpy_dataset import NumpyDataset
 from testing import util
 
 import transformation_measure as tm
 import matplotlib
-from transformation_measure.iterators.pytorch_activations_iterator import ImageDataset
+from transformation_measure.iterators.pytorch.activations_iterator import ImageDataset
 matplotlib.use('Agg')
 
 import config
@@ -32,7 +30,7 @@ transformations.set_input_shape(dataset.input_shape)
 transformations.set_pytorch(True)
 transformations.set_cuda(use_cuda)
 
-iterator = tm.PytorchActivationsIterator(model,image_dataset,transformations,batch_size=64,num_workers=0,use_cuda=use_cuda)
+iterator = tm.NormalStrategy(model, image_dataset, transformations, batch_size=64, num_workers=0, use_cuda=use_cuda)
 adapter = tm.PytorchNumpyImageTransformationAdapter(use_cuda=use_cuda)
 folderpath = config.testing_path() / "activations_iterator"
 folderpath.mkdir(exist_ok=True,parents=True)

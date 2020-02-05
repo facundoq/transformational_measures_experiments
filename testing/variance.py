@@ -31,7 +31,7 @@ numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
 n_rotations=4
 rotations = np.linspace(-np.pi, np.pi, n_rotations, endpoint=False)
 
-iterator = tm.PytorchActivationsIterator(model,numpy_dataset,transformations,batch_size=256 )
+iterator = tm.NormalStrategy(model, numpy_dataset, transformations, batch_size=256)
 
 
 

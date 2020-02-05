@@ -9,7 +9,7 @@ from .measure.quotient import QuotientMeasure,divide_activations
 
 
 from .iterators.activations_iterator import ActivationsIterator
-from .iterators.pytorch_activations_iterator import PytorchActivationsIterator,ObservableLayersModule
+from transformation_measure.iterators.pytorch import *
 
 from .image_transformations import AffineTransformationGenerator,SimpleAffineTransformationGenerator,AffineTransformation, AffineTransformationNumpy,AffineTransformationPytorch
 

@@ -60,7 +60,7 @@ def experiment(p: variance.Parameters, o: variance.Options):
     p.transformations.set_cuda(use_cuda)
 
     if not p.stratified:
-        iterator = tm.PytorchActivationsIterator(model, image_dataset, p.transformations, batch_size=o.batch_size)
+        iterator = tm.NormalStrategy(model, image_dataset, p.transformations, batch_size=o.batch_size)
         if o.verbose:
             print(f"Calculating measure {p.measure} dataset size {len(image_dataset)}...")
 
@@ -69,7 +69,7 @@ def experiment(p: variance.Parameters, o: variance.Options):
         if o.verbose:
             print(f"Calculating stratified version of measure {p.measure}...")
         stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test, dataset.x_test)
-        stratified_iterators = [tm.PytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size,num_workers=o.num_workers) for numpy_dataset in stratified_numpy_datasets]
+        stratified_iterators = [tm.NormalStrategy(model, numpy_dataset, p.transformations, batch_size=o.batch_size, num_workers=o.num_workers) for numpy_dataset in stratified_numpy_datasets]
         measure_result = p.measure.eval_stratified(stratified_iterators,dataset.labels)
 
     return variance.VarianceExperimentResult(p, measure_result)

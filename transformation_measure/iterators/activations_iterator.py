@@ -1,8 +1,10 @@
+from __future__ import annotations
 import abc
 from typing import List
 
 import transformation_measure as tm
 import numpy as np
+
 
 class ActivationsIterator(abc.ABC):
     """
@@ -39,6 +41,10 @@ class ActivationsIterator(abc.ABC):
 
     @abc.abstractmethod
     def get_inverted_and_normal_iterator(self) -> 'ActivationsIterator':
+        pass
+
+    @abc.abstractmethod
+    def get_normal_activations_iterator(self) -> 'ActivationsIterator':
         pass
 
     def row_from_iterator(self,transformation_activations_iterator)->([np.ndarray],np.ndarray):
