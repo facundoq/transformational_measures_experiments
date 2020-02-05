@@ -34,7 +34,11 @@ class ActivationsIterator(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def set_invert_transformations(self,invert:bool) -> List[str]:
+    def get_inverted_activations_iterator(self) -> 'ActivationsIterator':
+        pass
+
+    @abc.abstractmethod
+    def get_inverted_and_normal_iterator(self) -> 'ActivationsIterator':
         pass
 
     def row_from_iterator(self,transformation_activations_iterator)->([np.ndarray],np.ndarray):

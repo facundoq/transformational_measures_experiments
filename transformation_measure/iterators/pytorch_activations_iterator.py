@@ -4,14 +4,31 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 from .pytorch_image_dataset import ImageDataset
-import numpy as np
 
 from transformation_measure import TransformationSet
 from transformation_measure.adapters import TransformationAdapter
 
+from abc import abstractmethod
+from torch import nn
+import transformation_measure as tm
+
+
+class ObservableLayersModule(nn.Module):
+
+    @abstractmethod
+    def activation_names(self)->[str]:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def forward_intermediates(self,args)->(object,[]):
+        raise NotImplementedError()
+
+    def n_intermediates(self):
+        return len(self.activation_names())
+
 class PytorchActivationsIterator(ActivationsIterator):
 
-    def __init__(self, model:nn.Module, dataset, transformations:TransformationSet, batch_size=32,num_workers=0,adapter:TransformationAdapter=None,use_cuda=torch.cuda.is_available()):
+    def __init__(self, model:ObservableLayersModule, dataset, transformations:TransformationSet, batch_size=32,num_workers=0,adapter:TransformationAdapter=None,use_cuda=torch.cuda.is_available()):
         '''
         models: a pytorch models that implements the forward_intermediate() method
         dataset: a dataset that yields x,y tuples
@@ -96,18 +113,10 @@ class PytorchActivationsIterator(ActivationsIterator):
             x = self.adapter.post_adapt(x)
         return x
 
-from abc import abstractmethod
-from torch import nn
 
-class ObservableLayersModule(nn.Module):
 
-    @abstractmethod
-    def activation_names(self)->[str]:
-        raise NotImplementedError()
+    def get_inverted_activations_iterator(self) -> ActivationsIterator:
+        return tm.iterators.pytorch_activations_iterator_inverted.PytorchActivationsIteratorInverted(self.model,self.dataset,self.transformations,self.batch_size,self.num_workers,self.adapter,self.use_cuda)
 
-    @abstractmethod
-    def forward_intermediates(self,args)->(object,[]):
-        raise NotImplementedError()
-
-    def n_intermediates(self):
-        return len(self.activation_names())
+    def get_inverted_and_normal_iterator(self) -> ActivationsIterator:
+        pass

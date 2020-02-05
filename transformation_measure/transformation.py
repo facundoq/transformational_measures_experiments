@@ -2,6 +2,7 @@ from typing import List,Tuple,Sized,Iterable,Iterator
 import numpy as np
 import torch
 import abc
+
 class Transformation:
 
     @abc.abstractmethod
@@ -22,7 +23,13 @@ class TransformationSet(Sized, Iterable[Transformation]):
     def id(self):
         pass
 
+    @abc.abstractmethod
+    def valid_input(self,shape:Tuple[int, ])->bool:
+        pass
+
 class IdentityTransformation(Transformation):
 
     def __call__(self, x):
         return x
+
+

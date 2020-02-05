@@ -113,7 +113,7 @@ class AllConvolutionalConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False):
-        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32,"lsa16":128,"rwth":128}
+        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32,"lsa16":64,"rwth":64}
         return AllConvolutionalConfig(conv=conv[dataset], dropout=False, bn=bn)
 
     def __init__(self, conv=32, dropout=False, bn=False):
@@ -122,7 +122,7 @@ class AllConvolutionalConfig(ModelConfig):
 
     def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = models.AllConvolutional(input_shape, num_classes,self.conv, self.bn)
-        model, optimizer = self.default_optimizer(model,cuda)
+        model, optimizer = self.default_optimizer(model,cuda,lr=0.01)
         return model,optimizer
 
     def id(self):

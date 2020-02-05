@@ -6,7 +6,7 @@ from typing import List,Tuple,Iterator
 from .transformation import Transformation,TransformationSet
 import torch.nn.functional as F
 import torch
-
+from typing import Tuple
 import abc
 
 class AffineTransformation(Transformation):
@@ -168,6 +168,9 @@ class AffineTransformationGenerator(TransformationSet):
         transformation_parameters=self.all_parameter_combinations()
         return [generator(parameter) for parameter in transformation_parameters].__iter__()
 
+    def valid_input(self,shape:Tuple[int, ]) -> bool:
+        return len(shape) == 4
+
 #TODO move this class to Config
 class SimpleAffineTransformationGenerator(TransformationSet):
     default_n_rotations = 16
@@ -206,6 +209,9 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         self.affine_transformation_generator.use_cuda=use_cuda
     def set_pytorch(self,pytorch):
         self.affine_transformation_generator.pytorch=pytorch
+
+    def valid_input(self,shape:Tuple[int, ]) -> bool:
+        self.affine_transformation_generator.valid_input(shape)
 
     def copy(self):
         a = SimpleAffineTransformationGenerator(r=self.rotation_intensity,s=self.scale_intensity,t=self.translation_intensity,n_rotations=self.n_rotations,n_translations=self.n_translations)
