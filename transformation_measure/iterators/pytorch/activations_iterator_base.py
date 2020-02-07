@@ -5,12 +5,14 @@ from torch import nn
 from torch.utils.data import DataLoader
 from transformation_measure.iterators.pytorch_image_dataset import ImageDataset
 
-from transformation_measure import TransformationSet,Transformation
+from transformation_measure import TransformationSet, Transformation
 from transformation_measure.adapters import TransformationAdapter
 
 from abc import abstractmethod
 from torch import nn
 import transformation_measure as tm
+import abc
+from .inverse_transformer import InverseTransformer
 
 
 class ObservableLayersModule(nn.Module):
@@ -26,58 +28,35 @@ class ObservableLayersModule(nn.Module):
     def n_intermediates(self):
         return len(self.activation_names())
 
-from enum import Enum
 
+class PytorchActivationsIterator(ActivationsIterator):
 
+    def __init__(self, model: ObservableLayersModule, dataset, transformations: TransformationSet, batch_size,
+                 num_workers, adapter: TransformationAdapter, use_cuda):
 
-class TransformationStrategy(Enum):
-    Normal = 1
-    Inverse =2
-    Both = 3
+        self.model = model
+        self.dataset = dataset
+        self.transformations = transformations
 
-from .transformation_strategies import PytorchTransformationStrategy
+        self.image_dataset = ImageDataset(self.dataset)
+        self.batch_size = batch_size
+        self.num_workers = num_workers
+        self.use_cuda = use_cuda
+        self.adapter = adapter
 
+    @abc.abstractmethod
+    def samples_activation(self, t_i: int, transformation: Transformation, dataloader: DataLoader):
+        pass
 
-
-class PytorchActivationsIteratorBase(ActivationsIterator):
-
-    def __init__(self, model: ObservableLayersModule, dataset, transformations: TransformationSet, batch_size=32,
-                 num_workers=0, adapter: TransformationAdapter = None, use_cuda=torch.cuda.is_available()):
-        '''
-        models: a pytorch models that implements the forward_intermediate() method
-        dataset: a dataset that yields x,y tuples
-        transformations: a list of functions that take a numpy
-                        sample and return a transformed one
-        '''
-        self.strategy=
-
-
-    def get_transformations(self):
-        return self.transformations
-
-    def layer_names(self):
-        return self.model.activation_names()
-
-    '''
-    Returns the activations of the models by iterating first over transformations and 
-    then, for each transformation, over samples
-    '''
+    @abc.abstractmethod
+    def transformations_activations(self, x: torch.Tensor):
+        pass
 
     def transformations_first(self):
         for t_i, transformation in enumerate(self.transformations):
             dataloader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=False,
                                     num_workers=self.num_workers, drop_last=True, pin_memory=True)
             yield transformation, self.samples_activation(t_i, transformation, dataloader)
-
-    def samples_activation(self, t_i, transformation, dataloader):
-        for batch, _ in dataloader:
-            if self.use_cuda:
-                batch = batch.cuda()
-            batch = self.transform_batch(transformation, batch)
-            with torch.no_grad():
-                y, batch_activations = self.model.forward_intermediates(batch)
-                batch_activations = [a.cpu().numpy() for a in batch_activations]
-                yield batch, batch_activations
 
     '''
          Returns the activations of the models by iterating first over transformations and 
@@ -97,6 +76,51 @@ class PytorchActivationsIteratorBase(ActivationsIterator):
                     x = batch[i, :]
                     yield batch_cpu[i, :], self.transformations_activations(x)
 
+    def transform_sample(self, x: torch.Tensor):
+
+        x = x.unsqueeze(0)
+        results = []
+        for i, transformation in enumerate(self.transformations):
+            transformed = self.transform_batch(transformation, x)
+            results.append(transformed)
+        return torch.cat(results)
+
+    def transform_batch(self, transformation, x: torch.Tensor):
+        if not self.adapter is None:
+            x = self.adapter.pre_adapt(x)
+        x = transformation(x)
+        if not self.adapter is None:
+            x = self.adapter.post_adapt(x)
+        return x
+
+    def layer_names(self):
+        return self.model.activation_names()
+
+    def get_inverted_activations_iterator(self) -> ActivationsIterator:
+        return PytorchActivationsIteratorInverted(self.model, self.dataset, self.transformations, self.batch_size,
+                                                  self.num_workers, self.adapter, self.use_cuda)
+
+    def get_both_iterator(self) -> ActivationsIterator:
+        return PytorchActivationsIteratorBoth(self.model, self.dataset, self.transformations, self.batch_size,
+                                              self.num_workers, self.adapter, self.use_cuda)
+
+    def get_normal_activations_iterator(self) -> ActivationsIterator:
+        return NormalPytorchActivationsIterator(self.model, self.dataset, self.transformations, self.batch_size,
+                                                self.num_workers, self.adapter, self.use_cuda)
+
+
+class NormalPytorchActivationsIterator(PytorchActivationsIterator):
+
+    def samples_activation(self, t_i, transformation, dataloader):
+        for batch, _ in dataloader:
+            if self.use_cuda:
+                batch = batch.cuda()
+            batch = self.transform_batch(transformation, batch)
+            with torch.no_grad():
+                y, batch_activations = self.model.forward_intermediates(batch)
+                batch_activations = [a.cpu().numpy() for a in batch_activations]
+                yield batch, batch_activations
+
     def transformations_activations(self, x):
 
         x_transformed = self.transform_sample(x)
@@ -108,6 +132,111 @@ class PytorchActivationsIteratorBase(ActivationsIterator):
             yield batch, batch_activations
 
 
+class PytorchActivationsIteratorInverted(PytorchActivationsIterator):
 
-    def set_strategy(self,ts:TransformationStrategy):
-        self.transformation_strategy = ts.value
+    def samples_activation(self, t_i, transformation, dataloader):
+        for batch, _ in dataloader:
+            if self.use_cuda:
+                batch = batch.cuda()
+            batch = self.transform_batch(transformation, batch)
+            with torch.no_grad():
+                y, batch_activations = self.model.forward_intermediates(batch)
+                if self.inverse_transformer is None:
+                    shapes = [a.shape for a in batch_activations]
+                    self.inverse_transformer = InverseTransformer(shapes, self.layer_names(),
+                                                                  self.get_transformations())
+                # filter activations to those accepted by the transformations
+                batch_activations = self.inverse_transformer.filter_activations(batch_activations)
+                # inverse transform selected activations
+                self.inverse_transformer.inverse_trasform_st_same_column(batch_activations, t_i)
+                batch_activations = [a.cpu().numpy() for a in batch_activations]
+                yield batch, batch_activations
+
+    '''
+         Returns the activations of the models by iterating first over transformations and 
+         then, for each transformation, over samples
+     '''
+
+    def transformations_activations(self, x):
+        x_transformed = self.transform_sample(x)
+        dataloader = DataLoader(x_transformed, batch_size=self.batch_size, shuffle=False,
+                                num_workers=0, drop_last=False)
+        self.inverse_transformer = None
+        t_start = 0
+        for batch in dataloader:
+            with torch.no_grad():
+                y, batch_activations = self.model.forward_intermediates(batch)
+            t_end = t_start + batch_activations.shape[0]
+            if self.inverse_transformer is None:
+                shapes = [a.shape for a in batch_activations]
+                self.inverse_transformer = InverseTransformer(shapes, self.layer_names(), self.get_transformations())
+            # filter activations to those accepted by the transformations
+            batch_activations = self.inverse_transformer.filter_activations(batch_activations)
+            # inverse transform selected activations
+            self.inverse_transformer.inverse_trasform_st_same_row(batch_activations, t_start, t_end)
+            batch_activations = [a.cpu().numpy() for a in batch_activations]
+            t_start = t_end
+            yield batch, batch_activations
+
+    def get_inverted_activations_iterator(self) -> ActivationsIterator:
+        return self
+
+    def layer_names(self) -> [str]:
+        return self.inverse_transformer.layer_names
+
+
+class PytorchActivationsIteratorBoth(PytorchActivationsIterator):
+
+    def samples_activation(self, t_i, transformation, dataloader):
+        for batch, _ in dataloader:
+            if self.use_cuda:
+                batch = batch.cuda()
+            batch = self.transform_batch(transformation, batch)
+            with torch.no_grad():
+                y, batch_activations = self.model.forward_intermediates(batch)
+                if self.inverse_transformer is None:
+                    shapes = [a.shape for a in batch_activations]
+                    self.inverse_transformer = InverseTransformer(shapes, self.layer_names(),
+                                                                  self.get_transformations())
+                # filter activations to those accepted by the transformations
+                batch_activations = self.inverse_transformer.filter_activations(batch_activations)
+                inverted_batch_activations = batch_activations.copy()
+                # inverse transform selected activations
+                self.inverse_transformer.inverse_trasform_st_same_column(inverted_batch_activations, t_i)
+                batch_activations = [a.cpu().numpy() for a in batch_activations]
+                inverted_batch_activations = [a.cpu().numpy() for a in inverted_batch_activations]
+                yield batch, batch_activations, inverted_batch_activations
+
+    '''
+         Returns the activations of the models by iterating first over transformations and 
+         then, for each transformation, over samples
+     '''
+
+    def transformations_activations(self, x):
+        x_transformed = self.transform_sample(x)
+        dataloader = DataLoader(x_transformed, batch_size=self.batch_size, shuffle=False,
+                                num_workers=0, drop_last=False)
+        self.inverse_transformer = None
+        t_start = 0
+        for batch in dataloader:
+            with torch.no_grad():
+                y, batch_activations = self.model.forward_intermediates(batch)
+            t_end = t_start + batch_activations.shape[0]
+            if self.inverse_transformer is None:
+                shapes = [a.shape for a in batch_activations]
+                self.inverse_transformer = InverseTransformer(shapes, self.layer_names(), self.get_transformations())
+            # filter activations to those accepted by the transformations
+            batch_activations = self.inverse_transformer.filter_activations(batch_activations)
+            inverted_batch_activations = batch_activations.copy()
+            # inverse transform selected activations
+            self.inverse_transformer.inverse_trasform_st_same_row(inverted_batch_activations, t_start, t_end)
+            t_start = t_end
+            batch_activations = [a.cpu().numpy() for a in batch_activations]
+            inverted_batch_activations = [a.cpu().numpy() for a in inverted_batch_activations]
+            yield batch, batch_activations, inverted_batch_activations
+
+    def get_both_iterator(self) -> ActivationsIterator:
+        return self
+
+    def layer_names(self) -> [str]:
+        return self.inverse_transformer.layer_names

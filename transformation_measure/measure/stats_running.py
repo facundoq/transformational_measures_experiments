@@ -46,7 +46,7 @@ class RunningMeanSimple:
     def mean(self):
         return self.sum if self.n > 0 else np.zeros(1)
 
-class RunningMean:
+class RunningMeanWelford:
     def __repr__(self):
         return f"RunningMean(n={self.n},mean={self.mean().shape})"
 
@@ -107,8 +107,8 @@ class RunningMeanAndVarianceNaive(RunningMeanAndVariance):
     def __repr__(self):
         return f"RunningMeanAndVarianceNaive(n={self.n},mean={self.mean().shape})"
     def __init__(self):
-        self.e=RunningMean()
-        self.e2=RunningMean()
+        self.e=RunningMeanWelford()
+        self.e2=RunningMeanWelford()
 
     @property
     def n(self):
@@ -131,7 +131,7 @@ class RunningMeanAndVarianceNaive(RunningMeanAndVariance):
         self.e.update_all(x)
         self.e2.update_all(x*x)
 
-class RunningMeanAndVarianceWellford(RunningMeanAndVariance):
+class RunningMeanAndVarianceWelford(RunningMeanAndVariance):
 
     def __repr__(self):
 

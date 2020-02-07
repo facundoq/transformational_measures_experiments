@@ -113,7 +113,7 @@ class AllConvolutionalConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False):
-        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32,"lsa16":64,"rwth":64}
+        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32,"lsa16":128,"rwth":48}
         return AllConvolutionalConfig(conv=conv[dataset], dropout=False, bn=bn)
 
     def __init__(self, conv=32, dropout=False, bn=False):
@@ -230,7 +230,7 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
     elif model == models.TIPoolingSimpleConv.__name__ :
         epochs = {'cifar10': 20, 'mnist': 5, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     elif model == models.AllConvolutional.__name__ :
-        epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
+        epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12,"lsa16":25,"rwth":35}
     # elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:
     #     epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12, }
     elif model == models.VGG16D.__name__ :

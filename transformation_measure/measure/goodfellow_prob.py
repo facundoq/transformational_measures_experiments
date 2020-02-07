@@ -3,7 +3,7 @@ import transformation_measure as tm
 from multiprocessing import Queue
 from .multithreaded_layer_measure import LayerMeasure,PerLayerMeasure,ActivationsOrder
 import numpy as np
-from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean,RunningMeanSimple
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWelford,RunningMeanWelford,RunningMeanSimple
 from scipy.stats import norm
 
 
@@ -19,7 +19,7 @@ class GoodfellowGlobalVarianceNormal(Measure):
         self.sign=sign
 
     def eval(self,activations_iterator: ActivationsIterator)->MeasureResult:
-        running_means = [RunningMeanAndVarianceWellford() for i in activations_iterator.layer_names()]
+        running_means = [RunningMeanAndVarianceWelford() for i in activations_iterator.layer_names()]
         for transformation, samples_activations_iterator in activations_iterator.transformations_first():
             for x, batch_activations in samples_activations_iterator:
                 for j, activations in enumerate(batch_activations):
@@ -56,7 +56,7 @@ class GoodfellowLocalVarianceNormal(Measure):
         self.sign=sign
 
     def eval(self,activations_iterator: ActivationsIterator)->MeasureResult:
-        running_means = [RunningMean() for i in activations_iterator.layer_names()]
+        running_means = [RunningMeanWelford() for i in activations_iterator.layer_names()]
 
         for x,transformation_activations  in activations_iterator.samples_first():
             for x_transformed, activations in transformation_activations:

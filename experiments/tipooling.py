@@ -1,5 +1,5 @@
 from .common import *
-from transformation_measure.measure.stats_running import RunningMean
+from transformation_measure.measure.stats_running import RunningMeanWelford
 
 class TIPooling(Experiment):
     def description(self):
@@ -74,7 +74,7 @@ class TIPooling(Experiment):
 
         # average layer values
         layers = result.layers
-        means_per_original_layer = [RunningMean() for i in range(k)]
+        means_per_original_layer = [RunningMeanWelford() for i in range(k)]
         for i in range(m):
             start = i*k
             end = (i+1)*k

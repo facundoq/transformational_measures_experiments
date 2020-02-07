@@ -20,16 +20,17 @@ class DistanceAggregation:
     def name(self):
         return f"DA(normalize={self.normalize},keep_feature_maps={self.keep_feature_maps},distance={self.distance}" # TODO add parenthesis at the end
 
+    def normalize_activations(self,x:np.ndarray):
+        c,n,d=x.shape
+        if self.normalize and d>1:
+            for i in range(c):
+                for j in range(n):
+                    x[i,j,:]/=np.linalg.norm(x[i,j,:])
+
     def apply(self,x:np.ndarray):
         x = self.convert_to_cnd_format(x)
         # x has size (c,n,d), where c is the feature dimension
-
-        if self.normalize:
-            # TODO change to unit norm
-            x -= x.min(axis=0, keepdims=True)
-            max_values=x.max(axis=0,keepdims=True)
-            max_values[max_values==0]=1
-            x/=max_values
+        self.normalize_activations(x)
         return self.aggregate_distances(x)
 
     def convert_to_cnd_format(self,x:np.ndarray):
@@ -40,6 +41,7 @@ class DistanceAggregation:
             if self.keep_feature_maps:
                 # consider feature maps as a whole object of size h*w
                 x = x.reshape((n, c, h * w))
+
             else:
                 # consider every element of the feature map as a distinct activation
                 x = x.reshape((n, c * h * w, 1))
@@ -50,7 +52,6 @@ class DistanceAggregation:
             raise ValueError(f"Activation shape not supported {x.shape}")
         # ncd to cnd
         x = x.transpose((1, 0, 2))
-        #print(x.flags["C_CONTIGUOUS"])
         x = np.ascontiguousarray(x)
         return x
 

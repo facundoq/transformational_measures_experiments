@@ -38,7 +38,7 @@ import numpy as np
 from typing import List
 from pathlib import Path
 from experiment import variance
-from transformation_measure.measure.stats_running import  RunningMeanAndVarianceWellford
+from transformation_measure.measure.stats_running import  RunningMeanAndVarianceWelford
 import transformation_measure as tm
 from matplotlib.lines import Line2D
 
@@ -215,7 +215,7 @@ def plot_collapsing_layers_same_model_mr(results:List[tm.MeasureResult], filepat
     if linestyles is None and n <= 4 and plot_mean == False:
         linestyles = ["-", "--", ":", "-."]
 
-    mean_and_variance = RunningMeanAndVarianceWellford()
+    mean_and_variance = RunningMeanAndVarianceWelford()
     max_value=0
     for i, result in enumerate(results):
         n_layers= len(result.layers)

@@ -1,6 +1,6 @@
 from .base import Measure,MeasureResult,ActivationsByLayer
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWelford,RunningMeanWelford
 import scipy.stats
 
 class AnovaMeasure(Measure):
@@ -116,7 +116,7 @@ class AnovaFMeasure(Measure):
         :return: The global means for each layer, averaging out the transformations
         '''
         # n_transformations = len(means_per_layer_and_transformation)
-        global_means_running = [RunningMean() for i in range(n_layers)]
+        global_means_running = [RunningMeanWelford() for i in range(n_layers)]
         for transformation_means in means_per_layer_and_transformation:
             # means_per_layer  has the means for a given transformation
             for i,layer_means in enumerate(transformation_means):
@@ -138,7 +138,7 @@ class AnovaFMeasure(Measure):
         means_per_transformation = []
         samples_per_transformation=[]
         for transformation, transformation_activations in activations_iterator.transformations_first():
-            samples_variances_running = [RunningMean() for i in range(n_layers)]
+            samples_variances_running = [RunningMeanWelford() for i in range(n_layers)]
             # calculate the variance of all samples for this transformation
             n_samples=0
             for x, batch_activations in transformation_activations:

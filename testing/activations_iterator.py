@@ -32,8 +32,9 @@ transformations.set_pytorch(True)
 transformations.set_cuda(use_cuda)
 
 iterator = tm.NormalPytorchActivationsIterator(model, image_dataset, transformations, batch_size=64, num_workers=0, use_cuda=use_cuda)
+
 adapter = tm.PytorchNumpyImageTransformationAdapter(use_cuda=use_cuda)
-folderpath = config.testing_path() / f"activations_iterator"
+folderpath = config.testing_path() / f"{iterator.__class__.__name__}"
 folderpath.mkdir(exist_ok=True,parents=True)
 
 batch_size=64
@@ -41,7 +42,10 @@ i=0
 for original_x,activations_iterator in iterator.samples_first():
 
     for x_transformed,activations in activations_iterator:
-        x=adapter.pre_adapt(x_transformed)
+
+        x=activations[0].transpose((0,2,3,1))
+        if x.shape[3]==1:
+            x=x.squeeze
         filepath=folderpath/ f"{dataset}_samples_first.png"
         util.plot_image_grid(x, x.shape[0], show=False, save=filepath)
         i = i + 1

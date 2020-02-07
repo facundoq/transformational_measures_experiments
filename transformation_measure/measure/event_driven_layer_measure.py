@@ -1,7 +1,7 @@
 from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
-from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWelford,RunningMeanWelford
 from typing import List
 from enum import Enum
 
@@ -84,7 +84,7 @@ class STDLayerMeasure(EventDrivenLayerMeasure):
 
     def __init__(self,layer_index:int,layer_name:str):
         super(STDLayerMeasure).__init__(layer_index,layer_name)
-        self.running_mean = RunningMean()
+        self.running_mean = RunningMeanWelford()
 
     def update_layer(self, activations):
         layer_measure = activations.std(axis=0)

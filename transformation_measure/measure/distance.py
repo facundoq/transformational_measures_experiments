@@ -2,7 +2,7 @@ from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 from transformation_measure import ConvAggregation
 import numpy as np
-from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWelford,RunningMeanWelford
 from typing import List
 from enum import Enum
 from .quotient import divide_activations
@@ -22,7 +22,7 @@ class TransformationDistance(Measure):
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         layer_names=activations_iterator.layer_names()
         n_intermediates = len(layer_names)
-        mean_running= [RunningMean() for i in range(n_intermediates)]
+        mean_running= [RunningMeanWelford() for i in range(n_intermediates)]
         for x, transformation_activations_iterator in activations_iterator.samples_first():
             # transformation_activations_iterator can iterate over all transforms
             for x_transformed, activations in transformation_activations_iterator:
@@ -53,7 +53,7 @@ class SampleDistance(Measure):
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         layer_names = activations_iterator.layer_names()
         n_layers = len(layer_names)
-        mean_running = [RunningMean() for i in range(n_layers)]
+        mean_running = [RunningMeanWelford() for i in range(n_layers)]
 
         for transformation, transformation_activations in activations_iterator.transformations_first():
             # calculate the variance of all samples for this transformation

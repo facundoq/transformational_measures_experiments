@@ -3,7 +3,7 @@ import transformation_measure as tm
 from multiprocessing import Queue
 from .multithreaded_layer_measure import LayerMeasure,PerLayerMeasure,ActivationsOrder
 import numpy as np
-from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford,RunningMean,RunningMeanSimple
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWelford,RunningMeanWelford,RunningMeanSimple
 from scipy.stats import norm
 
 class GlobalVarianceNormal(LayerMeasure):
@@ -14,7 +14,7 @@ class GlobalVarianceNormal(LayerMeasure):
         self.sign=sign
 
     def eval(self,q:Queue,inner_q:Queue):
-        running_mean = RunningMeanAndVarianceWellford()
+        running_mean = RunningMeanAndVarianceWelford()
         for transformation in self.queue_as_generator(q):
             i=0
             for activations in self.queue_as_generator(inner_q):

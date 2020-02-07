@@ -3,7 +3,7 @@ import abc
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
 import numpy as np
 from typing import  List
-from .stats_running import RunningMean
+from .stats_running import RunningMeanWelford
 from .layer_transformation import ConvAggregation
 from utils import get_all
 
@@ -59,7 +59,7 @@ class MeasureResult:
         return self.per_layer_average().mean()
 
     def global_average(self)-> float:
-        rm = RunningMean()
+        rm = RunningMeanWelford()
         for layer in self.layers:
                 for act in layer[:]:
                     if np.isfinite(act):

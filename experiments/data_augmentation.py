@@ -37,7 +37,7 @@ class DataAugmentation(Experiment):
                 accuracies = []
                 for model_config_generator in models:
                     # Train
-                    model_config = model_config_generator.for_dataset(dataset)
+                    model_config = model_config_generator.for_dataset(dataset,bn=True)
                     model_accuracies = []
                     for t_train in [identity_transformations,transformation]:
                         epochs = config.get_epochs(model_config, dataset, t_train)

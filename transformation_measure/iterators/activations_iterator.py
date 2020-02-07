@@ -36,15 +36,15 @@ class ActivationsIterator(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_inverted_activations_iterator(self) -> 'ActivationsIterator':
+    def get_inverted_activations_iterator(self) -> ActivationsIterator:
         pass
 
     @abc.abstractmethod
-    def get_inverted_and_normal_iterator(self) -> 'ActivationsIterator':
+    def get_both_iterator(self) -> ActivationsIterator:
         pass
 
     @abc.abstractmethod
-    def get_normal_activations_iterator(self) -> 'ActivationsIterator':
+    def get_normal_activations_iterator(self) -> ActivationsIterator:
         pass
 
     def row_from_iterator(self,transformation_activations_iterator)->([np.ndarray],np.ndarray):
@@ -61,5 +61,6 @@ class ActivationsIterator(abc.ABC):
         activations = [ np.concatenate(layer_activations,axis=0) for layer_activations in activations]
         x_transformed = np.concatenate(x_transformed,axis=0)
         return activations,x_transformed
+
 
 

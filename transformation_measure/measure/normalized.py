@@ -1,7 +1,7 @@
 from transformation_measure import ConvAggregation
 from transformation_measure import MeasureFunction, QuotientMeasure
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-from transformation_measure.measure.stats_running import RunningMeanAndVarianceWellford, RunningMean,RunningMeanAndVarianceNaive
+from transformation_measure.measure.stats_running import RunningMeanAndVarianceWelford, RunningMeanWelford,RunningMeanAndVarianceNaive
 from .base import Measure, MeasureResult
 from .quotient import divide_activations
 
@@ -20,11 +20,11 @@ class TransformationVariance(Measure):
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
         layer_names = activations_iterator.layer_names()
         n_layers = len(layer_names)
-        mean_running = [RunningMean() for i in range(n_layers)]
+        mean_running = [RunningMeanWelford() for i in range(n_layers)]
         for x,transformation_activations  in activations_iterator.samples_first():
 
             #calculate the running mean/variance/std over all transformations of x
-            transformation_variances_running = [RunningMeanAndVarianceWellford() for i in range(n_layers)]
+            transformation_variances_running = [RunningMeanAndVarianceWelford() for i in range(n_layers)]
             for x_transformed, activations in transformation_activations:
                 for i, layer_activations in enumerate(activations):
                     # apply function to conv layers
@@ -59,10 +59,10 @@ class SampleVariance(Measure):
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
         layer_names = activations_iterator.layer_names()
         n_layers = len(layer_names)
-        mean_variances_running = [RunningMean() for i in range(n_layers)]
+        mean_variances_running = [RunningMeanWelford() for i in range(n_layers)]
 
         for transformation, samples_activations_iterator in activations_iterator.transformations_first():
-            samples_variances_running = [RunningMeanAndVarianceWellford() for i in range(n_layers)]
+            samples_variances_running = [RunningMeanAndVarianceWelford() for i in range(n_layers)]
             # calculate the variance of all samples for this transformation
             for x, batch_activations in samples_activations_iterator:
                 for j, layer_activations in enumerate(batch_activations):
