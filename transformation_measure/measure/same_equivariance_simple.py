@@ -9,30 +9,34 @@ def list_get_all(list:[],indices:[int])->[]:
     return [list[i] for i in indices]
 
 class DistanceFunction:
-    def __init__(self,keep_shape:bool):
-        self.keep_shape=keep_shape
+    def __init__(self,normalize:bool):
+        self.normalize=normalize
 
     def distance(self,batch:np.ndarray,batch_inverted:np.ndarray,mean_running:RunningMeanWelford):
         n_shape=len(batch.shape)
         assert n_shape>=2
         n,f=batch.shape[0],batch.shape[1]
 
-        if not self.keep_shape:
-            batch = batch.reshape(n,-1)
+        if n_shape>2 and self.normalize:
+            # normalize all extra dimensions
+            for i in range(n):
+                for j in range(f):
+                    batch[i,j,:]/=np.linalg.norm(batch[i,j,:])
+                    batch_inverted[i,j,:]/=np.linalg.norm(batch_inverted[i,j,:])
 
         # ssd of all values
         distances = (batch-batch_inverted)**2
-
+        n_shape=len(batch.shape)
         if n_shape>2:
             # aggregate extra dims to keep only the feature dim
-            distances= distances.sum(axis=tuple(range(2,n)))
-        # now we only have a 2d (samples,features) array
-        #assert len(distances.shape)==2
-
+            distances= distances.mean(axis=tuple(range(2,n_shape)))
+        distances = np.sqrt(distances)
+        assert len(distances.shape)==2
         mean_running.update_all(distances)
+    def __repr__(self):
+        return f"DF(normalize={self.normalize})"
 
-
-class DistanceSameEquivarianceSimpleMeasure(Measure):
+class DistanceSameEquivarianceSimple(Measure):
     def __init__(self, distance_function:DistanceFunction):
         super().__init__()
         self.distance_function=distance_function
@@ -49,6 +53,8 @@ class DistanceSameEquivarianceSimpleMeasure(Measure):
             # transformation_activations_iterator can iterate over all transforms
             for x_transformed, activations,inverted_activations in transformation_activations_iterator:
                 if mean_running is None:
+                    # do this after the first iteration since we dont know the number
+                    # of layers until the first iteration of the activations_iterator
                     mean_running = [RunningMeanWelford() for i in range(len(activations))]
                 for j, (layer_activations,inverted_layer_activations) in enumerate(zip(activations,inverted_activations)):
                     self.distance_function.distance(layer_activations,inverted_layer_activations,mean_running[j])

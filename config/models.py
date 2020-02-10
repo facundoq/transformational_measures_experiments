@@ -15,7 +15,7 @@ import abc
 class ModelConfig(abc.ABC):
 
     @abc.abstractmethod
-    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool)->(tm.ObservableLayersModule, Optimizer):
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool)->(tm.ObservableLayersModule, Optimizer):
         pass
 
     @abc.abstractmethod
@@ -60,7 +60,7 @@ class TIPoolingSimpleConvConfig(ModelConfig):
         self.fc=fc
         self.bn=bn
 
-    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = models.TIPoolingSimpleConv(input_shape, num_classes, self.transformations, self.conv, self.fc, self.bn)
         model, optimizer = self.default_optimizer(model,cuda)
         return model,optimizer
@@ -74,7 +74,7 @@ class SimpleConvConfig(ModelConfig):
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False,k=3, activation=models.ActivationFunction.ELU,max_pooling=True):
         conv = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64,"lsa16":128,"rwth":128}
-        fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128,"lsa16":64,"rwth":256}
+        fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128,"lsa16":64,"rwth":128}
 
         return SimpleConvConfig(conv=conv[dataset], fc=fc[dataset],bn=bn,k=k,activation=activation,max_pooling=max_pooling)
 
@@ -86,10 +86,15 @@ class SimpleConvConfig(ModelConfig):
         self.k=k
         self.max_pooling=max_pooling
 
-    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
-        model = models.SimpleConv(input_shape, num_classes, self.conv, self.fc, self.bn, self.k, self.activation_function,self.max_pooling)
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
+        model = self.make_model(input_shape,num_classes,cuda)
         model, optimizer = self.default_optimizer(model,cuda,lr=5e-4)
         return model,optimizer
+    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
+        model = models.SimpleConv(input_shape, num_classes, self.conv, self.fc, self.bn, self.k, self.activation_function,self.max_pooling)
+        if cuda:
+            model = model.cuda()
+        return model
 
     def id(self):
         params=[]
@@ -113,17 +118,18 @@ class AllConvolutionalConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,dataset:str,bn:bool=False):
-        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32,"lsa16":128,"rwth":48}
+        conv = {"mnist": 16, "mnist_rot": 32, "cifar10": 64, "fashion_mnist": 32,"lsa16":64,"rwth":128}
         return AllConvolutionalConfig(conv=conv[dataset], dropout=False, bn=bn)
 
     def __init__(self, conv=32, dropout=False, bn=False):
         self.conv=conv
         self.bn=bn
 
-    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = models.AllConvolutional(input_shape, num_classes,self.conv, self.bn)
-        model, optimizer = self.default_optimizer(model,cuda,lr=0.01)
+        model, optimizer = self.default_optimizer(model,cuda,lr=0.001)
         return model,optimizer
+
 
     def id(self):
         return f"{models.AllConvolutional.__name__}(conv={self.conv},bn={self.bn})"
@@ -141,7 +147,7 @@ class FFNetConfig(ModelConfig):
         self.h2=h2
         self.bn=bn
 
-    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = models.FFNet(input_shape, num_classes,self.h1,self.h2, self.bn)
         model, optimizer = self.default_optimizer(model,cuda)
         return model,optimizer
@@ -162,7 +168,7 @@ class VGG16DConfig(ModelConfig):
         self.fc=fc
         self.bn=bn
 
-    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = models.VGG16D(input_shape, num_classes,self.conv, self.fc, self.bn)
         model, optimizer = self.default_optimizer(model,cuda,lr=0.0001)
         return model,optimizer
@@ -180,7 +186,7 @@ class ResNetConfig(ModelConfig):
         self.bn=bn
         self.v=v
 
-    def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         if self.v == "18":
             model = models.ResNet18(input_shape, num_classes, self.bn)
             model, optimizer = self.default_optimizer(model,cuda,lr=5e-4)
@@ -230,13 +236,13 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
     elif model == models.TIPoolingSimpleConv.__name__ :
         epochs = {'cifar10': 20, 'mnist': 5, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
     elif model == models.AllConvolutional.__name__ :
-        epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12,"lsa16":25,"rwth":35}
+        epochs = {'cifar10': 40, 'mnist': 30, 'fashion_mnist': 12,"lsa16":20,"rwth":20}
     # elif model == models.VGGLike.__name__ or model == models.VGGLikeBN.__name__:
     #     epochs = {'cifar10': 50, 'mnist': 40, 'fashion_mnist': 12, }
     elif model == models.VGG16D.__name__ :
-        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12,"lsa16":25,"rwth":25, }
+        epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 12,"lsa16":20,"rwth":20, }
     elif model == models.ResNet.__name__:
-        epochs = {'cifar10': 40, 'mnist': 10, 'fashion_mnist': 12,"lsa16":25,"rwth":25}
+        epochs = {'cifar10': 40, 'mnist': 7, 'fashion_mnist': 12,"lsa16":20,"rwth":20}
     elif model == models.FFNet.__name__:
         epochs = {'cifar10': 30, 'mnist': 10, 'fashion_mnist': 8,"lsa16":25,"rwth":15}
     else:

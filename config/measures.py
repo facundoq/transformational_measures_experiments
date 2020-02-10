@@ -21,31 +21,41 @@ def default_measure_dataset(dataset:str,measure:Measure):
     subset = variance.DatasetSubset.test
     return variance.DatasetParameters(dataset, subset, dataset_size_for_measure(measure,subset))
 
-da = DistanceAggregation(normalize=False, keep_feature_maps=False)
-da_normalize = DistanceAggregation(normalize=True, keep_feature_maps=False)
-da_normalize_keep = DistanceAggregation(normalize=True, keep_feature_maps=True)
-da_keep = DistanceAggregation(normalize=False, keep_feature_maps=True)
+da = DistanceAggregation(normalize=False, keep_shape=False)
+da_normalize = DistanceAggregation(normalize=True, keep_shape=False)
+da_normalize_keep = DistanceAggregation(normalize=True, keep_shape=True)
+da_keep = DistanceAggregation(normalize=False, keep_shape=True)
+
+df = DistanceFunction(normalize=False)
+df_normalize = DistanceFunction(normalize=True)
 
 def all_measures()-> [Measure]:
     cas=[ConvAggregation.none, ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.max,]
+
     das = [da,da_normalize_keep,da_normalize,da_keep]
+    dfs = [df , df_normalize]
     measure_functions = [MeasureFunction.std]
     measures=[]
-
-    for (ca,mf) in itertools.product(cas,measure_functions):
-        measures.append(SampleVariance())
-        measures.append(TransformationVariance())
+    measures.append(SampleVariance())
+    measures.append(TransformationVariance())
+    measures.append(SampleVarianceSameEquivariance())
+    measures.append(TransformationVarianceSameEquivariance())
+    for ca in cas:
         measures.append(NormalizedVariance(ca))
-        # measures.append(SampleVarianceMeasure(mf, ))
-        # measures.append(TransformationVarianceMeasure(mf))
-        # measures.append(NormalizedVarianceMeasure(mf, conv_aggregation=ca))
+        measures.append(NormalizedVarianceSameEquivariance(ca))
+
 
     for (d,mf) in itertools.product(das,measure_functions):
         measures.append(SampleDistance(d))
         measures.append(TransformationDistance(d))
         for ca in cas:
             measures.append(NormalizedDistance(d,ca))
-        measures.append(NormalizedDistanceSameEquivarianceMeasure(d))
+        measures.append(NormalizedDistanceSameEquivariance(d))
+        measures.append(SampleDistanceSameEquivariance(d))
+        measures.append(TransformationDistanceSameEquivariance(d))
+
+    for d in dfs:
+        measures.append(DistanceSameEquivarianceSimple(d))
 
     for percentage in [0.01,0.001,0.1,0.5,0.05]:
         measures.append(GoodfellowMeasure(activations_percentage=percentage))
@@ -72,6 +82,6 @@ def common_measures()-> [Measure]:
         ,AnovaMeasure(alpha=0.99,bonferroni=True)
         ,NormalizedDistance(da,ca_mean)
         ,NormalizedDistance(da_keep, ca_none)
-        ,NormalizedDistanceSameEquivarianceMeasure(da_normalize_keep)
+        ,NormalizedDistanceSameEquivariance(da_normalize_keep)
     ]
     return measures

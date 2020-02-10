@@ -111,7 +111,7 @@ class Experiment(abc.ABC):
 
 
     def experiment_training(self, p: training.Parameters, min_accuracy=None,num_workers=0,use_fork=True,batch_size=256):
-        if not min_accuracy:
+        if min_accuracy is None:
             min_accuracy = config.min_accuracy(p.model, p.dataset)
         if self.experiment_finished(p):
             return

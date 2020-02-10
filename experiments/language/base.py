@@ -64,7 +64,7 @@ class Language(abc.ABC):
             tm.GoodfellowNormal: self.goodfellow,
             tm.GoodfellowMeasure: self.goodfellow,
             tm.AnovaMeasure: self.ANOVA,
-            tm.NormalizedDistanceSameEquivarianceMeasure:self.distance_equivariance,
+            tm.NormalizedDistanceSameEquivariance:self.distance_equivariance,
         }
         return dict[m.__class__]
 

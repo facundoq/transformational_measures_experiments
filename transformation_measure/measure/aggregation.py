@@ -10,9 +10,9 @@ import numpy as np
 
 class DistanceAggregation:
 
-    def __init__(self,normalize:bool,keep_feature_maps:bool,distance="euclidean"):
+    def __init__(self, normalize:bool, keep_shape:bool, distance="euclidean"):
         self.normalize=normalize
-        self.keep_feature_maps=keep_feature_maps
+        self.keep_feature_maps=keep_shape
         self.distance=distance
 
 

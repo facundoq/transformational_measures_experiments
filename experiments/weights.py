@@ -32,7 +32,7 @@ class RandomWeights(Experiment):
                 name += f"_random{i:03}"
                 model_path = Path(f"{name}{ext}")
                 if not model_path.exists():
-                    model, optimizer = model_config.make_model(dataset.input_shape, dataset.num_classes, o.use_cuda)
+                    model, optimizer = model_config.make_model_and_optimizer(dataset.input_shape, dataset.num_classes, o.use_cuda)
                     scores = training.eval_scores(model, dataset, p_training.transformations,  TransformationStrategy.random_sample, o.get_eval_options())
                     training.save_model(p_training, o, model, scores, model_path)
                     del model

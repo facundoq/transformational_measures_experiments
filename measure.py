@@ -12,7 +12,7 @@
 import datasets
 import torch,config
 from experiment import training, variance
-from utils import profiler
+from utils.profiler import Profiler
 from transformation_measure.iterators.pytorch_image_dataset import ImageDataset
 
 
@@ -60,7 +60,7 @@ def experiment(p: variance.Parameters, o: variance.Options):
     p.transformations.set_cuda(use_cuda)
 
     if not p.stratified:
-        iterator = tm.NormalPytorchActivationsIterator(model, image_dataset, p.transformations, batch_size=o.batch_size)
+        iterator = tm.NormalPytorchActivationsIterator(model, image_dataset, p.transformations, o.batch_size,o.num_workers,use_cuda)
         if o.verbose:
             print(f"Calculating measure {p.measure} dataset size {len(image_dataset)}...")
 
@@ -69,14 +69,14 @@ def experiment(p: variance.Parameters, o: variance.Options):
         if o.verbose:
             print(f"Calculating stratified version of measure {p.measure}...")
         stratified_numpy_datasets = NumpyDataset.stratify_dataset(dataset.y_test, dataset.x_test)
-        stratified_iterators = [tm.NormalPytorchActivationsIterator(model, numpy_dataset, p.transformations, batch_size=o.batch_size, num_workers=o.num_workers) for numpy_dataset in stratified_numpy_datasets]
+        stratified_iterators = [tm.NormalPytorchActivationsIterator(model, numpy_dataset, p.transformations, o.batch_size,o.num_workers,use_cuda) for numpy_dataset in stratified_numpy_datasets]
         measure_result = p.measure.eval_stratified(stratified_iterators,dataset.labels)
 
     return variance.VarianceExperimentResult(p, measure_result)
 
 
 def main(p:variance.Parameters,o:variance.Options):
-    profiler= profiler.Profiler()
+    profiler= Profiler()
     profiler.event("start")
     if o.verbose:
         print(f"Experimenting with parameters: {p}")

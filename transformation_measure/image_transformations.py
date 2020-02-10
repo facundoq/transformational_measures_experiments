@@ -71,8 +71,9 @@ class AffineTransformationPytorch(AffineTransformation):
 
     def __call__(self, x: torch.FloatTensor):
         n, c, h, w = x.shape
-        grid = self.grid.expand(n,*self.grid.shape[1:])
-        x = F.grid_sample(x, grid)#,align_corners=True)
+        with torch.no_grad():
+            grid = self.grid.expand(n,*self.grid.shape[1:])
+            x = F.grid_sample(x, grid)#,align_corners=True)
         return x
 
     def inverse(self):
@@ -211,7 +212,7 @@ class SimpleAffineTransformationGenerator(TransformationSet):
         self.affine_transformation_generator.pytorch=pytorch
 
     def valid_input(self,shape:Tuple[int, ]) -> bool:
-        self.affine_transformation_generator.valid_input(shape)
+        return self.affine_transformation_generator.valid_input(shape)
 
     def copy(self):
         a = SimpleAffineTransformationGenerator(r=self.rotation_intensity,s=self.scale_intensity,t=self.translation_intensity,n_rotations=self.n_rotations,n_translations=self.n_translations)

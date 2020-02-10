@@ -32,7 +32,7 @@ if __name__ == '__main__':
         measure=r.measure_result.measure
         # if r.measure_result.measure.__class__.__name__ == tm.AnovaMeasure.__name__:
         #     print("anova")
-        if r.measure_result.measure.__class__.__name__ == tm.NormalizedDistanceSameEquivarianceMeasure:
+        if r.measure_result.measure.__class__.__name__ == tm.NormalizedDistanceSameEquivariance:
 
             config.save_results(r,results_folderpath)
         else:

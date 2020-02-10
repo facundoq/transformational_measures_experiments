@@ -1,18 +1,9 @@
-from .base import Measure,MeasureResult
 from transformation_measure.iterators.activations_iterator import ActivationsIterator
-import numpy as np
+from transformation_measure import MeasureResult,Measure
 from transformation_measure.measure.stats_running import RunningMeanAndVarianceWelford,RunningMeanWelford
-from typing import List
-from enum import Enum
 from .quotient import divide_activations
 
-from sklearn.metrics.pairwise import euclidean_distances
-import sklearn
-import matplotlib.pyplot as plt
 from .distance import DistanceAggregation
-from pathlib import Path
-import transformation_measure as tm
-from time import gmtime, strftime
 
 def list_get_all(list:[],indices:[int])->[]:
     return [list[i] for i in indices]
@@ -22,7 +13,7 @@ class BaseDistanceSameEquivarianceMeasure(Measure):
         super().__init__()
         self.distance_aggregation=distance_aggregation
 
-class TransformationDistanceSameEquivarianceMeasure(BaseDistanceSameEquivarianceMeasure):
+class TransformationDistanceSameEquivariance(BaseDistanceSameEquivarianceMeasure):
 
 
     def __repr__(self):
@@ -52,7 +43,7 @@ class TransformationDistanceSameEquivarianceMeasure(BaseDistanceSameEquivariance
         return MeasureResult(means,activations_iterator.layer_names(),self)
 
 
-class SampleDistanceSameEquivarianceMeasure(BaseDistanceSameEquivarianceMeasure):
+class SampleDistanceSameEquivariance(BaseDistanceSameEquivarianceMeasure):
 
 
     def __repr__(self):
@@ -83,12 +74,12 @@ class SampleDistanceSameEquivarianceMeasure(BaseDistanceSameEquivarianceMeasure)
         return MeasureResult(means,activations_iterator.layer_names(),self)
 
 
-class NormalizedDistanceSameEquivarianceMeasure(Measure):
+class NormalizedDistanceSameEquivariance(Measure):
     def __init__(self, distance_aggregation:DistanceAggregation):
         super().__init__()
         self.distance_aggregation=distance_aggregation
-        self.transformation_measure=TransformationDistanceSameEquivarianceMeasure(distance_aggregation)
-        self.sample_measure=SampleDistanceSameEquivarianceMeasure(distance_aggregation)
+        self.transformation_measure=TransformationDistanceSameEquivariance(distance_aggregation)
+        self.sample_measure=SampleDistanceSameEquivariance(distance_aggregation)
 
 
     def __repr__(self):
@@ -98,8 +89,8 @@ class NormalizedDistanceSameEquivarianceMeasure(Measure):
         return "Normalized Distance Same-Equivariance"
     def abbreviation(self):
         return "NDSE"
-    transformation_key=TransformationDistanceSameEquivarianceMeasure.__name__
-    sample_key=SampleDistanceSameEquivarianceMeasure.__name__
+    transformation_key=TransformationDistanceSameEquivariance.__name__
+    sample_key=SampleDistanceSameEquivariance.__name__
 
     def eval(self,activations_iterator:ActivationsIterator) ->MeasureResult:
 
@@ -110,4 +101,4 @@ class NormalizedDistanceSameEquivarianceMeasure(Measure):
         extra_values={ self.transformation_key:transformation_result,
                        self.sample_key:sample_result,
                        }
-        return MeasureResult(result, activations_iterator.layer_names(),self,extra_values=extra_values)
+        return MeasureResult(result, transformation_result.layer_names,self,extra_values=extra_values)

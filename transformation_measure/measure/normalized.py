@@ -105,6 +105,7 @@ class NormalizedVariance(Measure):
             mf = ""
         else:
             mf = f"f={self.measure_function.value}"
+
         if self.conv_aggregation == ConvAggregation.none:
             ca =""
         else:
@@ -112,7 +113,7 @@ class NormalizedVariance(Measure):
         if ca!="" and mf!="":
             sep = ","
         else:
-            sep = ""
+                sep = ""
         return f"NV({ca}{sep}{mf})"
     def name(self):
         return "Normalized Variance"

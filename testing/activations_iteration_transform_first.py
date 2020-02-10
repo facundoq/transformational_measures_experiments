@@ -18,7 +18,7 @@ use_cuda=True
 dataset = datasets.get(dataset_name)
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
 image_dataset=ImageDataset(numpy_dataset)
-model,optimizer = model_config.make_model(dataset.input_shape,dataset.num_classes,use_cuda)
+model,optimizer = model_config.make_model_and_optimizer(dataset.input_shape, dataset.num_classes, use_cuda)
 p= utils.Profiler()
 p.event("start")
 

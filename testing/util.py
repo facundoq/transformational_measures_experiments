@@ -8,6 +8,7 @@ def plot_image_grid(x,samples=64,grid_cols=8,show=True,save=None,normalize=False
     samples=min(samples,n)
     skip= n // samples
 
+    grid_cols = min(grid_cols,samples)
 
     grid_rows=samples // grid_cols
     if samples % grid_cols >0:
@@ -39,7 +40,8 @@ def plot_image_grid(x,samples=64,grid_cols=8,show=True,save=None,normalize=False
     if show:
         plt.show()
     if not save is None:
-        plt.savefig(save)
+        plt.tight_layout()
+        plt.savefig(save,bbox_inches='tight')
     plt.close(f)
 
 

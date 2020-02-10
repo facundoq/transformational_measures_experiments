@@ -133,7 +133,7 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
             print(f"Savepoints at epochs {epochs_str}.")
 
     def do_train():
-        model,optimizer = p.model.make_model(dataset.input_shape, dataset.num_classes, o.use_cuda)
+        model,optimizer = p.model.make_model_and_optimizer(dataset.input_shape, dataset.num_classes, o.use_cuda)
         def generate_epochs_callbacks():
             epochs_callbacks=[]
             for epoch in p.savepoints:

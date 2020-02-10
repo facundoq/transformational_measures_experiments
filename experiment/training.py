@@ -175,7 +175,7 @@ def plot_history(history, p:Parameters, folderpath:str):
     a2.set_ylabel('loss')
     a2.set_xlabel('epoch')
     a2.legend(['train', 'test'], loc='upper right')
-    f.suptitle(f"{p.model} trained with {p.dataset} and {p.transformations} ({p.id()})")
+    # f.suptitle(f"{p.model} trained with {p.dataset} and {p.transformations} ({p.id()})")
     plt.subplots_adjust(wspace=0.3)
     plt.savefig(folderpath)
     plt.close(f)

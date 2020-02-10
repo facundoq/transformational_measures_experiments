@@ -32,13 +32,17 @@ def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[s
     # Add xticks on the middle of the group bars
     plt.xlabel(l.model)
     plt.ylabel(l.accuracy)
+    def shorten(l:str): return l if len(l)<=10  else l[:9]+"."
+
+    group_names = [shorten(l) for l in group_names]
+
     plt.xticks([r + barWidth for r in range(len(group_names))], group_names)
     plt.tick_params(axis='both', which='both', length=0)
     #plt.tick_params(top='off', bottom='off', left='off', right='off', labelleft='on', labelbottom='on')
 
     # Create legend & save
     plt.legend(fontsize=8)
-    plt.savefig(plot_filepath)
+    plt.savefig(plot_filepath,bbox_inches='tight')
     plt.close()
 
 def plot_accuracies_single_model(plot_filepath:Path, accuracies:[float], labels:[str]):
@@ -67,7 +71,7 @@ def plot_accuracies_single_model(plot_filepath:Path, accuracies:[float], labels:
 
     # Create legend & save
     plt.legend(fontsize=8)
-    plt.savefig(plot_filepath)
+    plt.savefig(plot_filepath,bbox_inches='tight')
     plt.close()
 
 

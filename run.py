@@ -95,6 +95,10 @@ if __name__ == '__main__':
         ModelAccuracies(),
 
         CompareMeasures(),
+        CompareSameEquivariance(),
+        CompareSameEquivarianceNormalized(),
+        CompareSameEquivarianceSimple(),
+
         CompareGoodfellowAlpha(),
         CompareGoodfellow(),
         Stratified(),
