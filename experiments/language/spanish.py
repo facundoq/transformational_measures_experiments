@@ -40,7 +40,18 @@ class Spanish(Language):
         self.transformational_distance = "Distancia Transformacional"
         self.sample_variance = "Varianza Muestral"
         self.transformational_variance = "Varianza Transformacional"
+
         self.distance_equivariance = "Auto-Equivarianza"
+
+        self.normalized_distance_sameequivariance= "Auto-Equivarianza de Distancia Normalizada"
+
+        self.sample_distance_sameequivariance= "Auto-Equivarianza de Distancia Muestral"
+        self.transformational_distance_sameequivariance= "Auto-Equivarianza de Distancia Transformacional"
+
+        self.sample_variance_sameequivariance= "Auto-Equivarianza de Varianza Muestral"
+        self.transformational_variance_sameequivariance= "Auto-Equivarianza de Varianza Transformacional"
+        self.normalized_variance_sameequivariance= "Auto-Equivarianza de Varianza Normalizada"
+        self.simple_sameequivariance= "Auto-Equivarianza Simple"
         self.stratified = "Estratificado"
         self.non_stratified = "No estratificado"
         self.to="a"

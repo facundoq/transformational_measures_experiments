@@ -42,7 +42,16 @@ class Language(abc.ABC):
         self.transformational_variance = ""
         self.goodfellow = "Goodfellow"
         self.ANOVA = "ANOVA"
-        self.distance_equivariance= ""
+        self.normalized_distance_sameequivariance= ""
+
+        self.sample_distance_sameequivariance= ""
+        self.transformational_distance_sameequivariance= ""
+
+        self.sample_variance_sameequivariance= ""
+        self.transformational_variance_sameequivariance= ""
+        self.normalized_variance_sameequivariance= ""
+
+        self.simple_sameequivariance= ""
         self.stratified=""
         self.non_stratified=""
         self.to=""
@@ -64,7 +73,14 @@ class Language(abc.ABC):
             tm.GoodfellowNormal: self.goodfellow,
             tm.GoodfellowMeasure: self.goodfellow,
             tm.AnovaMeasure: self.ANOVA,
-            tm.NormalizedDistanceSameEquivariance:self.distance_equivariance,
+            tm.NormalizedDistanceSameEquivariance:self.normalized_distance_sameequivariance,
+            tm.TransformationDistanceSameEquivariance:self.transformational_distance_sameequivariance,
+            tm.SampleDistanceSameEquivariance:self.sample_distance_sameequivariance,
+            tm.SampleVarianceSameEquivariance:self.sample_variance_sameequivariance,
+            tm.TransformationVarianceSameEquivariance:self.transformational_variance_sameequivariance,
+            tm.NormalizedVarianceSameEquivariance:self.normalized_variance_sameequivariance,
+            tm.DistanceSameEquivarianceSimple:self.simple_sameequivariance,
+
         }
         return dict[m.__class__]
 

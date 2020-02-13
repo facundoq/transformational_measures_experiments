@@ -88,10 +88,10 @@ if __name__ == '__main__':
 
 
     all_experiments = [
-        TrainModels(),# run this first or you'll need to retrain some models
-        DataAugmentationClassical(),
-        DataAugmentationHandshape(),
-        SimpleConvAccuracies(),
+        # TrainModels(),# run this first or you'll need to retrain some models
+        # DataAugmentationClassical(),
+        # DataAugmentationHandshape(),
+        # SimpleConvAccuracies(),
         ModelAccuracies(),
 
         CompareMeasures(),
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         CompareGoodfellowAlpha(),
         CompareGoodfellow(),
         Stratified(),
-
+        #
         DatasetSize(),
         DatasetSubset(),
         DatasetTransfer(),
@@ -123,7 +123,7 @@ if __name__ == '__main__':
         RandomInitialization(),
         RandomWeights(),
         DuringTraining(),
-        #VisualizeInvariantFeatureMaps(),
+        # VisualizeInvariantFeatureMaps(),
 
         CompareModels(),
         TIPooling(),
