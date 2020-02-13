@@ -11,6 +11,7 @@ class Language(abc.ABC):
         self.layer = ""
         self.layers = ""
         self.transformation = ""
+        self.transformations = ""
         self.rotation = ""
         self.scale = ""
         self.translation = ""

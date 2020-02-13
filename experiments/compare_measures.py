@@ -25,7 +25,6 @@ class CompareMeasures(Experiment):
                 tm.NormalizedVarianceSameEquivariance(ca_mean),
                 tm.NormalizedDistanceSameEquivariance(da_normalize_keep),
                 tm.DistanceSameEquivarianceSimple(df_normalize),
-
             ]
         }
 
@@ -66,7 +65,7 @@ class CompareMeasures(Experiment):
             variance_parameters_data_augmentation = variance_parameters_both[1]
             variance_parameters_all = variance_parameters_id + variance_parameters_data_augmentation
             # plot results
-            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure_set_name}"
+            experiment_name = f"{measure_set_name}_{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_results(config.results_paths(variance_parameters_all))
             labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m

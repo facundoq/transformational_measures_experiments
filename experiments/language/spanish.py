@@ -10,6 +10,7 @@ class Spanish(Language):
         self.layer = "Capa"
         self.layers = "Capas"
         self.transformation = "Transformación"
+        self.transformations = "Transformaciones"
         self.transformed = "Transformado"
         self.rotation = "Rotación"
         self.scale = "Escala"

@@ -125,12 +125,14 @@ class AffineTransformationNumpy(AffineTransformation):
     def numpy(self):
         return self
 
-TranslationParameter=Tuple[int,int]
+
+TranslationParameter=Tuple[float,float]
 ScaleParameter=Tuple[float,float]
 
 
 class AffineTransformationGenerator(TransformationSet):
     def __init__(self,rotations:List[float]=None, scales:List[ScaleParameter]=None, translations:List[TranslationParameter]=None,use_cuda:bool=False,pytorch=False,input_shape=None):
+
         if rotations is None or not rotations:
             rotations=[0]
         if scales is None or not scales:
@@ -140,7 +142,7 @@ class AffineTransformationGenerator(TransformationSet):
 
         self.rotations:List[float]=rotations
         self.scales:List[ScaleParameter]=scales
-        self.translations=translations
+        self.translations:List[TranslationParameter]=translations
         self.input_shape=input_shape
         self.pytorch=pytorch
         self.use_cuda=use_cuda
@@ -171,6 +173,7 @@ class AffineTransformationGenerator(TransformationSet):
 
     def valid_input(self,shape:Tuple[int, ]) -> bool:
         return len(shape) == 4
+
 
 #TODO move this class to Config
 class SimpleAffineTransformationGenerator(TransformationSet):
@@ -231,7 +234,6 @@ class SimpleAffineTransformationGenerator(TransformationSet):
             ns=f",ns={self.n_scales}"
         if hasattr(self, 'n_translations') and self.n_translations != self.translation_intensity:
             nt=f",nt={self.n_translations}"
-
         return f"Affine(r={self.rotation_intensity},s={self.scale_intensity},t={self.translation_intensity}{nr}{ns}{nt})"
 
     def __eq__(self, other):
@@ -272,10 +274,10 @@ class SimpleAffineTransformationGenerator(TransformationSet):
             scales.append((r_upsample,r_upsample))
             scales.append((r_downsample,r_downsample))
 
-        translations=[(0,0)]
+        translations=[(0.0,0.0)]
         start_translation = self.translation_intensity - self.n_translations
         for t in range(start_translation ,self.translation_intensity):
-            d= 2**(t)
+            d= float(2**(t))
             translations.append( (0,d) )
             translations.append((0, -d))
             translations.append((d, 0))
@@ -286,3 +288,6 @@ class SimpleAffineTransformationGenerator(TransformationSet):
             translations.append((d, d))
 
         return rotations,translations,scales
+
+
+
