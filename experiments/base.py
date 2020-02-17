@@ -147,7 +147,9 @@ class Experiment(abc.ABC):
         utils_runner.run_python(self.venv, python_command)
 
     def experiment_measure_call(self, p: variance.Parameters, batch_size: int = 64, num_workers: int = 0, adapt_dataset=False):
-
+        results_path = config.results_path(p)
+        if results_path.exists():
+            return
 
         o=variance.Options(verbose=False,batch_size=batch_size,num_workers=num_workers,adapt_dataset=adapt_dataset)
 
