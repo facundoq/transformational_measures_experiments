@@ -121,7 +121,7 @@ class CompareModels(Experiment):
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)
-                self.experiment_variance(p_variance, model_path)
+                self.experiment_measure(p_variance, model_path)
 
             # plot results
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"

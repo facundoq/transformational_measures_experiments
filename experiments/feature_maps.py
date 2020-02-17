@@ -33,7 +33,7 @@ class VisualizeInvariantFeatureMaps(Experiment):
             p_dataset = variance.DatasetParameters(dataset_name, variance.DatasetSubset.test, p)
             p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
             model_path = config.model_path(p_training)
-            self.experiment_variance(p_variance, model_path)
+            self.experiment_measure(p_variance, model_path)
 
             model_filepath = config.model_path(p_training)
             model, p_model, o, scores = training.load_model(model_filepath, use_cuda=torch.cuda.is_available())

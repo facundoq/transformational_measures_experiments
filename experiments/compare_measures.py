@@ -58,7 +58,7 @@ class CompareMeasures(Experiment):
                 # evaluate variance
                 model_path = config.model_path(p_training)
                 for p_variance in variance_parameters:
-                    self.experiment_variance(p_variance, model_path)
+                    self.experiment_measure(p_variance, model_path)
                 variance_parameters_both.append(variance_parameters)
 
             variance_parameters_id = variance_parameters_both[0]

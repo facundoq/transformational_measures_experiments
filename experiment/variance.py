@@ -30,6 +30,7 @@ class Parameters:
         self.measure=measure
         self.transformations=transformations
         self.stratified=stratified
+
     def model_name(self):
         base,filename_ext=os.path.split(self.model_path)
         filename,ext=os.path.splitext(filename_ext)
@@ -46,7 +47,7 @@ class Parameters:
         measure = self.measure.id()
         if self.stratified:
             measure = f"Stratified({measure})"
-        return f"VarianceExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, measure={measure}"
+        return f"VarianceExperiment(model={self.model_name()}, dataset={self.dataset}, transformations={self.transformations}, measure={measure})"
 
 class Options:
     def __init__(self,verbose:bool,batch_size:int,num_workers:int,adapt_dataset:bool):
@@ -55,6 +56,8 @@ class Options:
         self.num_workers=num_workers
         self.adapt_dataset=adapt_dataset
 
+    def __repr__(self):
+        return f"Options(verbose={self.verbose},batch_size={self.batch_size},num_workers={self.num_workers},adapt_dataset={self.adapt_dataset})"
 class VarianceExperimentResult:
     #TODO change name to MeasureExperimentResult
     def __init__(self, parameters:Parameters, measure_result:tm.MeasureResult):
@@ -117,9 +120,10 @@ def parse_parameters()->typing.Tuple[Parameters,Options]:
                         help=f'Print info about dataset/models/transformations')
 
     parser.add_argument('-num_workers', metavar='nw'
-                        , help=f'num_workersto use during training'
+                        , help=f'num_workers to use during training'
                         , type=int
                         , default=2)
+
     parser.add_argument('-batchsize', metavar='b'
                         , help=f'batchsize to use during eval'
                         , type=int

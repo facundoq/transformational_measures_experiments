@@ -92,7 +92,7 @@ if __name__ == '__main__':
         # DataAugmentationClassical(),
         # DataAugmentationHandshape(),
         # SimpleConvAccuracies(),
-        ModelAccuracies(),
+        # ModelAccuracies(),
 
         CompareMeasures(),
         CompareSameEquivariance(),
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         CompareGoodfellowAlpha(),
         CompareGoodfellow(),
         Stratified(),
-        #
+
         DatasetSize(),
         DatasetSubset(),
         DatasetTransfer(),
@@ -114,6 +114,7 @@ if __name__ == '__main__':
 
         TransformationDiversity(),
         TransformationComplexity(),
+        TransformationSetSize(),
 
         BatchNormalization(),
         ActivationFunction(),

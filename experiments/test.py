@@ -38,7 +38,7 @@ class ValidateMeasure(Experiment):
             self.experiment_training(p_training)
             model_path = config.model_path(p_training)
 
-            self.experiment_variance(p_measure, model_path)
+            self.experiment_measure(p_measure, model_path)
             print(experiment_name)
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 

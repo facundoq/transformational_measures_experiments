@@ -1,6 +1,8 @@
 from .common import *
 
+
 class SameEquivarianceNormalization(Experiment):
+
     def description(self):
         return """Compare the result of DistanceSameEquivariance normalized or not."""
 
@@ -23,7 +25,7 @@ class SameEquivarianceNormalization(Experiment):
             variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
-                self.experiment_variance(p_variance, model_path)
+                self.experiment_measure(p_variance, model_path)
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"

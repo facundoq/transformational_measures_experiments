@@ -45,7 +45,7 @@ class RandomWeights(Experiment):
             for model_path in models_paths:
                 model_id, ext = os.path.splitext(os.path.basename(model_path))
                 p_variance = variance.Parameters(model_id, p_dataset, transformation, measure)
-                self.experiment_variance(p_variance, model_path)
+                self.experiment_measure(p_variance, model_path)
                 variance_parameters.append(p_variance)
 
             # plot results
@@ -110,7 +110,7 @@ class DuringTraining(Experiment):
             model_paths.append(model_path)
 
         for p_variance, model_path in zip(variance_parameters, model_paths):
-            self.experiment_variance(p_variance, model_path)
+            self.experiment_measure(p_variance, model_path)
         return variance_parameters, model_paths
 
     def plot(self, results, plot_filepath, model_paths, savepoints, epochs,measure:tm.Measure):
@@ -166,7 +166,7 @@ class RandomInitialization(Experiment):
                 p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
-                self.experiment_variance(p_variance, model_path)
+                self.experiment_measure(p_variance, model_path)
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"

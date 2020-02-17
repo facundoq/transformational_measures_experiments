@@ -10,8 +10,8 @@ class DataAugmentation(Experiment):
     def get_datasets(self)->[str]:
         pass
 
-    def run(self):
-        models = common_models_generators
+    def run(self, generators=common_models_generators):
+        models = generators
         transformations = common_transformations_da
 
         # model_names = [m.for_dataset("mnist").name for m in models]

@@ -36,7 +36,7 @@ class TIPooling(Experiment):
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)
-                self.experiment_variance(p_variance, model_path)
+                self.experiment_measure(p_variance, model_path)
 
             model, _, _, _ = config.load_model(p_training_siamese,use_cuda=False,load_state=False)
             model: models.TIPoolingSimpleConv = model

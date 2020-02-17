@@ -27,7 +27,7 @@ class BatchNormalization(Experiment):
                 batch_size = 64
                 if model_config.name.startswith("ResNet"):
                     batch_size = 32
-                self.experiment_variance(p_variance, model_path, batch_size=batch_size)
+                self.experiment_measure(p_variance, model_path, batch_size=batch_size)
                 variance_parameters.append(p_variance)
 
             # plot results

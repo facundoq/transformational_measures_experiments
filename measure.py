@@ -84,6 +84,7 @@ def main(p:variance.Parameters,o:variance.Options):
     profiler.event("end")
     print(profiler.summary(human=True))
     config.save_results(measures_results)
+
 if __name__ == "__main__":
 
     p, o = variance.parse_parameters()

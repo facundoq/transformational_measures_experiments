@@ -29,7 +29,7 @@ class TransformationDiversity(Experiment):
                     p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
                     p_variance = variance.Parameters(p_training.id(), p_dataset, test_transformation, measure)
                     model_path = config.model_path(p_training)
-                    self.experiment_variance(p_variance, model_path)
+                    self.experiment_measure(p_variance, model_path)
                     variance_parameters.append(p_variance)
                 results = config.load_results(config.results_paths(variance_parameters))
                 experiment_name = f"{model_config.name}_{dataset}_{train_transformation}_{measure.id()}"
@@ -46,17 +46,19 @@ class TransformationSetSize(Experiment):
     def run(self):
         measures = normalized_measures
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
-        rotations=360
-        scaling= 4
-        translation = 3
-        test_sets = [[tm.SimpleAffineTransformationGenerator(r=rotations,n_rotations=i) for i in [4,8,16,32]],
-                     [tm.SimpleAffineTransformationGenerator(s=4,n_scales=i) for i in range(1,scaling+1)],
-                     [tm.SimpleAffineTransformationGenerator(t=3,n_translations=i) for i in range(1,translation+1)],
+        rotations= [8,16,32]
+        scales=  [8,16,32]
+        translations =  [8,16,32]
+        r,s,t=(0,360),((0.5,0.5),(1.25,1.25)),((-8,-8),(8,8))
+        test_sets = [[config.UniformAffineTransformationGenerator(r=r, nr=i) for i in rotations],
+                     [config.UniformAffineTransformationGenerator(s=s, ns=i) for i in scales],
+                     [config.UniformAffineTransformationGenerator(t=t, nt=i) for i in translations],
                      ]
+
         labels = [ [f"{len(s)} {l.transformations}" for s in set] for set in test_sets ]
 
 
-        train_transformations = common_transformations
+        train_transformations = [set[0] for set in test_sets]
 
         for model_config_generator, dataset, measure in combinations:
             model_config = model_config_generator.for_dataset(dataset)
@@ -65,20 +67,19 @@ class TransformationSetSize(Experiment):
                 # TRAIN
                 epochs = config.get_epochs(model_config, dataset, train_transformation)
                 p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
+                model_path = config.model_path(p_training)
                 self.experiment_training(p_training)
                 # MEASURE
                 variance_parameters = []
                 for k, test_transformation in enumerate(transformation_set):
                     p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
-                    p_variance = variance.Parameters(p_training.id(), p_dataset, test_transformation, measure)
-                    model_path = config.model_path(p_training)
-                    self.experiment_variance(p_variance, model_path)
+                    p_variance = variance.Parameters(str(model_path), p_dataset, test_transformation, measure)
+                    #model_path
+                    self.experiment_measure_call(p_variance)
                     variance_parameters.append(p_variance)
                 # PLOT
                 experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
                 plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-
-
                 results = config.load_results(config.results_paths(variance_parameters))
                 visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
 
@@ -121,7 +122,7 @@ class TransformationComplexity(Experiment):
                     p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
                     p_variance = variance.Parameters(p_training.id(), p_dataset, test_transformation, measure)
                     model_path = config.model_path(p_training)
-                    self.experiment_variance(p_variance, model_path)
+                    self.experiment_measure(p_variance, model_path)
                     variance_parameters.append(p_variance)
                 # PLOT
                 experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
@@ -169,7 +170,7 @@ class TransformationComplexityDetailed(Experiment):
                         p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
                         p_variance = variance.Parameters(p_training.id(), p_dataset, test_transformation, measure)
                         model_path = config.model_path(p_training)
-                        self.experiment_variance(p_variance, model_path)
+                        self.experiment_measure(p_variance, model_path)
                         variance_parameters.append(p_variance)
 
                     title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n Train transformation: {train_transformation.id()}"

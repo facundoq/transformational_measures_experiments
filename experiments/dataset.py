@@ -25,7 +25,7 @@ class DatasetSize(Experiment):
                                    p_dataset in p_datasets]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
-                self.experiment_variance(p_variance, model_path)
+                self.experiment_measure(p_variance, model_path)
             results = config.load_results(config.results_paths(variance_parameters))
             p_datasets = [r.parameters.dataset for r in results]
 
@@ -71,7 +71,7 @@ class DatasetSubset(Experiment):
                                    p_dataset in p_datasets]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
-                self.experiment_variance(p_variance, model_path)
+                self.experiment_measure(p_variance, model_path)
             results = config.load_results(config.results_paths(variance_parameters))
             labels = [f"{l.format_subset(d.subset)}" for d in p_datasets]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
@@ -100,7 +100,7 @@ class DatasetTransfer(Experiment):
                 p_dataset = variance.DatasetParameters(dataset_test, variance.DatasetSubset.test, p)
                 p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
                 model_path = config.model_path(p_training)
-                self.experiment_variance(p_variance, model_path, adapt_dataset=True)
+                self.experiment_measure(p_variance, model_path, adapt_dataset=True)
                 variance_parameters.append(p_variance)
 
             # plot results

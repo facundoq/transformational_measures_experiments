@@ -40,7 +40,7 @@ df_normalize = tm.DistanceFunction(normalize=True)
 
 measures = config.common_measures()
 nv = tm.NormalizedVariance(ca_mean)
-nd = tm.NormalizedDistance(da_keep,ca_none) # TODO change to ca_none, its the same because of da_keep but still..
+nd = tm.NormalizedDistance(da_keep,ca_mean) # TODO change to ca_none, its the same because of da_keep but still..
 dse = tm.NormalizedDistanceSameEquivariance(da_normalize_keep)
 vse = tm.NormalizedVarianceSameEquivariance(ca_mean)
 gf = tm.GoodfellowNormal()
