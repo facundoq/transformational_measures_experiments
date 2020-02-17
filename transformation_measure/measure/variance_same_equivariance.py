@@ -14,6 +14,7 @@ class TransformationVarianceSameEquivariance(Measure):
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
         activations_iterator = activations_iterator.get_inverted_activations_iterator()
+
         mean_running = None
         for x,transformation_activations  in activations_iterator.samples_first():
             transformation_variances_running = None
@@ -50,7 +51,11 @@ class SampleVarianceSameEquivariance(Measure):
 
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
-        activations_iterator = activations_iterator.get_inverted_activations_iterator()
+        activations_iterator:ActivationsIterator = activations_iterator.get_inverted_activations_iterator()
+        ts = list(map(str, (activations_iterator.get_transformations())))
+        print(f"{len(ts)} transformation")
+        print("\n".join(ts))
+
         mean_variances_running = None
 
         for transformation, samples_activations_iterator in activations_iterator.transformations_first():
@@ -90,8 +95,9 @@ class NormalizedVarianceSameEquivariance(Measure):
     sample_key=SampleVarianceSameEquivariance.__name__
 
     def eval(self, activations_iterator: ActivationsIterator) -> MeasureResult:
-        transformation_result=self.tv.eval(activations_iterator)
+
         sample_result=self.sv.eval(activations_iterator)
+        transformation_result = self.tv.eval(activations_iterator)
 
         transformation_result = transformation_result.collapse_convolutions(self.conv_aggregation)
         sample_result = sample_result.collapse_convolutions(self.conv_aggregation)

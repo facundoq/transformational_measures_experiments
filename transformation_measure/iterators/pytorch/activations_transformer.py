@@ -13,8 +13,18 @@ class ActivationsTransformer:
 
         self.layer_names,self.indices=self.get_valid_layers(activation_shapes,layer_names,transformation_set)
 
+
         self.valid_shapes=list_get_all(activation_shapes,self.indices)
+
         self.transformation_sets=self.get_transformations_set(self.valid_shapes, transformation_set, inverse)
+        assert len(self.transformation_sets) == len(self.valid_shapes)
+        for s in self.transformation_sets:
+            assert len(self.transformation_sets) == len(transformation_set)
+        print(self.valid_shapes)
+        print(layer_names)
+        print(self.layer_names, self.indices)
+        for i,s in enumerate(self.transformation_sets):
+            print(i,"".join([str(t) for t in s]))
 
 
 
@@ -34,6 +44,7 @@ class ActivationsTransformer:
         for s in shapes:
             n, c, h, w = s
             layer_transformation_set: tm.TransformationSet = transformation_set.copy()
+            print(len(transformation_set),"vs",len(layer_transformation_set))
             # layer_transformation_set.set_pytorch(False)
             layer_transformation_set.set_input_shape((h, w, c))
             layer_transformation_set_list = list(layer_transformation_set)

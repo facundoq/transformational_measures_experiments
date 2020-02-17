@@ -153,6 +153,7 @@ class InvertedPytorchActivationsIterator(PytorchActivationsIterator):
                 batch_activations = self.activations_transformer.filter_activations(batch_activations)
 
                 # inverse transform selected activations
+                print(t_i)
                 self.activations_transformer.trasform_st_same_column(batch_activations, t_i)
                 batch_activations = [a.cpu().numpy() for a in batch_activations]
                 yield batch, batch_activations

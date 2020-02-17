@@ -1,3 +1,4 @@
+from __future__ import annotations
 from typing import List,Tuple,Sized,Iterable,Iterator
 import numpy as np
 import torch
@@ -25,6 +26,10 @@ class TransformationSet(Sized, Iterable[Transformation]):
 
     @abc.abstractmethod
     def valid_input(self,shape:Tuple[int, ])->bool:
+        pass
+
+    @abc.abstractmethod
+    def copy(self)->TransformationSet:
         pass
 
 class IdentityTransformation(Transformation):
