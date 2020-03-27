@@ -35,8 +35,8 @@ The available models are:
 These instructions have been tested on a modern ubuntu-based (18.10/19.10) distro with python version>=3.5. All experiments are based on models defined and trained with PyTorch.  
 
 1. Clone the repository and cd to it:
-    * `git clone https://github.com/facundoq/variance_measure.git`
-    * `cd variance_measure` 
+    * `git clone https://github.com/facundoq/transformational_measures_experiments.git`
+    * `cd transformational_measures_experiments` 
 2. Create a virtual environment and activate it (requires python3 with the venv module and pip):
     * `python3 -m venv .env`
     * `source .env/bin/activate`
