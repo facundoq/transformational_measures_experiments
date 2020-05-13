@@ -40,25 +40,24 @@ class RandomWeights(Experiment):
 
             # generate variance params
             variance_parameters = []
-            p_dataset = variance.DatasetParameters(dataset_name, variance.DatasetSubset.test, p)
+            p_dataset = measure.DatasetParameters(dataset_name, measure.DatasetSubset.test, p)
 
             for model_path in models_paths:
                 model_id, ext = os.path.splitext(os.path.basename(model_path))
-                p_variance = variance.Parameters(model_id, p_dataset, transformation, measure)
+                p_variance = measure.Parameters(model_id, p_dataset, transformation, measure)
                 self.experiment_measure(p_variance, model_path)
                 variance_parameters.append(p_variance)
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset_name}_{transformation.id()}_{measure}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
             n = len(results)
             labels = [f"{l.random_models} ({n} {l.samples})."] + ([None] * (n - 1))
             # get alpha colors
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True, labels=labels,
                                                             colors=color)
 
@@ -94,18 +93,18 @@ class DuringTraining(Experiment):
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
             self.plot(results, plot_filepath, model_paths, savepoints, epochs,measure )
 
     def measure(self, p_training, config, dataset, measure, transformation, savepoints):
         variance_parameters = []
         model_paths = []
         p = config.dataset_size_for_measure(measure)
-        p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
+        p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
         for sp in savepoints:
             model_path = config.model_path(p_training, savepoint=sp)
             model_id = p_training.id(savepoint=sp)
-            p_variance = variance.Parameters(model_id, p_dataset, transformation, measure)
+            p_variance = measure.Parameters(model_id, p_dataset, transformation, measure)
             variance_parameters.append(p_variance)
             model_paths.append(model_path)
 
@@ -138,7 +137,7 @@ class DuringTraining(Experiment):
 
 class RandomInitialization(Experiment):
     def description(self):
-        return """Test measures with various instances of the same architecture/transformation/dataset to see if the measure is dependent on the random initialization in the training or simply on the architecture"""
+        return """Test measures with various instances of the same architecture/transformation/dataset to see if the numpy is dependent on the random initialization in the training or simply on the architecture"""
 
     def run(self):
         measures = normalized_measures_validation
@@ -162,8 +161,8 @@ class RandomInitialization(Experiment):
             for p_training in training_parameters:
                 model_path = config.model_path(p_training)
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
+                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 self.experiment_measure(p_variance, model_path)
@@ -171,6 +170,5 @@ class RandomInitialization(Experiment):
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
-
+            results = config.load_measure_results(config.results_paths(variance_parameters))
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True,ylim=get_ylim_normalized(measure))

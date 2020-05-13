@@ -1,8 +1,6 @@
 import matplotlib.pyplot as plt
-from typing import Callable
 from pytorch.training import train,test
 import numpy as np
-import os
 import torch
 from pathlib import Path
 import typing
@@ -11,13 +9,15 @@ from torch import nn
 from torch.optim.optimizer import Optimizer
 
 import  transformation_measure as tm
-import config
+
 import datasets
 from typing import *
 
 from torch.utils.data import DataLoader
-from transformation_measure.iterators.pytorch_image_dataset import ImageDataset,TransformationStrategy
+from pytorch.pytorch_image_dataset import ImageDataset,TransformationStrategy
 from pytorch.numpy_dataset import NumpyDataset
+import config
+print(dir(config))
 
 class Parameters:
     def __init__(self,model:config.ModelConfig,dataset:str
@@ -55,10 +55,9 @@ class Parameters:
             assert (savepoint >= 0)
             if not self.savepoints.__contains__(savepoint):
                 raise ValueError(f"Invalid savepoint {savepoint}. Options: {', '.join(self.savepoints)}")
-            result += f"_savepoint={savepoint}"
+            result += f"_savepoint={savepoint}:03d"
 
-        #TODO simply use self.suffix when retraining all models
-        suffix = getattr(self, 'suffix', '')
+        suffix = self.suffix
         if len(suffix)>0:
             result += f"_{suffix}"
         return result
@@ -102,9 +101,7 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
     else:
         if o.train_verbose:
             print(f"### Pretraining models |{p.model}| with untransformed dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
-        t=tm.SimpleAffineTransformationGenerator()
-        t.set_input_shape(dataset.input_shape)
-        t.set_pytorch(True)
+        t=config.identity_transformation
         pre_history =do_run(model,dataset,t,o,optimizer,p.epochs,loss_function,epochs_callbacks)
 
     history =do_run(model,dataset,p.transformations,o,optimizer,p.epochs,loss_function,epochs_callbacks)
@@ -146,6 +143,7 @@ def get_data_generator(x:np.ndarray, y:np.ndarray,
                        transformation:tm.TransformationSet, batch_size:int, num_workers:int, transformation_strategy:TransformationStrategy)->DataLoader:
 
     dataset=NumpyDataset(x,y)
+    # TODO verify this
     image_dataset=ImageDataset(dataset,transformation,transformation_strategy)
     dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=False,)
 

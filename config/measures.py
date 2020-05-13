@@ -1,7 +1,7 @@
 from transformation_measure import *
 import itertools
-from experiment.variance import DatasetSubset
-from experiment import variance
+from datasets import DatasetSubset
+from experiment import measure
 
 def dataset_size_for_measure(measure:Measure,subset=DatasetSubset.test)->float:
     if subset == DatasetSubset.test:
@@ -17,9 +17,9 @@ def dataset_size_for_measure(measure:Measure,subset=DatasetSubset.test)->float:
     else:
         raise ValueError(f"Invalid subset {subset}")
 
-def default_measure_dataset(dataset:str,measure:Measure):
-    subset = variance.DatasetSubset.test
-    return variance.DatasetParameters(dataset, subset, dataset_size_for_measure(measure,subset))
+def default_measure_dataset(dataset:str,m:Measure):
+    subset = DatasetSubset.test
+    return measure.DatasetParameters(dataset, subset, dataset_size_for_measure(m, subset))
 
 da = DistanceAggregation(normalize=False, keep_shape=False)
 da_normalize = DistanceAggregation(normalize=True, keep_shape=False)

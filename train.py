@@ -6,120 +6,16 @@ import config
 import torch
 import datasets
 from experiment import  training
-import argparse,argcomplete
-import transformation_measure as tm
-from typing import Tuple
-from transformation_measure.iterators.pytorch_image_dataset import TransformationStrategy
+from pytorch.pytorch_image_dataset import TransformationStrategy
 
-def list_parser(s:str):
-    s=s.strip()
-    if s=="":
-        return []
-    delim=","
-    string_list=s.split(delim)
-    return [int(n) for n in string_list]
-
-def parse_args()->Tuple[training.Parameters, training.Options,float]:
-
-    bool_parser=lambda x: (str(x).lower() in ['true','1', 'yes'])
-
-    transformations=config.all_transformations()
-    transformations={t.id():t for t in transformations}
-
-
-    model_configs = config.all_models()
-    parser = argparse.ArgumentParser(description="Script to train a models with a dataset and transformations")
-
-
-    parser.add_argument('-max_restarts', metavar='mr'
-                        , help=f'Maximum number of restarts to train the model until a minimum accuracy is reached'
-                        , type=int
-                        , default=4)
-    parser.add_argument('-min_accuracy', metavar='macc'
-                        , help=f'minimum accuracy required'
-                        , type=float
-                        , default=0.0)
-
-    parser.add_argument('-batchsize', metavar='b'
-                        , help=f'batchsize to use during training'
-                        , type=int
-                        , default=256)
-
-    parser.add_argument('-num_workers', metavar='nw'
-                        , help=f'num_workersto use during training'
-                        , type=int
-                        , default=2)
-
-    parser.add_argument('-epochs', metavar='epo'
-                        , help=f'Epochs to train the model'
-                        ,required=True
-                        , type=int)
-
-    parser.add_argument('-notransform_epochs', metavar='nte'
-                        , help=f'Train with no transformations for notransform_epochs epochs'
-                        , type=int
-                        , default=0)
-
-    parser.add_argument('-savepoints', metavar='b'
-                        , help=f'Epochs where models is to be saved'
-                        , type=list_parser
-                        , default=[])
-
-    parser.add_argument('-plots', metavar='p'
-                        , help=f'Generate plots for training epochs'
-                        , type=bool_parser
-                        , default=True)
-
-    parser.add_argument('-model', metavar='m',
-                        help=f'Model to train/use. Allowed values: {", ".join(model_configs.keys())}'
-                        ,choices=model_configs.keys()
-                        ,required=True)
-
-    parser.add_argument('-usecuda', metavar='c'
-                        , help=f'Use cuda'
-                        , type=bool_parser
-                        , default=torch.cuda.is_available())
-
-    parser.add_argument('-dataset', metavar='d',
-                        help=f'Dataset to train/eval models. Allowed values: {", ".join(datasets.names)}'
-                        ,choices=datasets.names
-                        ,required=True)
-
-    parser.add_argument('-transformation', metavar='t',
-                        help=f'Transformations to apply to the dataset to train a models. Allowed values: {", ".join(transformations.keys())}'
-                        , choices=transformations.keys()
-                        ,default=tm.SimpleAffineTransformationGenerator())
-
-    parser.add_argument('-suffix', metavar='suff'
-                        , help=f'Suffix to add to model name'
-                        , type=str
-                        , default="")
-
-    parser.add_argument('-verbose',
-                        help=f'Print info about dataset/models/transformations',
-                        action="store_true", )
-
-    parser.add_argument('-train_verbose',
-                        help=f'Print details about the training',
-                        action="store_true", )
-
-    argcomplete.autocomplete(parser)
-
-    args = parser.parse_args()
-    transformation=transformations[args.transformation]
-    model_config = model_configs[args.model]
-    p= training.Parameters(model_config, args.dataset, transformation, args.epochs, args.notransform_epochs,args.savepoints,args.suffix)
-
-    o= training.Options(args.verbose, args.train_verbose, True, args.batchsize, args.num_workers, args.usecuda, args.plots,args.max_restarts)
-
-    min_accuracy = args.min_accuracy
-    return p,o,min_accuracy
 
 def main(p:training.Parameters,o:training.Options,min_accuracy:float):
 
     dataset = datasets.get(p.dataset)
-    p.transformations.set_input_shape(dataset.input_shape)
-    p.transformations.set_pytorch(True)
+    dataset.normalize_features()
+
+    # p.transformations.set_input_shape(dataset.input_shape)
+    # p.transformations.set_pytorch(True)
     if o.verbose:
         print("Parameters: ",p)
         print("Options: ",o)
@@ -192,12 +88,8 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
     del model
     del dataset
     torch.cuda.empty_cache()
-if __name__ == "__main__":
-    print("starting")
-    p,o,min_accuracy = parse_args()
-    print("parsed")
 
-    main(p,o,min_accuracy)
+
 
 
 

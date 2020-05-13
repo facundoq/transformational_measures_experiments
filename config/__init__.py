@@ -1,13 +1,13 @@
 import os
 import pickle
 from pathlib import Path
-import torch
+
 from .models import *
 from .datasets import *
 from .measures import *
 from .transformations import *
 
-from experiment import variance, training,accuracy
+from experiment import measure, training,accuracy
 
 
 
@@ -60,37 +60,44 @@ def accuracies_folder()->Path:
 
 ########## TRANSFORMATIONAL MEASURES EXPERIMENTS #######################
 
-def results_paths(ps:[variance.Parameters], results_folder=results_folder())->[Path]:
+def results_paths(ps:[measure.Parameters], results_folder=results_folder())->[Path]:
     variance_paths= [results_path(p,results_folder) for p in ps]
     return variance_paths
 
-def results_path(p:variance.Parameters, results_folder=results_folder())-> Path:
+def results_path(p:measure.Parameters, results_folder=results_folder())-> Path:
     return  results_folder / f"{p.id()}.pickle"
 
-def save_results(r:variance.VarianceExperimentResult, results_folder=results_folder()):
+def save_results(r:measure.MeasureExperimentResult, results_folder=results_folder()):
     path = results_path(r.parameters, results_folder)
     basename:Path = path.parent
     basename.mkdir(exist_ok=True,parents=True)
     pickle.dump(r,path.open(mode="wb"))
 
-def load_result(path:Path)->variance.VarianceExperimentResult:
-    r:variance.VarianceExperimentResult=pickle.load(path.open(mode="rb"))
+def load_result(path:Path)->measure.MeasureExperimentResult:
+    r:measure.MeasureExperimentResult=pickle.load(path.open(mode="rb"))
     return r
 
+def load_measure_result(path:Path)->tm.MeasureResult:
+    return load_result(path).measure_result
 
-def load_results(filepaths:[Path])-> [variance.VarianceExperimentResult]:
+def load_results(filepaths:[Path])-> [measure.MeasureExperimentResult]:
     results = []
     for filepath in filepaths:
         result = load_result(filepath)
         results.append(result)
     return results
 
-def load_all_results(folderpath:Path)-> [variance.VarianceExperimentResult]:
+def load_measure_results(filepaths:[Path])-> [tm.MeasureResult]:
+    results = load_results(filepaths)
+    results = [r.measure_result for r in results]
+    return results
+
+def load_all_results(folderpath:Path)-> [measure.MeasureExperimentResult]:
     filepaths=[f for f in folderpath.iterdir() if f.is_file()]
     return load_results(filepaths)
 
 
-def results_filepaths_for_model(training_parameters)->[variance.VarianceExperimentResult]:
+def results_filepaths_for_model(training_parameters)->[measure.MeasureExperimentResult]:
     model_id = training_parameters.id()
     results_folderpath = results_folder()
     all_results_filepaths = results_folderpath.iterdir()

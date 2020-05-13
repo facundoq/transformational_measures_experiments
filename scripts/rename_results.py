@@ -2,7 +2,7 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import os
-from experiment import variance, training
+from experiment import measure, training
 import texttable
 import config
 import transformation_measure as tm
@@ -30,13 +30,13 @@ if __name__ == '__main__':
 
     for r in results:
         measure=r.measure_result.measure
-        # if r.measure_result.measure.__class__.__name__ == tm.AnovaMeasure.__name__:
+        # if r.measure_result.numpy.__class__.__name__ == tm.AnovaMeasure.__name__:
         #     print("anova")
         if r.measure_result.measure.__class__.__name__ == tm.NormalizedDistanceSameEquivariance:
 
             config.save_results(r,results_folderpath)
         else:
             pass
-            #print(r.measure_result.measure.__class__.__name__   )
-            # print(r.measure_result.measure.id())
+            #print(r.measure_result.numpy.__class__.__name__   )
+            # print(r.measure_result.numpy.id())
 

@@ -5,34 +5,34 @@ from pytorch.numpy_dataset import NumpyDataset
 import config
 import transformation_measure as tm
 import matplotlib
-from transformation_measure.iterators.pytorch.test import ImageDataset
+
 matplotlib.use('Agg')
 
 
-dataset_name="rwth"
+dataset_name="mnist"
 
 print(f"### Loading dataset {dataset_name} ....")
 
 use_cuda=True
 dataset = datasets.get(dataset_name)
+dataset.normalize_features()
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
-image_dataset=ImageDataset(numpy_dataset)
 p= profiler.Profiler()
 p.event("start")
 
-transformations=tm.SimpleAffineTransformationGenerator(r=360, s=2, t=3,n_rotations=8)
-transformations.set_input_shape(dataset.input_shape)
-transformations.set_cuda(use_cuda)
-transformations.set_pytorch(True)
+transformations=config.AffineGenerator(r=0, s=0, t=4, n_rotations=8)
+# transformations.set_input_shape(dataset.input_shape)
+# transformations.set_cuda(use_cuda)
+# transformations.set_pytorch(True)
 
 adapter = tm.NumpyPytorchImageTransformationAdapter(use_cuda=use_cuda)
 folderpath = config.testing_path() / f"affine_transformation_generator_pytorch/{dataset_name}"
 folderpath.mkdir(exist_ok=True,parents=True)
 n_t=len(transformations)
-print(n_t)
+print(f"Transformations: {n_t}")
 batch_size=4
 i=0
-x,y= image_dataset.get_batch(range(batch_size))
+x,y= numpy_dataset.get_batch(range(batch_size))
 if use_cuda:
     x=x.cuda()
 from testing import util

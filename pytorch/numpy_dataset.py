@@ -8,27 +8,27 @@ def check_equal(lst):
 
 class NumpyDataset(Dataset):
 
-    @classmethod
-    def stratify_dataset(cls,y,*data_sources):
+
+    def stratify_dataset(self,y):
         '''
 
         :param y: class labels
         :param data_sources: list of numpy arrays. The first dim of each array must match len(y)
         :return: a list of NumpyDatasets, one for each class in np.unique(y), with the samples corresponding to each class
         '''
-        for d in data_sources:
+        for d in self.data_sources:
             assert(d.shape[0]==y.shape[0])
         classes = np.unique(y)
         classes.sort()
 
         per_class_variance = []
-        # calculate the var measure for each class
+        # calculate the var numpy for each class
         iterators=[]
         for i, c in enumerate(classes):
             # logging.debug(f"Evaluating vars for class {c}...")
             ids = np.where(y == c)
             ids = ids[0]
-            data_sources_class=[ x[ids, :] for x in data_sources ]
+            data_sources_class=[ x[ids, :] for x in self.data_sources ]
             y_class = y[ids]
             data_sources_class.append(y_class)
             iterators.append(NumpyDataset(*data_sources_class))
@@ -41,7 +41,7 @@ class NumpyDataset(Dataset):
         assert(check_equal(lengths))
 
     def __getitem__(self, idx):
-        return self.get_batch(idx)
+        return self.get_batch(idx)[0,:]
 
     def __len__(self):
         return self.data_sources[0].shape[0]
@@ -49,7 +49,10 @@ class NumpyDataset(Dataset):
     def get_batch(self, idx):
         if isinstance(idx, int):
             idx = [idx]
-        batch=( torch.from_numpy(d[idx,]) for d in self.data_sources)
+        batch=tuple( torch.from_numpy(d[idx,]) for d in self.data_sources)
+        if len(batch)==1:
+            return batch[0]
+
         return batch
 
     def get_all(self):

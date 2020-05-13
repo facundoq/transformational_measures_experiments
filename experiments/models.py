@@ -1,6 +1,7 @@
 from .common import *
 from .weights import DuringTraining
 
+from .visualization import accuracies
 
 class TrainModels(Experiment):
 
@@ -9,19 +10,18 @@ class TrainModels(Experiment):
 
     def run(self):
         model_generators = simple_models_generators
+        transformations = common_transformations+[identity_transformation]
         combinations = itertools.product(
-            model_generators, dataset_names, common_transformations)
+            model_generators, dataset_names, transformations)
         for model_config_generator, dataset, transformation in combinations:
             # train
             model_config = model_config_generator.for_dataset(dataset)
             epochs = config.get_epochs(model_config, dataset, transformation)
             savepoints = [sp * epochs // 100 for sp in DuringTraining.savepoints_percentages]
             savepoints = sorted(list(set(savepoints)))
-
             # Training
             p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
             self.experiment_training(p_training)
-
 
 class SimpleConvAccuracies(Experiment):
     def description(self):
@@ -29,7 +29,7 @@ class SimpleConvAccuracies(Experiment):
 
     def run(self):
         transformations = common_transformations_combined
-        transformation_labels = [l.rotation,l.scale,l.translation,l.combined]#["Rotation", "Scale", "Translation", "Combined"]
+        transformation_labels = [l.rotation,l.scale,l.translation,l.combined]
         for dataset in dataset_names:
             transformation_scores = []
             for transformation in transformations:
@@ -47,7 +47,7 @@ class SimpleConvAccuracies(Experiment):
             experiment_name = f"{dataset}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
-            visualization.plot_accuracies_single_model(plot_filepath, transformation_scores, transformation_labels )
+            accuracies.plot_accuracies_single_model(plot_filepath, transformation_scores, transformation_labels )
 
 
 class ModelAccuracies(Experiment):
@@ -56,7 +56,7 @@ class ModelAccuracies(Experiment):
 
     def run(self):
         models = common_models_generators
-        transformations = common_transformations + [tm.SimpleAffineTransformationGenerator(r=360, s=4, t=3)]
+        transformations = common_transformations_combined
         model_names = [m.for_dataset("mnist").name for m in models]
         transformation_labels = [l.rotation,l.scale,l.translation,l.combined]
         for dataset in dataset_names:
@@ -80,7 +80,7 @@ class ModelAccuracies(Experiment):
             experiment_name = f"{dataset}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
-            visualization.plot_accuracies(plot_filepath, transformation_scores, transformation_labels, model_names)
+            accuracies.plot_accuracies(plot_filepath, transformation_scores, transformation_labels, model_names)
 
 
 class CompareModels(Experiment):
@@ -97,10 +97,8 @@ class CompareModels(Experiment):
             config.ResNetConfig,
 
         ]
-        # transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
-
         transformations = common_transformations
-
+        model_names = [m.for_dataset("mnist").name for m in models]
         combinations = itertools.product(dataset_names, transformations, measures)
         for (dataset, transformation, measure) in combinations:
             variance_parameters = []
@@ -116,8 +114,8 @@ class CompareModels(Experiment):
                 self.experiment_training(p_training)
                 # generate variance params
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
+                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)
@@ -126,12 +124,11 @@ class CompareModels(Experiment):
             # plot results
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
-            labels = [m.name for m in model_configs]
-            visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=labels,
+            results = config.load_measure_results(config.results_paths(variance_parameters))
+            visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=model_names,
                                                                   markers=self.fc_layers_indices(results),ylim=get_ylim_normalized(measure))
 
-    def fc_layers_indices(self, results: [VarianceExperimentResult]) -> [[int]]:
+    def fc_layers_indices(self, results: [MeasureExperimentResult]) -> [[int]]:
         indices = []
         for r in results:
             layer_names = r.measure_result.layer_names

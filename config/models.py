@@ -97,22 +97,7 @@ class SimpleConvConfig(ModelConfig):
         return model
 
     def id(self):
-        params=[]
-        if self.bn:
-            params.append(f"bn={self.bn}")
-        if self.k!=3:
-            params.append(f"k={self.k}")
-        if self.activation_function != models.ActivationFunction.ELU:
-            params.append(f"act={self.activation_function.value}")
-        if not self.max_pooling:
-            params.append(f"mp={self.max_pooling}")
-        params = ",".join(params)
-        if len(params)>0:
-            params=f"({params})"
-
-        return f"{models.SimpleConv.__name__}{params}"
-        # TODO rerun all
-        #return f"SimpleConv(conv={self.conv},fc={self.fc},bn={self.bn},k={self.k},act={self.activation_function.value},mp={self.mp})"
+        return f"{models.SimpleConv.__name__}(conv={self.conv},fc={self.fc},bn={self.bn},k={self.k},act={self.activation_function.value},mp={self.max_pooling})"
 
 class AllConvolutionalConfig(ModelConfig):
 
@@ -254,11 +239,14 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
         factor = 1.1 * np.log(m)
     else:
         factor = 1
-
+    factor =1
     # if not model_config.bn:
     #     factor *= 1.5
 
-    return int(epochs[dataset] * factor)
+    final_epochs= int(epochs[dataset] * factor)
+    #TODO REMOVE THIS
+    final_epochs=min(final_epochs,10)
+    return final_epochs
 
 def min_accuracy(model: str, dataset: str) -> float:
     min_accuracies = {"mnist": .90, "cifar10": .5,"lsa16":.6,"rwth":.45}

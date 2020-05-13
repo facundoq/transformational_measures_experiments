@@ -21,8 +21,8 @@ class BatchNormalization(Experiment):
                 self.experiment_training(p_training)
 
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
+                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 model_path = config.model_path(p_training)
                 batch_size = 64
                 if model_config.name.startswith("ResNet"):
@@ -31,8 +31,8 @@ class BatchNormalization(Experiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            bn_result, result = config.load_results(config.results_paths(variance_parameters))
-            layer_names = bn_result.measure_result.layer_names
+            bn_result, result = config.load_measure_results(config.results_paths(variance_parameters))
+            layer_names = bn_result.layer_names
             bn_indices = [i for i, n in enumerate(layer_names) if n.endswith("bn")]
             # single
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
@@ -42,7 +42,7 @@ class BatchNormalization(Experiment):
             # comparison
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}_comparison"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            bn_result.measure_result = bn_result.measure_result.remove_layers(bn_indices)
+            bn_result = bn_result.remove_layers(bn_indices)
             labels = [l.with_bn,l.without_bn]
             visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
@@ -65,7 +65,7 @@ class ActivationFunction(Experiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            results= config.load_results(config.results_paths(variance_parameters))
+            results= config.load_measure_results(config.results_paths(variance_parameters))
             # single
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
@@ -91,7 +91,7 @@ class KernelSize(Experiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
             # single
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
@@ -117,7 +117,7 @@ class MaxPooling(Experiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
             # single
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"

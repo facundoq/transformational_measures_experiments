@@ -35,6 +35,21 @@ class ClassificationDataset:
             raise ValueError(subset)
 
 
+    def normalize_features(self):
+        self.x_test=self.x_test.astype(np.float32)
+        self.x_train=self.x_train.astype(np.float32)
+
+        def mean_std(x:np.ndarray):
+            u=x.mean(axis=(0,2,3),keepdims=True)
+            d=x.std(axis=(0,2,3),keepdims=True)
+            d[d==0]=1
+            return u,d
+        def normalize(x,u,d):
+            x-=u
+            x/=d
+        u,d=mean_std(self.x_train)
+        normalize(self.x_train,u,d)
+        normalize(self.x_test,u,d)
 
     def reduce_size_stratified(self, percentage):
         if percentage==1:

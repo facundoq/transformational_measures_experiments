@@ -1,7 +1,7 @@
 from testing.util import plot_image_grid
 import datasets
 import config
-from transformation_measure.iterators.pytorch_image_dataset import ImageDataset
+from pytorch.pytorch_image_dataset import ImageDataset
 from pytorch.numpy_dataset import NumpyDataset
 import itertools
 folderpath=config.testing_path()/ "numpy_iterator"

@@ -1,16 +1,18 @@
 import os
 from pathlib import Path
 from datetime import datetime
-from experiment import variance, training, accuracy,utils_runner
+from experiment import measure, training, accuracy
 import config
-import transformation_measure as trans_measure
+import transformation_measure as tm
 import abc
 import torch
 from .language import Spanish,English
 
-import train,measure,measure_accuracy
+import train
+
 import sys
 import torch
+from utils.profiler import  Profiler
 
 class Experiment(abc.ABC):
 
@@ -100,85 +102,51 @@ class Experiment(abc.ABC):
                 self.print_date(f" Error in: {message}")
                 sys.exit(status)
 
-    def experiment_training_call(self, p:training.Parameters, min_accuracy=None, num_workers=0, batch_size=256):
-
+    def experiment_training(self, p: training.Parameters, min_accuracy=None,num_workers=0,batch_size=256):
+        if min_accuracy is None:
+            min_accuracy = config.min_accuracy(p.model, p.dataset)
+        if self.experiment_finished(p):
+            return
 
         o=training.Options(verbose=False,train_verbose=True,save_model=True,batch_size=batch_size,num_workers=num_workers,use_cuda=torch.cuda.is_available(),plots=True,max_restarts=5)
         message=f"Training with {p}\n{o}"
         self.print_date(message)
         train.main(p,o,min_accuracy)
-        #self.experiment_fork(message,lambda: train.main(p,o,min_accuracy))
 
 
-
-    def experiment_training(self, p: training.Parameters, min_accuracy=None,num_workers=0,use_fork=True,batch_size=256):
-        if min_accuracy is None:
-            min_accuracy = config.min_accuracy(p.model, p.dataset)
-        if self.experiment_finished(p):
-            return
-        if use_fork:
-            self.experiment_training_call(p, min_accuracy, num_workers, batch_size)
-        else:
-            if len(p.suffix) > 0:
-                suffix = f'-suffix "{p.suffix}"'
-            else:
-                suffix = ""
-
-            savepoints = ",".join([str(sp) for sp in p.savepoints])
-            python_command = f'train.py -model "{p.model}" -dataset "{p.dataset}" -transformation "{p.transformations.id()}" -epochs {p.epochs}  -num_workers {num_workers} -min_accuracy {min_accuracy} -max_restarts 5 -batchsize {batch_size} -savepoints "{savepoints}" {suffix}'
-            utils_runner.run_python(self.venv, python_command)
-
-    def experiment_measure(self, p: variance.Parameters, model_path: Path, batch_size: int = 64, num_workers: int = 0,
-                           adapt_dataset=False):
+    def experiment_measure(self, p: measure.Parameters, model_path: Path, batch_size: int = 64, num_workers: int = 0, adapt_dataset=False):
 
         results_path = config.results_path(p)
         if results_path.exists():
             return
-        if p.stratified:
-            stratified = "-stratified"
-        else:
-            stratified = ""
-
-        python_command = f'measure.py -mo "{model_path}" -me "{p.measure.id()}" -d "{p.dataset.id()}" -t "{p.transformations.id()}" -verbose False -batchsize {batch_size} -num_workers {num_workers} {stratified}'
-
-        if adapt_dataset:
-            python_command = f"{python_command} -adapt_dataset True"
-
-        utils_runner.run_python(self.venv, python_command)
-
-    def experiment_measure_call(self, p: variance.Parameters, batch_size: int = 64, num_workers: int = 0, adapt_dataset=False):
-        results_path = config.results_path(p)
-        if results_path.exists():
-            return
-
-        o=variance.Options(verbose=False,batch_size=batch_size,num_workers=num_workers,adapt_dataset=adapt_dataset)
+        o=measure.Options(verbose=False, batch_size=batch_size, num_workers=num_workers, adapt_dataset=adapt_dataset)
 
         message=f"Measuring:\n{p}\n{o}"
         self.print_date(message)
 
         measure.main(p,o)
 
-
-
     default_accuracy_options=accuracy.Options(False,64,0,torch.cuda.is_available())
+
+
     def experiment_accuracy(self, p: accuracy.Parameters, o=default_accuracy_options):
         results_path = config.accuracy_path(p)
         if results_path.exists():
             return
-        python_command = f'measure_accuracy.py -mo "{p.model_path}" -d "{p.dataset.id()}" -transformation "{p.transformations.id()}" -transformation_strategy "{p.transformation_strategy.value}" -verbose {o.verbose} -batchsize {o.batch_size} -num_workers {o.num_workers}'
-
-        utils_runner.run_python(self.venv, python_command)
+        accuracy.main(p,o)
 
 
-    def train_measure(self, model_config:config.ModelConfig, dataset:str, transformation:trans_measure.TransformationSet, measure:trans_measure.Measure, p=None):
+
+
+    def train_measure(self, model_config:config.ModelConfig, dataset:str, transformation:tm.TransformationSet, m:tm.Measure, p=None):
 
         epochs = config.get_epochs(model_config, dataset, transformation)
         p_training = training.Parameters(model_config, dataset, transformation, epochs)
         self.experiment_training(p_training)
         if p is None:
-            p = config.dataset_size_for_measure(measure)
-        p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-        p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+            p = config.dataset_size_for_measure(m)
+        p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
+        p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, m)
         model_path = config.model_path(p_training)
         self.experiment_measure(p_variance, model_path)
         return p_training,p_variance,p_dataset

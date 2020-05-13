@@ -1,6 +1,6 @@
 import enum
 import abc
-from experiment.variance import DatasetSubset
+from datasets import DatasetSubset
 import transformation_measure as tm
 
 class Language(abc.ABC):

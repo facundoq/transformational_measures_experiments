@@ -3,6 +3,7 @@ from . import Language
 class English(Language):
 
     def __init__(self):
+        super().__init__()
         self.message="hola"
         self.accuracy="Accuracy"
         self.layer="Layer"
@@ -44,5 +45,6 @@ class English(Language):
         self.random_models="Random models"
         self.samples="samples"
         self.model="Model"
+        self.transformed="Transformed"
 
 

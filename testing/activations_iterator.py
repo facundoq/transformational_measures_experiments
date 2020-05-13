@@ -5,7 +5,7 @@ from testing import util
 import itertools
 import transformation_measure as tm
 import matplotlib
-from transformation_measure.iterators.pytorch_image_dataset import ImageDataset
+from pytorch.pytorch_image_dataset import ImageDataset
 matplotlib.use('Agg')
 import numpy as np
 import config

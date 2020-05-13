@@ -1,5 +1,5 @@
 from .common import *
-from transformation_measure.measure.stats_running import RunningMeanWelford
+from transformation_measure.numpy.stats_running import RunningMeanWelford
 
 class TIPooling(Experiment):
     def description(self):
@@ -31,8 +31,8 @@ class TIPooling(Experiment):
                 self.experiment_training(p_training)
                 # generate variance params
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-                p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
+                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)
@@ -40,8 +40,8 @@ class TIPooling(Experiment):
 
             model, _, _, _ = config.load_model(p_training_siamese,use_cuda=False,load_state=False)
             model: models.TIPoolingSimpleConv = model
-            results = config.load_results(config.results_paths(variance_parameters))
-            results[0].measure_result = self.average_paths_tipooling(model, results[0].measure_result)
+            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results[0] = self.average_paths_tipooling(model, results[0])
             # plot results
             # print("simpleconv",len(results[1].measure_result.layer_names),results[1].measure_result.layer_names)
             labels = ["TIPooling SimpleConv", "SimpleConv"]

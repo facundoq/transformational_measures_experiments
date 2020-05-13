@@ -16,10 +16,11 @@ from experiments import *
 import datasets
 import torch
 
+from experiments import language
 
 class CompareAnovaMeasures(Experiment):
     def description(self):
-        return """Determine which Anova measure is more appropriate"""
+        return """Determine which Anova numpy is more appropriate"""
 
     def run(self):
         pass
@@ -79,7 +80,7 @@ def print_table(experiments:[Experiment]):
     print(table.draw())
 
 if __name__ == '__main__':
-
+    language.set_language(language.English())
     todo = [
 
     ]
@@ -88,49 +89,49 @@ if __name__ == '__main__':
 
 
     all_experiments = [
-        # TrainModels(),# run this first or you'll need to retrain some models
-        # DataAugmentationClassical(),
-        # DataAugmentationHandshape(),
-        # SimpleConvAccuracies(),
-        # ModelAccuracies(),
-
+        TrainModels(),# run this first or you'll need to retrain some models
+        DataAugmentationClassical(),
+        DataAugmentationHandshape(),
+        SimpleConvAccuracies(),
+        ModelAccuracies(),
+        #
         CompareMeasures(),
         CompareSameEquivariance(),
         CompareSameEquivarianceNormalized(),
         CompareSameEquivarianceSimple(),
 
         CompareGoodfellowAlpha(),
-        CompareGoodfellow(),
-        Stratified(),
-
-        DatasetSize(),
-        DatasetSubset(),
-        DatasetTransfer(),
-
-        AggregationFunctionsVariance(),
-        AggregationBeforeAfter(),
-        AggregationFunctionsDistance(),
-        SameEquivarianceNormalization(),
-
-        TransformationDiversity(),
-        TransformationComplexity(),
-        TransformationSetSize(),
-
-        BatchNormalization(),
-        ActivationFunction(),
-        MaxPooling(),
-        KernelSize(),
-
-        RandomInitialization(),
-        RandomWeights(),
-        DuringTraining(),
-        # VisualizeInvariantFeatureMaps(),
-
-        CompareModels(),
-        TIPooling(),
-
-        ValidateMeasure(),
-        ValidateGoodfellow(),
+        # CompareGoodfellow(),
+        # Stratified(),
+        #
+        # DatasetSize(),
+        # DatasetSubset(),
+        # DatasetTransfer(),
+        #
+        # AggregationFunctionsVariance(),
+        # AggregationBeforeAfter(),
+        # AggregationFunctionsDistance(),
+        # SameEquivarianceNormalization(),
+        #
+        # TransformationDiversity(),
+        # TransformationComplexity(),
+        # TransformationSetSize(),
+        #
+        # BatchNormalization(),
+        # ActivationFunction(),
+        # MaxPooling(),
+        # KernelSize(),
+        #
+        # RandomInitialization(),
+        # RandomWeights(),
+        # DuringTraining(),
+        # # VisualizeInvariantFeatureMaps(),
+        #
+        # CompareModels(),
+        # TIPooling(),
+        #
+        # ValidateMeasure(),
+        # ValidateGoodfellow(),
     ]
     experiments, o = parse_args(all_experiments)
     if o.show_list:

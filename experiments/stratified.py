@@ -24,11 +24,11 @@ class Stratified(Experiment):
             # generate variance params
             p = config.dataset_size_for_measure(measure)
             
-            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.train, 0.1)
-            p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+            p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.train, 0.1)
+            p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
             
-            p_dataset_variance = variance.DatasetParameters(dataset, variance.DatasetSubset.train, 1.0)
-            p_variance_stratified = variance.Parameters(p_training.id(), p_dataset_variance , transformation, measure,stratified=True)
+            p_dataset_variance = measure.DatasetParameters(dataset, measure.DatasetSubset.train, 1.0)
+            p_variance_stratified = measure.Parameters(p_training.id(), p_dataset_variance, transformation, measure, stratified=True)
             
             # evaluate variance
             model_path = config.model_path(p_training)
@@ -38,7 +38,7 @@ class Stratified(Experiment):
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
             
             labels = [l.non_stratified,l.stratified]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))

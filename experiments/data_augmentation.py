@@ -1,7 +1,7 @@
 from .common import *
 import datasets
 import abc
-
+from .visualization.accuracies import plot_accuracies
 class DataAugmentation(Experiment):
     def description(self):
         return """Compare the accuracies of the models for each set of transformations"""
@@ -16,7 +16,6 @@ class DataAugmentation(Experiment):
 
         # model_names = [m.for_dataset("mnist").name for m in models]
         # transformation_labels = [l.rotation,l.scale,l.translation,l.combined]
-        identity_transformations=tm.SimpleAffineTransformationGenerator()
         labels = [f"{l.train} {tr}, {l.test} {te}" for tr in [l.normal,l.transformed] for te in [l.normal,l.transformed]]
 
 
@@ -38,18 +37,18 @@ class DataAugmentation(Experiment):
 
                     model_labels.append(model_config.name)
                     model_accuracies = []
-                    for t_train in [identity_transformations,transformation]:
+                    for t_train in [identity_transformation,transformation]:
                         epochs = config.get_epochs(model_config, dataset, t_train)
                         p_training = training.Parameters(model_config, dataset, t_train, epochs)
                         if dataset == "lsa16" or dataset =="rwth":
                             batch_size=32
                         else:
-                            batch_size=256
+                            batch_size=64
                         self.experiment_training(p_training,batch_size=batch_size)
                         model_path=config.model_path(p_training)
                         # Test
                         # print("***")
-                        for t_test in [identity_transformations,transformation]:
+                        for t_test in [identity_transformation,transformation]:
                             p_accuracy = accuracy.Parameters(model_path,p_dataset,t_test)
                             self.experiment_accuracy(p_accuracy)
                             result= config.load_accuracy(config.accuracy_path(p_accuracy))
@@ -63,7 +62,7 @@ class DataAugmentation(Experiment):
                 accuracies=np.array(accuracies)
                 experiment_name = f"{dataset}_{transformation.id()}"
                 plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-                visualization.plot_accuracies(plot_filepath, accuracies,labels,model_labels  )
+                plot_accuracies(plot_filepath, accuracies,labels,model_labels  )
 
 
 class DataAugmentationClassical(DataAugmentation):

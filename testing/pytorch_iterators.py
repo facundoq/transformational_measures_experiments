@@ -2,7 +2,7 @@ import datasets
 from testing.util import plot_image_grid
 
 from pytorch.numpy_dataset import NumpyDataset
-from transformation_measure.iterators.pytorch.test import ImageDataset
+from transformation_measure.pytorch import ImageDataset
 import transformation_measure as tm
 dataformat="NCHW"
 dataset = datasets.get("cifar10",dataformat=dataformat)

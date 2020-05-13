@@ -14,25 +14,25 @@ class AggregationBeforeAfter(Experiment):
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
-            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
+            p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, default_dataset_percentage)
 
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
             measures = [tm.NormalizedVariance(ca) for ca in before_functions]
-            variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
+            variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance, model_path)
-            normal_results = config.load_results(config.results_paths(variance_parameters))
+            normal_results = config.load_measure_results(config.results_paths(variance_parameters))
 
-            ca_none_variance_parameter = variance.Parameters(p_training.id(), p_dataset, transformation,
-                                                             tm.NormalizedVariance(ca_none))
+            ca_none_variance_parameter = measure.Parameters(p_training.id(), p_dataset, transformation,
+                                                            tm.NormalizedVariance(ca_none))
             self.experiment_measure(ca_none_variance_parameter, model_path)
             ca_none_variance_parameters = [ca_none_variance_parameter] * len(after_functions)
-            ca_none_results = config.load_results(config.results_paths(ca_none_variance_parameters))
-            for (ca, r) in zip(after_functions , ca_none_results):
-                r.measure_result = r.measure_result.collapse_convolutions(ca)
+            ca_none_results = config.load_measure_results(config.results_paths(ca_none_variance_parameters))
+            ca_none_results = [r.collapse_convolutions(ca) for ca,r in zip(after_functions , ca_none_results)]
+
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
@@ -56,17 +56,17 @@ class AggregationFunctionsVariance(Experiment):
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
-            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
+            p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, default_dataset_percentage)
 
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
             measures = [tm.NormalizedVariance(ca) for ca in before_functions]
-            variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
+            variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance, model_path)
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
@@ -90,18 +90,18 @@ class AggregationFunctionsDistance(Experiment):
         for model_config_generator, dataset, transformation in combinations:
             model_config = model_config_generator.for_dataset(dataset)
 
-            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
+            p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, default_dataset_percentage)
 
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
 
-            variance_parameters = [variance.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
+            variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance, model_path)
-            results = config.load_results(config.results_paths(variance_parameters))
-            results[0].measure_result=results[0].measure_result.collapse_convolutions(ca_mean)
+            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results[0]=results[0].collapse_convolutions(ca_mean)
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"

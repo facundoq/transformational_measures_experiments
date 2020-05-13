@@ -1,5 +1,5 @@
 from .common import *
-
+import experiment.measure as m
 
 class CompareMeasures(Experiment):
     def description(self):
@@ -21,6 +21,17 @@ class CompareMeasures(Experiment):
                 tm.NormalizedDistance(da_keep, ca_mean),
                 tm.GoodfellowNormal(alpha=0.99),
             ],
+            "Normalized": [
+                tm.NormalizedVariance(ca_sum),
+                tm.NormalizedDistance(da_keep, ca_mean),
+            ],
+            "NormalizedVariance": [
+                tm.NormalizedVariance(ca_sum),
+            ],
+            "Basic": [
+                tm.AnovaMeasure(0.99, bonferroni=True),
+                tm.GoodfellowNormal(alpha=0.99),
+            ],
             "Equivariance": [
                 tm.NormalizedVarianceSameEquivariance(ca_mean),
                 tm.NormalizedDistanceSameEquivariance(da_normalize_keep),
@@ -40,7 +51,7 @@ class CompareMeasures(Experiment):
         for (model_config_generator, dataset, transformation, measure_set) in combinations:
             # train model with data augmentation and without
             variance_parameters_both = []
-            for t in [tm.SimpleAffineTransformationGenerator(), transformation]:
+            for t in [AffineGenerator(), transformation]:
 
                 model_config = model_config_generator.for_dataset(dataset)
                 epochs = config.get_epochs(model_config, dataset, t)
@@ -52,8 +63,8 @@ class CompareMeasures(Experiment):
                 measure_set_name, measures = measure_set
                 for measure in measures:
                     p = config.dataset_size_for_measure(measure)
-                    p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, p)
-                    p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+                    p_dataset = m.DatasetParameters(dataset, measure.DatasetSubset.test, p)
+                    p_variance = m.Parameters(p_training.id(), p_dataset, transformation, measure)
                     variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)
@@ -67,7 +78,7 @@ class CompareMeasures(Experiment):
             # plot results
             experiment_name = f"{measure_set_name}_{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters_all))
+            results = config.load_measure_results(config.results_paths(variance_parameters_all))
             labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m
                                                                                                in measures]
             n = len(measures)
@@ -116,7 +127,7 @@ class CompareGoodfellowAlpha(Experiment):
                 p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
                 variance_parameters.append(p_variance)
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
             labels = [f"α={alpha}" for alpha in alphas]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
@@ -141,7 +152,7 @@ class CompareGoodfellow(Experiment):
             local_result, global_result = result.extra_values[tm.GoodfellowNormal.l_key], result.extra_values[
                 tm.GoodfellowNormal.g_key]
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            visualization.plot_collapsing_layers_same_model_mr([local_result, global_result], plot_filepath,labels=labels, ylim=0.1)
+            visualization.plot_collapsing_layers_same_model([local_result, global_result], plot_filepath,labels=labels, ylim=0.1)
 
 
 
@@ -171,7 +182,7 @@ class CompareSameEquivarianceNormalized(Experiment):
                 p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
                 variance_parameters.append(p_variance)
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
 
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
@@ -200,7 +211,7 @@ class CompareSameEquivarianceSimple(Experiment):
                 p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
                 variance_parameters.append(p_variance)
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_results(config.results_paths(variance_parameters))
+            results = config.load_measure_results(config.results_paths(variance_parameters))
 
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 class CompareSameEquivariance(Experiment):
@@ -222,9 +233,9 @@ class CompareSameEquivariance(Experiment):
             measure = tm.NormalizedVarianceSameEquivariance(ca_mean)
             p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results_experiment = config.load_result(config.results_path(p_variance))
-            normalized_results:tm.MeasureResult = results_experiment.measure_result
+            normalized_results = config.load_measure_result(config.results_path(p_variance))
+
             transformation_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.transformation_key]
             sample_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.sample_key]
             results=[transformation_results,sample_results]
-            visualization.plot_collapsing_layers_same_model_mr(results, plot_filepath, labels=labels)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)

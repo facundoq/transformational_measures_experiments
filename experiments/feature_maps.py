@@ -30,8 +30,8 @@ class VisualizeInvariantFeatureMaps(Experiment):
             # train
             self.experiment_training(p_training)
             p = config.dataset_size_for_measure(measure)
-            p_dataset = variance.DatasetParameters(dataset_name, variance.DatasetSubset.test, p)
-            p_variance = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+            p_dataset = measure.DatasetParameters(dataset_name, measure.DatasetSubset.test, p)
+            p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
             model_path = config.model_path(p_training)
             self.experiment_measure(p_variance, model_path)
 

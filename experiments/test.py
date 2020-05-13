@@ -3,7 +3,7 @@ from .common import *
 class ValidateMeasure(Experiment):
 
     def description(self):
-        return """Validate measure/transformation. Just for testing purposes."""
+        return """Validate numpy/transformation. Just for testing purposes."""
 
     def run(self):
         measures = [
@@ -32,8 +32,8 @@ class ValidateMeasure(Experiment):
             p_training = training.Parameters(model_config, dataset, tm.SimpleAffineTransformationGenerator(), epochs, 0,
                                              savepoints=[0, 10, 20, 30, 40, 50, 60, 70, 80, 100])
             experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{transformation.id()}"
-            p_dataset = variance.DatasetParameters(dataset, variance.DatasetSubset.test, default_dataset_percentage)
-            p_measure = variance.Parameters(p_training.id(), p_dataset, transformation, measure)
+            p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, default_dataset_percentage)
+            p_measure = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
 
             self.experiment_training(p_training)
             model_path = config.model_path(p_training)

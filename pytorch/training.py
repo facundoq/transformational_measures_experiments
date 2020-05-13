@@ -7,7 +7,7 @@ def print_results(dataset,loss,accuracy,correct,n):
     print('{} => Loss: {:.4f}, Accuracy: {:.2f}% ({}/{})'.format(dataset,
         loss, 100. * accuracy, correct, n),flush=True)
 
-def train(model,epochs,optimizer,use_cuda,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3,eval_test_every_n_epochs:int=None,epochs_callbacks:{int:Callable}={}):
+def train(model:torch.nn.Module,epochs:int,optimizer,use_cuda:bool,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3,eval_test_every_n_epochs:int=None,epochs_callbacks:{int:Callable}={}):
 
     if eval_test_every_n_epochs == None:
         eval_test_every_n_epochs= max(epochs//10,1)

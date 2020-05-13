@@ -4,7 +4,7 @@
 # cuda 9.0
 #torch
 
-# cuda 10.0, python 3.6
-https://download.pytorch.org/whl/cu100/torch-1.0.1.post2-cp36-cp36m-linux_x86_64.whl
+# cuda 10.1, python 3.7
 
+#pip install torch==1.5.0+cu101 torchvision==0.6.0+cu101 -f https://download.pytorch.org/whl/torch_stable.html
 

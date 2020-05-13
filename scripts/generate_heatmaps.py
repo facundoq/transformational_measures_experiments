@@ -58,7 +58,7 @@ import transformation_measure as tm
 #         detail=f"{r.id()}"
 #         name=f"{detail}.png"
 #         stratified_name = f"{detail}_stratified.png"
-#         visualization.plot_heatmap(detail, r.measure_result.measure.id(), r.measure_result.activation_names, vmin=vmin, vmax=vmax, savefig=folderpath, savefig_name=name)
+#         visualization.plot_heatmap(detail, r.measure_result.numpy.id(), r.measure_result.activation_names, vmin=vmin, vmax=vmax, savefig=folderpath, savefig_name=name)
 
 heatmaps_folder=config.heatmaps_folder()
 heatmaps_folder.mkdir(exist_ok=True,parents=True)

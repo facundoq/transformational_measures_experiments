@@ -2,7 +2,7 @@
 # PYTHON_ARGCOMPLETE_OK
 
 import os
-from experiment import variance, training
+from experiment import measure, training
 import texttable
 import config
 

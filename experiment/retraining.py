@@ -101,5 +101,5 @@ def freeze_layers_except(layers,layer_names,layers_to_train):
         layer=layers[i]
         requires_grad=name in layers_to_train
         #print(f"Layer {name}: setting requires_grad to {requires_grad}.")
-        for param in layer.parameters():
+        for param in layer.values():
             param.requires_grad=requires_grad
