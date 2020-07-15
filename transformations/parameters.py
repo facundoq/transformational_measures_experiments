@@ -4,12 +4,13 @@ import itertools
 from typing import Iterator
 
 class TransformationParameters(abc.ABC,list):
-    def __init__(self,members):
+    def __init__(self,members:[]):
         super().__init__(members)
 
     @abc.abstractmethod
     def id(self)->str:
         pass
+
     def __repr__(self)->str:
         return self.id()
 
@@ -63,9 +64,9 @@ class TransformationParameters(abc.ABC,list):
 
 class ConstantParameters(TransformationParameters):
     def __init__(self,values:[]):
-        self.values=values
-    def values(self):
-        return self.values
+        super().__init__(values)
+    def id(self):
+        return f"C({self[:]})"
 
 
 class UniformRotation(TransformationParameters):
@@ -109,7 +110,7 @@ class ScaleUniform(ScaleParameters):
             return (1,1)
         upscale = np.linspace(1,self.max_upscale,self.n+1,endpoint=True)
         upscale=upscale[1:]# remove scale=1
-        downscale = np.linspace(self.min_downscale,1,self.n)
+        downscale = np.linspace(self.min_downscale,1,self.n,endpoint=False)
         return self.scale3(downscale)+self.scale3(upscale,include_identity=self.include_identity)
 
     def id(self):
@@ -134,3 +135,22 @@ class TranslationUniform(TransformationParameters):
         return self.translations8(values,include_identity=True)
     def id(self):
         return f"UT({self.max_intensity},{self.n})"
+
+
+class NoRotation(TransformationParameters):
+    def __init__(self):
+        super().__init__([0])
+    def id(self):
+        return f"NR"
+
+class NoScale(TransformationParameters):
+    def __init__(self):
+        super().__init__([(1,1)])
+    def id(self):
+        return f"NS"
+
+class NoTranslation(TransformationParameters):
+    def __init__(self):
+        super().__init__([(0,0)])
+    def id(self):
+        return f"NT"

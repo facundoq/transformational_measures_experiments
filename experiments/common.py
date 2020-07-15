@@ -15,9 +15,10 @@ from pathlib import Path
 import os
 from transformations.pytorch.affine import AffineGenerator
 
-from config.parameters import UniformRotation,ScaleUniform,TranslationUniform
+from transformations.parameters import UniformRotation,ScaleUniform,TranslationUniform
 
 from config.transformations import common_transformations,common_transformations_da,common_transformations_combined,identity_transformation
+
 
 default_dataset_percentage = 0.5
 
@@ -58,7 +59,7 @@ venv_path = ""
 
 
 
-def get_ylim_normalized(measure: tm.Measure):
+def get_ylim_normalized(measure: tm.NumpyMeasure):
     # TODO dict
     if measure.__class__ == tm.NormalizedDistanceSameEquivariance:
         return 8

@@ -1,4 +1,5 @@
-from .base import Measure,MeasureResult
+from .base import NumpyMeasure
+from .. import MeasureResult
 from transformation_measure.activations_iterator import ActivationsIterator
 import numpy as np
 from transformation_measure.numpy.stats_running import RunningMeanWelford
@@ -23,7 +24,7 @@ class EventDrivenLayerMeasure():
     def on_begin(self):
         pass
 
-class LayerTransformationMeasure(Measure):
+class LayerTransformationMeasure(NumpyMeasure):
     def __init__(self, layer_measure_generator:Callable[[int,str], EventDrivenLayerMeasure]):
         super().__init__()
         self.layer_measure_generator=layer_measure_generator

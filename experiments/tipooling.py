@@ -1,3 +1,4 @@
+import transformation_measure.measure
 from .common import *
 from transformation_measure.numpy.stats_running import RunningMeanWelford
 
@@ -17,8 +18,7 @@ class TIPooling(Experiment):
 
             siamese = config.TIPoolingSimpleConvConfig.for_dataset(dataset, bn=False, t=transformation)
             siamese_epochs = config.get_epochs(siamese, dataset, transformation)
-            p_training_siamese = training.Parameters(siamese, dataset, tm.SimpleAffineTransformationGenerator(),
-                                                     siamese_epochs, 0)
+            p_training_siamese = training.Parameters(siamese, dataset,identity_transformation,siamese_epochs, 0)
 
             normal = config.SimpleConvConfig.for_dataset(dataset, bn=False)
             normal_epochs = config.get_epochs(normal, dataset, transformation)
@@ -36,7 +36,7 @@ class TIPooling(Experiment):
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)
-                self.experiment_measure(p_variance, model_path)
+                self.experiment_measure(p_variance)
 
             model, _, _, _ = config.load_model(p_training_siamese,use_cuda=False,load_state=False)
             model: models.TIPoolingSimpleConv = model
@@ -50,7 +50,7 @@ class TIPooling(Experiment):
             mark_layers = range(model.layer_before_pooling_each_transformation())
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,mark_layers=mark_layers,ylim=get_ylim_normalized(measure))
 
-    def average_paths_tipooling(self, model: models.TIPoolingSimpleConv, result: tm.MeasureResult) -> tm.MeasureResult:
+    def average_paths_tipooling(self, model: models.TIPoolingSimpleConv, result: transformation_measure.measure.MeasureResult) -> transformation_measure.measure.MeasureResult:
         # print(len(model.activation_names()),model.activation_names())
         # print(len(model.original_conv_names()),model.original_conv_names())
         # print(len(model.fc_names()), model.fc_names())
@@ -87,4 +87,4 @@ class TIPooling(Experiment):
 
         # print(len(layers),len(layer_names))
         # print(layer_names)
-        return tm.MeasureResult(layers, layer_names, result.measure)
+        return transformation_measure.measure.MeasureResult(layers, layer_names, result.measure)

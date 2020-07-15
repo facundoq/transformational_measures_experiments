@@ -1,3 +1,4 @@
+import transformation_measure.measure
 from .common import *
 
 class ValidateMeasure(Experiment):
@@ -22,7 +23,8 @@ class ValidateMeasure(Experiment):
         # model_names = ["VGG16D","VGG16DBN"]
         model_names = [config.TIPoolingSimpleConvConfig]
         dataset_names = ["mnist"]
-        transformations = [tm.SimpleAffineTransformationGenerator(r=360)]
+        r,s,t=common_transformations
+        transformations = r
         # transformations=config.common_transformations()
         combinations = itertools.product(model_names, dataset_names, measures, transformations)
         for model_config_generator, dataset, measure, transformation in combinations:
@@ -38,12 +40,12 @@ class ValidateMeasure(Experiment):
             self.experiment_training(p_training)
             model_path = config.model_path(p_training)
 
-            self.experiment_measure(p_measure, model_path)
+            self.experiment_measure(p_measure)
             print(experiment_name)
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
             title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n transformation: {transformation.id()} "
-            result = config.load_result(config.results_path(p_measure))
+            result = config.load_experiment_result(config.results_path(p_measure))
             print(config.results_path(p_measure))
             visualization.plot_heatmap(result.measure_result, plot_filepath)
 
@@ -73,17 +75,17 @@ class ValidateGoodfellow(Experiment):
             plot_filepath_global = self.plot_folderpath / f"{experiment_name}_global.jpg"
             plot_filepath_local = self.plot_folderpath / f"{experiment_name}_local.jpg"
 
-            experiment_result = config.load_result(config.results_path(p_variance))
+            experiment_result = config.load_experiment_result(config.results_path(p_variance))
 
-            result:tm.MeasureResult=experiment_result.measure_result
-            global_result:tm.MeasureResult = result.extra_values[tm.GoodfellowNormal.g_key]
-            local_result:tm.MeasureResult=result.extra_values[tm.GoodfellowNormal.l_key]
+            result: transformation_measure.measure.MeasureResult =experiment_result.measure_result
+            global_result: transformation_measure.measure.MeasureResult = result.extra_values[tm.GoodfellowNormal.g_key]
+            local_result: transformation_measure.measure.MeasureResult =result.extra_values[tm.GoodfellowNormal.l_key]
             visualization.plot_heatmap(result, plot_filepath)
             visualization.plot_heatmap(global_result, plot_filepath_global)
             visualization.plot_heatmap(local_result, plot_filepath_local)
 
             plot_filepath_thresholds = self.plot_folderpath / f"{experiment_name}_thresholds.jpg"
             thresholds = global_result.extra_values[tm.GoodfellowGlobalVarianceNormal.thresholds_key]
-            thresholds_result=tm.MeasureResult(thresholds,result.layer_names,global_result.measure)
+            thresholds_result= transformation_measure.measure.MeasureResult(thresholds, result.layer_names, global_result.measure)
             visualization.plot_heatmap(thresholds_result, plot_filepath_thresholds)
 

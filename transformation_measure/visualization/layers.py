@@ -1,4 +1,6 @@
 # TODO move to experiments?
+import transformation_measure.measure
+
 params = {
     # 'text.latex.preamble': ['\\usepackage{gensymb}'],
 
@@ -46,7 +48,7 @@ from ..language import l
 
 default_y_lim=1.4
 
-def plot_collapsing_layers_different_models(results:List[tm.MeasureResult], filepath:Path, labels=None, title="", linestyles=None, colors=None, legend_location=None, markers:[[int]]=None,ylim=None):
+def plot_collapsing_layers_different_models(results:List[transformation_measure.measure.MeasureResult], filepath:Path, labels=None, title="", linestyles=None, colors=None, legend_location=None, markers:[[int]]=None, ylim=None):
     if ylim is None:
         ylim = default_y_lim
     f=plt.figure(dpi=300)
@@ -192,7 +194,7 @@ def get_dpi(n:int):
     return min(350, max(150, n * 15))
 
 
-def plot_collapsing_layers_same_model(results:List[tm.MeasureResult], filepath:Path, labels:[str]=None, title="", linestyles=None, plot_mean=False, colors=None, legend_location=None, mark_layers:[int]=None,ylim=None):
+def plot_collapsing_layers_same_model(results:List[transformation_measure.measure.MeasureResult], filepath:Path, labels:[str]=None, title="", linestyles=None, plot_mean=False, colors=None, legend_location=None, mark_layers:[int]=None, ylim=None):
     if ylim is None:
         ylim = default_y_lim
 

@@ -45,7 +45,7 @@ class RandomWeights(Experiment):
             for model_path in models_paths:
                 model_id, ext = os.path.splitext(os.path.basename(model_path))
                 p_variance = measure.Parameters(model_id, p_dataset, transformation, measure)
-                self.experiment_measure(p_variance, model_path)
+                self.experiment_measure(p_variance)
                 variance_parameters.append(p_variance)
 
             # plot results
@@ -109,10 +109,10 @@ class DuringTraining(Experiment):
             model_paths.append(model_path)
 
         for p_variance, model_path in zip(variance_parameters, model_paths):
-            self.experiment_measure(p_variance, model_path)
+            self.experiment_measure(p_variance)
         return variance_parameters, model_paths
 
-    def plot(self, results, plot_filepath, model_paths, savepoints, epochs,measure:tm.Measure):
+    def plot(self, results, plot_filepath, model_paths, savepoints, epochs, measure:tm.NumpyMeasure):
         # TODO implement a heatmap where the x axis is the training time/epoch
         # and the y axis indicates the layer, and the color indicates the invariance
         # to see it evolve over time.
@@ -165,7 +165,7 @@ class RandomInitialization(Experiment):
                 p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
-                self.experiment_measure(p_variance, model_path)
+                self.experiment_measure(p_variance)
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"

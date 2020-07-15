@@ -32,8 +32,8 @@ class Stratified(Experiment):
             
             # evaluate variance
             model_path = config.model_path(p_training)
-            self.experiment_measure(p_variance, model_path)
-            self.experiment_measure(p_variance_stratified, model_path)
+            self.experiment_measure(p_variance)
+            self.experiment_measure(p_variance_stratified)
             variance_parameters = [p_variance, p_variance_stratified]
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"

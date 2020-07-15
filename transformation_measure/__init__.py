@@ -2,7 +2,8 @@
 # IMPORT BASIC STUFF FIRST
 from .transformation import TransformationSet,Transformation,IdentityTransformation
 
-from .numpy.base import MeasureResult,Measure,StratifiedMeasureResult
+from .numpy.base import NumpyMeasure
+from .measure import MeasureResult, StratifiedMeasureResult
 from .numpy.functions import MeasureFunction
 from .numpy.layer_transformation import ConvAggregation
 from .numpy.quotient import QuotientMeasure,divide_activations

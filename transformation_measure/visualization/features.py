@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+
+import transformation_measure.measure
 from pytorch.numpy_dataset import NumpyDataset
 import transformation_measure as tm
 from pathlib import Path
@@ -121,7 +123,7 @@ def indices_of_largest_k(a,k):
     # ind.sort()
     return indices[-k:]
 
-def select_feature_maps(measure_result:tm.MeasureResult, most_invariant_k:int,least_invariant_k:int):
+def select_feature_maps(measure_result: transformation_measure.measure.MeasureResult, most_invariant_k:int, least_invariant_k:int):
     feature_indices_per_layer=[]
     feature_scores_per_layer = []
     values=measure_result.layers

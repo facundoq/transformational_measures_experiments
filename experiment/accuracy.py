@@ -95,7 +95,6 @@ def measure(model:nn.Module,dataset:datasets.ClassificationDataset,transformatio
 
     scores = training.eval_scores(model,dataset,transformations,TransformationStrategy.random_sample,o.get_eval_options(),subsets=subset.value)
     loss, accuracy = scores[subset.value]
-    print("acuracy.py measure",type(loss),type(accuracy))
     return accuracy
 
 def main(p:Parameters,o:Options):

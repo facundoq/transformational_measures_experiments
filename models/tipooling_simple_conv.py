@@ -22,9 +22,6 @@ class TIPoolingSimpleConv(ObservableLayersModule):
         h, w, channels = input_shape
 
         self.transformations=transformations
-        self.transformations.set_input_shape(input_shape)
-        self.transformations.set_pytorch(True)
-        self.transformations.set_cuda(torch.cuda.is_available())
 
         conv_filters2=conv_filters*2
         conv_filters4 = conv_filters * 4

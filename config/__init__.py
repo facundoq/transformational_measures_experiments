@@ -2,13 +2,14 @@ import os
 import pickle
 from pathlib import Path
 
+import transformation_measure.measure
 from .models import *
 from .datasets import *
 from .measures import *
 from .transformations import *
 
 from experiment import measure, training,accuracy
-
+import torch
 
 
 
@@ -28,9 +29,17 @@ def model_path(p: training.Parameters,savepoint=None,model_folderpath= models_fo
     filepath=model_folderpath / filename
     return filepath
 
+def model_path_from_id(id:str,model_folderpath=models_folder())->Path:
+    filename=f"{id}.pt"
+    filepath=model_folderpath / filename
+    return filepath
+
+def model_path_from_filename(filename:str,model_folderpath= models_folder())->Path:
+    return model_folderpath / filename
+
 def load_model(p: training.Parameters,savepoint=None,model_folderpath= models_folder(),use_cuda:bool=torch.cuda.is_available(),load_state=True):
-    model_path = config.model_path(p,savepoint,model_folderpath)
-    return training.load_model(model_path,use_cuda,load_state)
+    path = model_path(p,savepoint,model_folderpath)
+    return training.load_model(path,use_cuda,load_state)
 
 def get_models_filenames():
     files=os.listdir(models_folder())
@@ -67,27 +76,27 @@ def results_paths(ps:[measure.Parameters], results_folder=results_folder())->[Pa
 def results_path(p:measure.Parameters, results_folder=results_folder())-> Path:
     return  results_folder / f"{p.id()}.pickle"
 
-def save_results(r:measure.MeasureExperimentResult, results_folder=results_folder()):
+def save_experiment_results(r:measure.MeasureExperimentResult, results_folder=results_folder()):
     path = results_path(r.parameters, results_folder)
     basename:Path = path.parent
     basename.mkdir(exist_ok=True,parents=True)
     pickle.dump(r,path.open(mode="wb"))
 
-def load_result(path:Path)->measure.MeasureExperimentResult:
+def load_experiment_result(path:Path)->measure.MeasureExperimentResult:
     r:measure.MeasureExperimentResult=pickle.load(path.open(mode="rb"))
     return r
 
-def load_measure_result(path:Path)->tm.MeasureResult:
-    return load_result(path).measure_result
+def load_measure_result(path:Path)-> transformation_measure.measure.MeasureResult:
+    return load_experiment_result(path).measure_result
 
 def load_results(filepaths:[Path])-> [measure.MeasureExperimentResult]:
     results = []
     for filepath in filepaths:
-        result = load_result(filepath)
+        result = load_experiment_result(filepath)
         results.append(result)
     return results
 
-def load_measure_results(filepaths:[Path])-> [tm.MeasureResult]:
+def load_measure_results(filepaths:[Path])-> [transformation_measure.measure.MeasureResult]:
     results = load_results(filepaths)
     results = [r.measure_result for r in results]
     return results

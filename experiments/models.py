@@ -10,7 +10,7 @@ class TrainModels(Experiment):
 
     def run(self):
         model_generators = simple_models_generators
-        transformations = common_transformations+[identity_transformation]
+        transformations = common_transformations_combined+[identity_transformation]
         combinations = itertools.product(
             model_generators, dataset_names, transformations)
         for model_config_generator, dataset, transformation in combinations:
@@ -118,8 +118,7 @@ class CompareModels(Experiment):
                 p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
-                model_path = config.model_path(p_training)
-                self.experiment_measure(p_variance, model_path)
+                self.experiment_measure(p_variance)
 
             # plot results
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"

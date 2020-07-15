@@ -1,12 +1,8 @@
 import numpy as np
 from torch.optim.optimizer import Optimizer
-from typing import Tuple,Dict,Callable
 from torch import optim,nn
-import datasets
 import models
 import transformation_measure as tm
-import itertools
-import config
 
 
 
@@ -182,30 +178,31 @@ class ResNetConfig(ModelConfig):
     def id(self):
         return f"{models.ResNet.__name__}(v={self.v},bn={self.bn})"
 
-from models.simple_conv import ActivationFunction
-def all_models()->[ModelConfig]:
-    kernel_sizes=[3,5,7]
-    mps=[False,True]
-    bns=[False,True]
-    activation_functions=list(ActivationFunction)
-    combinations = itertools.product(datasets.names,bns)
-    simple_conv_combinations=itertools.product(mps,kernel_sizes,activation_functions)
-    models_configs:[ModelConfig]=[]
+# from models.simple_conv import ActivationFunction
 
+# def all_models()->[ModelConfig]:
+#     kernel_sizes=[3,5,7]
+#     mps=[False,True]
+#     bns=[False,True]
+#     activation_functions=list(ActivationFunction)
+#     combinations = itertools.product(datasets.names,bns)
+#     simple_conv_combinations=itertools.product(mps,kernel_sizes,activation_functions)
+#     models_configs:[ModelConfig]=[]
+#
+#
+#     for dataset,bn in combinations:
+#         for mp,k,af in simple_conv_combinations:
+#             models_configs.append(SimpleConvConfig.for_dataset(dataset,bn,k,af,mp))
+#         models_configs.append(AllConvolutionalConfig.for_dataset(dataset, bn))
+#         models_configs.append(VGG16DConfig.for_dataset(dataset, bn))
+#         models_configs.append(ResNetConfig.for_dataset(dataset, bn))
+#         models_configs.append(FFNetConfig.for_dataset(dataset, bn))
+#
+#         for t in config.all_transformations():
+#             models_configs.append(TIPoolingSimpleConvConfig.for_dataset(dataset, bn, t))
 
-    for dataset,bn in combinations:
-        for mp,k,af in simple_conv_combinations:
-            models_configs.append(SimpleConvConfig.for_dataset(dataset,bn,k,af,mp))
-        models_configs.append(AllConvolutionalConfig.for_dataset(dataset, bn))
-        models_configs.append(VGG16DConfig.for_dataset(dataset, bn))
-        models_configs.append(ResNetConfig.for_dataset(dataset, bn))
-        models_configs.append(FFNetConfig.for_dataset(dataset, bn))
-
-        for t in config.all_transformations():
-            models_configs.append(TIPoolingSimpleConvConfig.for_dataset(dataset, bn, t))
-
-    models_configs = { m.id():m for m in models_configs}
-    return models_configs
+    # models_configs = { m.id():m for m in models_configs}
+    # return models_configs
 
 
 
@@ -239,13 +236,10 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
         factor = 1.1 * np.log(m)
     else:
         factor = 1
-    factor =1
+
     # if not model_config.bn:
     #     factor *= 1.5
-
     final_epochs= int(epochs[dataset] * factor)
-    #TODO REMOVE THIS
-    final_epochs=min(final_epochs,10)
     return final_epochs
 
 def min_accuracy(model: str, dataset: str) -> float:

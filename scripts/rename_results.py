@@ -34,7 +34,7 @@ if __name__ == '__main__':
         #     print("anova")
         if r.measure_result.measure.__class__.__name__ == tm.NormalizedDistanceSameEquivariance:
 
-            config.save_results(r,results_folderpath)
+            config.save_experiment_results(r, results_folderpath)
         else:
             pass
             #print(r.measure_result.numpy.__class__.__name__   )

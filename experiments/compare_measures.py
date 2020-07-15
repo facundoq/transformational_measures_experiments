@@ -1,5 +1,5 @@
 from .common import *
-import experiment.measure as m
+import experiment.measure as measure_package
 
 class CompareMeasures(Experiment):
     def description(self):
@@ -51,7 +51,7 @@ class CompareMeasures(Experiment):
         for (model_config_generator, dataset, transformation, measure_set) in combinations:
             # train model with data augmentation and without
             variance_parameters_both = []
-            for t in [AffineGenerator(), transformation]:
+            for t in [identity_transformation, transformation]:
 
                 model_config = model_config_generator.for_dataset(dataset)
                 epochs = config.get_epochs(model_config, dataset, t)
@@ -63,13 +63,15 @@ class CompareMeasures(Experiment):
                 measure_set_name, measures = measure_set
                 for measure in measures:
                     p = config.dataset_size_for_measure(measure)
-                    p_dataset = m.DatasetParameters(dataset, measure.DatasetSubset.test, p)
-                    p_variance = m.Parameters(p_training.id(), p_dataset, transformation, measure)
+                    p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
+                    p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                     variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)
+
+
                 for p_variance in variance_parameters:
-                    self.experiment_measure(p_variance, model_path)
+                    self.experiment_measure(p_variance)
                 variance_parameters_both.append(variance_parameters)
 
             variance_parameters_id = variance_parameters_both[0]
@@ -79,8 +81,7 @@ class CompareMeasures(Experiment):
             experiment_name = f"{measure_set_name}_{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_measure_results(config.results_paths(variance_parameters_all))
-            labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m
-                                                                                               in measures]
+            labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m in measures]
             n = len(measures)
             # cmap = visualization.discrete_colormap(n=n)
             cmap = visualization.default_discrete_colormap()
@@ -88,9 +89,7 @@ class CompareMeasures(Experiment):
             colors = np.vstack([color, color])
             linestyles = ["--" for i in range(n)] + ["-" for i in range(n)]
             ylim = self.get_ylim(measure_set_name, dataset)
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,
-                                                            linestyles=linestyles,
-                                                            colors=colors, ylim=ylim)
+            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,linestyles=linestyles,colors=colors, ylim=ylim)
 
     def get_ylim(self, measure_set_name, dataset):
         if measure_set_name == "Distance":
@@ -148,7 +147,7 @@ class CompareGoodfellow(Experiment):
             # train
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
-            result = config.load_result(config.results_path(p_variance)).measure_result
+            result = config.load_experiment_result(config.results_path(p_variance)).measure_result
             local_result, global_result = result.extra_values[tm.GoodfellowNormal.l_key], result.extra_values[
                 tm.GoodfellowNormal.g_key]
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"

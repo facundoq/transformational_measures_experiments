@@ -1,10 +1,10 @@
-from transformation_measure import ConvAggregation
+from transformation_measure import ConvAggregation, MeasureResult
 from transformation_measure.activations_iterator import ActivationsIterator
 from transformation_measure.numpy.stats_running import RunningMeanAndVarianceWelford, RunningMeanWelford
-from .base import Measure, MeasureResult
+from .base import NumpyMeasure
 from .quotient import divide_activations
 
-class TransformationVarianceSameEquivariance(Measure):
+class TransformationVarianceSameEquivariance(NumpyMeasure):
     def __init__(self):
         super().__init__()
 
@@ -41,7 +41,7 @@ class TransformationVarianceSameEquivariance(Measure):
     def abbreviation(self):
         return "TVSE"
 
-class SampleVarianceSameEquivariance(Measure):
+class SampleVarianceSameEquivariance(NumpyMeasure):
     def __init__(self):
         super().__init__()
 
@@ -84,7 +84,7 @@ class SampleVarianceSameEquivariance(Measure):
 
 
 
-class NormalizedVarianceSameEquivariance(Measure):
+class NormalizedVarianceSameEquivariance(NumpyMeasure):
     def __init__(self, conv_aggregation: ConvAggregation):
         self.sv = SampleVarianceSameEquivariance()
         self.tv = TransformationVarianceSameEquivariance()

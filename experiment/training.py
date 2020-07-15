@@ -17,7 +17,6 @@ from torch.utils.data import DataLoader
 from pytorch.pytorch_image_dataset import ImageDataset,TransformationStrategy
 from pytorch.numpy_dataset import NumpyDataset
 import config
-print(dir(config))
 
 class Parameters:
     def __init__(self,model:config.ModelConfig,dataset:str
@@ -191,6 +190,7 @@ def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:Path):
 
 
 def load_model(model_filepath:Path,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
+    print("load_model",model_filepath)
     logging.info(f"Loading models from {model_filepath}...")
     if use_cuda:
         data = torch.load(model_filepath)

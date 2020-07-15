@@ -5,6 +5,7 @@ from transformations.affine import RotationParameter,ScaleParameter,TranslationP
 from transformations import affine
 import numpy as np
 
+
 class AffineTransformation(affine.AffineTransformation):
 
     def __init__(self,ap:affine.AffineParameters):
@@ -24,8 +25,8 @@ class AffineTransformation(affine.AffineTransformation):
         sx,sy=s
         #tx,ty=t
         matrix = torch.eye(3)
-        matrix[:2, :2] = torch.tensor([[np.cos(r)*sx, -1.0*np.sin(r)*sy],
-                                        [np.sin(r)*sx, np.cos(r)*sy]])
+        matrix[:2, :2] = torch.tensor([[np.cos(r)/sx, -1.0*np.sin(r)/sy],
+                                        [np.sin(r)/sx, np.cos(r)/sy]])
         matrix[:2,2]=torch.tensor(t)*2
         #matrix=decenter_matrix.mm(matrix.mm(center_matrix))
         # print(matrix)
@@ -33,17 +34,21 @@ class AffineTransformation(affine.AffineTransformation):
 
     def __call__(self, x: torch.FloatTensor):
         with torch.no_grad(): # TODO is this necessary?
-            #n, c, h, w = x.shape
+            n, c, h, w = x.shape
+            # print(x.shape)
+            # print(self.transformation_matrix.shape)
+            grid = F.affine_grid(self.transformation_matrix, (1,c,h,w),align_corners=False)
 
-            grid = F.affine_grid(self.transformation_matrix, x.shape,align_corners=False)
             #if self.use_cuda:
             grid=grid.to(x.device)
-            #grid = self.grid.expand(n,*self.grid.shape[1:])
-            x = F.grid_sample(x, grid,align_corners=False)
+            grid = grid.expand(n,*grid.shape[1:])
+            x = F.grid_sample(x, grid,align_corners=False,padding_mode="border")
         return x
 
     def inverse(self):
         return AffineTransformation(self.ap.inverse())
+
+
 
 
 class AffineGenerator(affine.AffineGenerator):

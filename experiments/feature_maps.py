@@ -10,10 +10,8 @@ class VisualizeInvariantFeatureMaps(Experiment):
         # conv_model_names = [m for m in common_model_names if (not "FFNet" in m)]
         conv_model_names = simple_models_generators  # [models.SimpleConv.__name__]
 
-        transformations = [tm.SimpleAffineTransformationGenerator(r=360),
-                           tm.SimpleAffineTransformationGenerator(s=4),
-                           tm.SimpleAffineTransformationGenerator(t=3),
-                           ]
+        transformations = common_transformations
+
         combinations = itertools.product(
             conv_model_names, dataset_names, transformations, measures)
         for (model_config_generator, dataset_name, transformation, measure) in combinations:
@@ -33,12 +31,12 @@ class VisualizeInvariantFeatureMaps(Experiment):
             p_dataset = measure.DatasetParameters(dataset_name, measure.DatasetSubset.test, p)
             p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
             model_path = config.model_path(p_training)
-            self.experiment_measure(p_variance, model_path)
+            self.experiment_measure(p_variance)
 
             model_filepath = config.model_path(p_training)
             model, p_model, o, scores = training.load_model(model_filepath, use_cuda=torch.cuda.is_available())
             result_filepath = config.results_path(p_variance)
-            result = config.load_result(result_filepath)
+            result = config.load_experiment_result(result_filepath)
             dataset = datasets.get(dataset_name)
 
             plot_folderpath.mkdir(parents=True, exist_ok=True)

@@ -1,11 +1,5 @@
-from transformation_measure import *
-import itertools
 from transformations.pytorch.affine import AffineGenerator
-from typing import Iterator
-from .parameters import UniformRotation,ScaleUniform,TranslationUniform
-import torch
-
-
+from transformations.parameters import UniformRotation,ScaleUniform,TranslationUniform
 
 n_transformations=24
 n_r=n_transformations+1 #24+1=25 transformations
@@ -16,7 +10,7 @@ r=UniformRotation(n_r, rotation_max_degrees)
 scale_min_downscale=0.5
 scale_max_upscale=1.25
 s=ScaleUniform(n_s,scale_min_downscale,scale_max_upscale)
-translation_max=0.25
+translation_max=0.15
 t=TranslationUniform(n_t,translation_max)
 common_transformations= [AffineGenerator(r=r,),
                          AffineGenerator(s=s),
@@ -63,9 +57,6 @@ identity_transformation = AffineGenerator()
 #
 
 
-
-
-from transformation_measure.transformation import Transformation,TransformationSet
 # import numpy as np
 # from typing import List,Tuple,Iterator
 #

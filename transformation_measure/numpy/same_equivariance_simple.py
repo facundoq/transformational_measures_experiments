@@ -1,4 +1,5 @@
-from .base import Measure,MeasureResult
+from .base import NumpyMeasure
+from .. import MeasureResult
 from transformation_measure.activations_iterator import ActivationsIterator
 from transformation_measure.numpy.stats_running import RunningMeanWelford
 import numpy as np
@@ -34,7 +35,7 @@ class DistanceFunction:
     def __repr__(self):
         return f"DF(normalize={self.normalize})"
 
-class DistanceSameEquivarianceSimple(Measure):
+class DistanceSameEquivarianceSimple(NumpyMeasure):
     def __init__(self, distance_function:DistanceFunction):
         super().__init__()
         self.distance_function=distance_function

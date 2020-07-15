@@ -24,7 +24,7 @@ class DatasetSize(Experiment):
             variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, measure) for p_dataset in p_datasets]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
-                self.experiment_measure(p_variance, model_path)
+                self.experiment_measure(p_variance)
             results = config.load_measure_results(config.results_paths(variance_parameters))
             #p_datasets = [r.parameters.dataset for r in results]
 
@@ -44,7 +44,7 @@ class DatasetSubset(Experiment):
         return '''Vary the test dataset subset (either train o testing) and see how it affects the numpy's value.'''
 
     def run(self):
-        dataset_subsets = [measure.DatasetSubset.test, measure.DatasetSubset.train]
+        dataset_subsets = [datasets.DatasetSubset.test, datasets.DatasetSubset.train]
 
         model_names = simple_models_generators
         measures = normalized_measures_validation
@@ -70,7 +70,7 @@ class DatasetSubset(Experiment):
                                    p_dataset in p_datasets]
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
-                self.experiment_measure(p_variance, model_path)
+                self.experiment_measure(p_variance)
             results = config.load_measure_results(config.results_paths(variance_parameters))
             labels = [f"{l.format_subset(d.subset)}" for d in p_datasets]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
@@ -99,7 +99,7 @@ class DatasetTransfer(Experiment):
                 p_dataset = measure.DatasetParameters(dataset_test, measure.DatasetSubset.test, p)
                 p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 model_path = config.model_path(p_training)
-                self.experiment_measure(p_variance, model_path, adapt_dataset=True)
+                self.experiment_measure(p_variance, adapt_dataset=True)
                 variance_parameters.append(p_variance)
 
             # plot results

@@ -23,7 +23,10 @@ def experiment(p: Parameters, o: Options):
     if o.verbose:
         print(dataset.summary())
 
-    model, training_parameters, training_options, scores = training.load_model(p.model_path, use_cuda)
+    model_path = config.model_path_from_id(p.model_id)
+    if o.verbose:
+        print(f"Loading model {model_path}")
+    model, training_parameters, training_options, scores = training.load_model(model_path, use_cuda)
 
 
     if training_parameters.dataset != p.dataset.name:
@@ -48,14 +51,7 @@ def experiment(p: Parameters, o: Options):
     dataset = dataset.reduce_size_stratified(p.dataset.percentage)
     dataset.normalize_features()
 
-    # TODO move the subset enum to ClassificationDataset
-    if p.dataset.subset == datasets.DatasetSubset.test:
-        x,y = dataset.x_test,dataset.y_test
-    elif p.dataset.subset == datasets.DatasetSubset.train:
-        x,y = dataset.x_train,dataset.x_test
-    else:
-        raise ValueError(p.dataset.subset)
-
+    x,y=dataset.get_subset(p.dataset.subset)
     numpy_dataset = NumpyDataset(x)
 
     if not p.stratified:
@@ -86,4 +82,4 @@ def main(p:Parameters,o:Options):
     measures_results=experiment(p,o)
     profiler.event("end")
     print(profiler.summary(human=True))
-    config.save_results(measures_results)
+    config.save_experiment_results(measures_results)

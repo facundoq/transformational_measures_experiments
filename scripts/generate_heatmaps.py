@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
+import transformation_measure.measure
 from transformation_measure import MeasureResult
 import config
 import matplotlib as mpl
@@ -67,7 +68,7 @@ folder = config.results_folder()
 for f in sorted(folder.iterdir()):
     if not f.is_file():
         continue
-    result=config.load_result(f)
+    result=config.load_experiment_result(f)
     if "savepoint=" in result.parameters.model_name():
         continue
     if "rep=" in result.parameters.model_name():
@@ -81,10 +82,10 @@ for f in sorted(folder.iterdir()):
     visualization.plot_heatmap(result.measure_result,filepath)
 
     measure_result= result.measure_result
-    if measure_result.__class__ == tm.StratifiedMeasureResult:
+    if measure_result.__class__ == transformation_measure.measure.StratifiedMeasureResult:
         stratified_folderpath = model_folderpath / f"{result.id()}_stratified"
         stratified_folderpath.mkdir(exist_ok=True,parents=True)
-        measure_result:tm.StratifiedMeasureResult = measure_result
+        measure_result: transformation_measure.measure.StratifiedMeasureResult = measure_result
         n = len(measure_result.class_labels)
         for i,class_name,measure in zip(range(n),measure_result.class_labels,measure_result.class_measures):
             title = f"{i:02}_{class_name}"

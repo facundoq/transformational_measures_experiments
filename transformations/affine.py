@@ -4,10 +4,10 @@ from typing import Tuple,Iterator
 import itertools
 import abc
 
-
 TranslationParameter = Tuple[float, float]
 ScaleParameter = Tuple[float, float]
 RotationParameter = float
+
 
 class AffineParameters:
     def __init__(self,r:RotationParameter,s=ScaleParameter,t=TranslationParameter):
@@ -53,12 +53,13 @@ def ifnone(x,v):
     else:
         return x
 
+from transformations.parameters import NoRotation,NoScale,NoTranslation
 
 class AffineGenerator(TransformationSet):
     def __init__(self, r:[RotationParameter]=None, s:[ScaleParameter]=None, t:[TranslationParameter]=None):
-        r=ifnone(r,[0.0])
-        s=ifnone(s, [(1.0,1.0)])
-        t=ifnone(t,[(0.0,0.0)])
+        r=ifnone(r,NoRotation())
+        s=ifnone(s,NoScale())
+        t=ifnone(t,NoTranslation())
         self.r,self.s,self.t=r,s,t
         parameters = itertools.product(r,s,t)
         parameters = [AffineParameters(r,s,t) for r,s,t in parameters]

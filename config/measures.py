@@ -3,7 +3,7 @@ import itertools
 from datasets import DatasetSubset
 from experiment import measure
 
-def dataset_size_for_measure(measure:Measure,subset=DatasetSubset.test)->float:
+def dataset_size_for_measure(measure:NumpyMeasure, subset=DatasetSubset.test)->float:
     if subset == DatasetSubset.test:
         if measure.__class__.__name__.endswith("Variance"):
             return 0.5
@@ -17,7 +17,7 @@ def dataset_size_for_measure(measure:Measure,subset=DatasetSubset.test)->float:
     else:
         raise ValueError(f"Invalid subset {subset}")
 
-def default_measure_dataset(dataset:str,m:Measure):
+def default_measure_dataset(dataset:str, m:NumpyMeasure):
     subset = DatasetSubset.test
     return measure.DatasetParameters(dataset, subset, dataset_size_for_measure(m, subset))
 
@@ -29,7 +29,7 @@ da_keep = DistanceAggregation(normalize=False, keep_shape=True)
 df = DistanceFunction(normalize=False)
 df_normalize = DistanceFunction(normalize=True)
 
-def all_measures()-> [Measure]:
+def all_measures()-> [NumpyMeasure]:
     cas=[ConvAggregation.none, ConvAggregation.sum,ConvAggregation.mean,ConvAggregation.max,]
 
     das = [da,da_normalize_keep,da_normalize,da_keep]
@@ -69,7 +69,7 @@ def all_measures()-> [Measure]:
     return measures
 
 
-def common_measures()-> [Measure]:
+def common_measures()-> [NumpyMeasure]:
 
     mf, ca_sum, ca_mean = MeasureFunction.std, ConvAggregation.sum, ConvAggregation.mean
     ca_none = ConvAggregation.none

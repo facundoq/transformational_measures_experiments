@@ -1,17 +1,18 @@
-from .base import Measure,MeasureResult
+from .base import NumpyMeasure
 from transformation_measure.activations_iterator import ActivationsIterator
-from transformation_measure import ConvAggregation
+from transformation_measure import ConvAggregation, MeasureResult
 from transformation_measure.numpy.stats_running import RunningMeanWelford
 from .quotient import divide_activations
 from .aggregation import DistanceAggregation
 
-class TransformationDistance(Measure):
+default_distance_aggregation=DistanceAggregation()
+class TransformationDistance(NumpyMeasure):
     def __init__(self, distance_aggregation:DistanceAggregation):
         super().__init__()
         self.distance_aggregation=distance_aggregation
 
     def __repr__(self):
-        return f"TD(da={self.distance_aggregation.name})"
+        return f"TD(da={self.distance_aggregation})"
 
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
@@ -37,13 +38,13 @@ class TransformationDistance(Measure):
         return "TD"
 
 
-class SampleDistance(Measure):
+class SampleDistance(NumpyMeasure):
     def __init__(self, distance_aggregation: DistanceAggregation):
         super().__init__()
         self.distance_aggregation = distance_aggregation
 
     def __repr__(self):
-        return f"SD(da={self.distance_aggregation.name})"
+        return f"SD(da={self.distance_aggregation})"
 
     def eval(self,activations_iterator:ActivationsIterator)->MeasureResult:
         layer_names = activations_iterator.layer_names()
@@ -68,7 +69,7 @@ class SampleDistance(Measure):
 
 
 
-class NormalizedDistance(Measure):
+class NormalizedDistance(NumpyMeasure):
     def __init__(self, distance_aggregation: DistanceAggregation,conv_aggregation:ConvAggregation):
         self.distance_aggregation = distance_aggregation
         self.td = TransformationDistance(distance_aggregation)
@@ -89,7 +90,7 @@ class NormalizedDistance(Measure):
         return MeasureResult(result, activations_iterator.layer_names(), self)
 
     def __repr__(self):
-        return f"ND(ca={self.conv_aggregation.value},da={self.distance_aggregation.name})"
+        return f"ND(ca={self.conv_aggregation.value},da={self.distance_aggregation})"
 
 
     def name(self):

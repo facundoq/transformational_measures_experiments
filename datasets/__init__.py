@@ -26,6 +26,14 @@ class ClassificationDataset:
         self.labels = labels
         self.dataformat = dataformat
 
+    def get_subset(self,subset:DatasetSubset):
+        if subset == DatasetSubset.test:
+            return self.x_test,self.y_test
+        elif subset == DatasetSubset.train:
+            return self.x_train,self.x_test
+        else:
+            raise ValueError(subset)
+
     def size(self,subset:DatasetSubset):
         if subset==DatasetSubset.test:
             return self.y_test.shape[0]

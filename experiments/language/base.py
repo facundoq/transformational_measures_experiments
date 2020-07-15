@@ -63,7 +63,7 @@ class Language(abc.ABC):
         self.max=""
         self.min=""
         self.sum=""
-    def measure_name(self,m:tm.Measure):
+    def measure_name(self, m:tm.NumpyMeasure):
         dict = {
             tm.NormalizedDistance: self.normalized_distance,
             tm.NormalizedVariance: self.normalized_variance,
