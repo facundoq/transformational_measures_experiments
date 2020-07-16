@@ -1,3 +1,5 @@
+* finish example in google colab
+* change lib name to "tmeasure"
 * Split measures for every framework
     * Measures for PyTorch/TF receive Model, Dataset and Transformation objects
     * Measures for Numpy still receive an Iterator adapter. 
@@ -5,6 +7,7 @@
 
 * fix numpy transformations
 * see TODOs
+* 
 
 LISTO:
 

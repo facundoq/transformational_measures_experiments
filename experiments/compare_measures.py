@@ -84,12 +84,12 @@ class CompareMeasures(Experiment):
             labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m in measures]
             n = len(measures)
             # cmap = visualization.discrete_colormap(n=n)
-            cmap = visualization.default_discrete_colormap()
+            cmap = tm.visualization.default_discrete_colormap()
             color = cmap(range(n))
             colors = np.vstack([color, color])
             linestyles = ["--" for i in range(n)] + ["-" for i in range(n)]
             ylim = self.get_ylim(measure_set_name, dataset)
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,linestyles=linestyles,colors=colors, ylim=ylim)
+            tm.visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,linestyles=linestyles,colors=colors, ylim=ylim)
 
     def get_ylim(self, measure_set_name, dataset):
         if measure_set_name == "Distance":

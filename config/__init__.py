@@ -6,7 +6,7 @@ import transformational_measures.measure
 from .models import *
 from .datasets import *
 from .measures import *
-from .transformations import *
+from transformational_measures.transformations import *
 
 from experiment import measure, training,accuracy
 import torch

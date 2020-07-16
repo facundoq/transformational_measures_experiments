@@ -13,9 +13,9 @@ import numpy as np
 import itertools
 from pathlib import Path
 import os
-from transformations.pytorch.affine import AffineGenerator
+from transformational_measures.transformations.pytorch.affine import AffineGenerator
 
-from transformations.parameters import UniformRotation,ScaleUniform,TranslationUniform
+from transformational_measures.transformations.parameters import UniformRotation,ScaleUniform,TranslationUniform
 
 from config.transformations import common_transformations,common_transformations_da,common_transformations_combined,identity_transformation
 
