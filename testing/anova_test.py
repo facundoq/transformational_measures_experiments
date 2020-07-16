@@ -1,7 +1,7 @@
 import torch
 import os
 import numpy as np
-import transformation_measure as tm
+import transformational_measures as tm
 from typing import Generator,Any,Tuple,List
 from nptyping import Array
 

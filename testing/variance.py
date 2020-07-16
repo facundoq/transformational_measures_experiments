@@ -18,7 +18,7 @@ model,rotated_model,scores,config= model_loading.get_model(model_name, dataset,u
 
 print(model.name, dataset.name)
 
-import transformation_measure as tm
+import transformational_measures as tm
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')

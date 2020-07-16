@@ -1,12 +1,12 @@
 import config
 import torch
-import transformation_measure as tm
+import transformational_measures as tm
 from .base import Experiment
 from .language import l
 from pytorch.pytorch_image_dataset import TransformationStrategy
 import datasets
 from experiment import measure, training, accuracy
-from transformation_measure import visualization
+from transformational_measures import visualization
 from experiment.measure import MeasureExperimentResult
 import models
 import numpy as np

@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 from models.util import SequentialWithIntermediates
-from transformation_measure import ObservableLayersModule
+from transformational_measures import ObservableLayersModule
 
 
 class ConvBNAct(ObservableLayersModule):

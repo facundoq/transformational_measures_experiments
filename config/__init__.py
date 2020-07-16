@@ -2,7 +2,7 @@ import os
 import pickle
 from pathlib import Path
 
-import transformation_measure.measure
+import transformational_measures.measure
 from .models import *
 from .datasets import *
 from .measures import *
@@ -86,7 +86,7 @@ def load_experiment_result(path:Path)->measure.MeasureExperimentResult:
     r:measure.MeasureExperimentResult=pickle.load(path.open(mode="rb"))
     return r
 
-def load_measure_result(path:Path)-> transformation_measure.measure.MeasureResult:
+def load_measure_result(path:Path)-> transformational_measures.measure.MeasureResult:
     return load_experiment_result(path).measure_result
 
 def load_results(filepaths:[Path])-> [measure.MeasureExperimentResult]:
@@ -96,7 +96,7 @@ def load_results(filepaths:[Path])-> [measure.MeasureExperimentResult]:
         results.append(result)
     return results
 
-def load_measure_results(filepaths:[Path])-> [transformation_measure.measure.MeasureResult]:
+def load_measure_results(filepaths:[Path])-> [transformational_measures.measure.MeasureResult]:
     results = load_results(filepaths)
     results = [r.measure_result for r in results]
     return results

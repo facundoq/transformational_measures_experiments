@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from experiments.language import l
 
-from transformation_measure.visualization import default_discrete_colormap
+from transformational_measures.visualization import default_discrete_colormap
 
 def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[str], group_names:[str]):
     # set width of bar

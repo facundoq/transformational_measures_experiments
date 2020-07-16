@@ -1,10 +1,10 @@
 from enum import Enum
 import datasets
 from pathlib import Path
-import transformation_measure as tm
+import transformational_measures as tm
 import os
 
-import transformation_measure.measure
+import transformational_measures.measure
 
 
 class DatasetParameters:
@@ -54,7 +54,7 @@ class Options:
         return f"Options(verbose={self.verbose},batch_size={self.batch_size},num_workers={self.num_workers},adapt_dataset={self.adapt_dataset})"
 
 class MeasureExperimentResult:
-    def __init__(self, parameters:Parameters, measure_result: transformation_measure.measure.MeasureResult):
+    def __init__(self, parameters:Parameters, measure_result: transformational_measures.measure.MeasureResult):
         self.parameters=parameters
         self.measure_result=measure_result
 

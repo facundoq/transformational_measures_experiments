@@ -2,7 +2,7 @@ import numpy as np
 from torch.optim.optimizer import Optimizer
 from torch import optim,nn
 import models
-import transformation_measure as tm
+import transformational_measures as tm
 
 
 

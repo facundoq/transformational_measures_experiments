@@ -1,4 +1,4 @@
-from transformation_measure import *
+from transformational_measures import *
 import itertools
 from datasets import DatasetSubset
 from experiment import measure

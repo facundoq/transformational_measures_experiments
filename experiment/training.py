@@ -8,7 +8,7 @@ import logging
 from torch import nn
 from torch.optim.optimizer import Optimizer
 
-import  transformation_measure as tm
+import  transformational_measures as tm
 
 import datasets
 from typing import *

@@ -1,5 +1,5 @@
 import skimage.io
-import transformation_measure as tm
+import transformational_measures as tm
 import numpy as np
 import matplotlib.pyplot as plt
 import os

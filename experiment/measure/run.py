@@ -2,7 +2,7 @@ import os
 import typing
 
 import datasets
-import transformation_measure as tm
+import transformational_measures as tm
 from enum import Enum
 
 from pathlib import Path
@@ -45,7 +45,7 @@ def experiment(p: Parameters, o: Options):
         print("### Scores obtained:")
         training.print_scores(scores)
 
-    import transformation_measure as tm
+    import transformational_measures as tm
 
     from pytorch.numpy_dataset import NumpyDataset
     dataset = dataset.reduce_size_stratified(p.dataset.percentage)

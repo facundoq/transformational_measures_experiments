@@ -1,6 +1,6 @@
-import transformation_measure.measure
+import transformational_measures.measure
 from .common import *
-from transformation_measure.numpy.stats_running import RunningMeanWelford
+from transformational_measures.numpy.stats_running import RunningMeanWelford
 
 class TIPooling(Experiment):
     def description(self):
@@ -50,7 +50,7 @@ class TIPooling(Experiment):
             mark_layers = range(model.layer_before_pooling_each_transformation())
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,mark_layers=mark_layers,ylim=get_ylim_normalized(measure))
 
-    def average_paths_tipooling(self, model: models.TIPoolingSimpleConv, result: transformation_measure.measure.MeasureResult) -> transformation_measure.measure.MeasureResult:
+    def average_paths_tipooling(self, model: models.TIPoolingSimpleConv, result: transformational_measures.measure.MeasureResult) -> transformational_measures.measure.MeasureResult:
         # print(len(model.activation_names()),model.activation_names())
         # print(len(model.original_conv_names()),model.original_conv_names())
         # print(len(model.fc_names()), model.fc_names())
@@ -87,4 +87,4 @@ class TIPooling(Experiment):
 
         # print(len(layers),len(layer_names))
         # print(layer_names)
-        return transformation_measure.measure.MeasureResult(layers, layer_names, result.measure)
+        return transformational_measures.measure.MeasureResult(layers, layer_names, result.measure)

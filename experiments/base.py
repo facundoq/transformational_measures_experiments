@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 from experiment import measure, training, accuracy
 import config
-import transformation_measure as tm
+import transformational_measures as tm
 import abc
 import torch
 from .language import Spanish, English

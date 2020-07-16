@@ -4,7 +4,7 @@ from torchvision.transforms import functional
 from torch.utils.data import Dataset
 from PIL import Image
 import numpy as np
-import transformation_measure as tm
+import transformational_measures as tm
 from enum import Enum
 
 class TransformationStrategy(Enum):

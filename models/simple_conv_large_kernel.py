@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from transformation_measure import ObservableLayersModule
+from transformational_measures import ObservableLayersModule
 
 from models import SequentialWithIntermediates
 

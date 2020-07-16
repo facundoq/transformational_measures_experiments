@@ -1,7 +1,7 @@
 import enum
 import abc
 from datasets import DatasetSubset
-import transformation_measure as tm
+import transformational_measures as tm
 
 class Language(abc.ABC):
     def __init__(self):

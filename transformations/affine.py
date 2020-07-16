@@ -1,5 +1,5 @@
 
-from transformation_measure.transformation import Transformation,TransformationSet
+from transformational_measures.transformation import Transformation,TransformationSet
 from typing import Tuple,Iterator
 import itertools
 import abc

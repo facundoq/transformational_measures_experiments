@@ -1,7 +1,7 @@
 import progressbar
 import torch,torch.multiprocessing
 import numpy as np
-import transformation_measure as tm
+import transformational_measures as tm
 from typing import Callable
 def print_results(dataset,loss,accuracy,correct,n):
     print('{} => Loss: {:.4f}, Accuracy: {:.2f}% ({}/{})'.format(dataset,

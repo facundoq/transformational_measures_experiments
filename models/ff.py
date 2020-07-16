@@ -1,5 +1,5 @@
 from torch import nn
-from transformation_measure import ObservableLayersModule
+from transformational_measures import ObservableLayersModule
 from models import SequentialWithIntermediates
 import torch.nn.functional as F
 from models.util import Flatten

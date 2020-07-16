@@ -2,7 +2,7 @@ import typing
 from experiment import training
 import datasets, torch
 from torch import nn
-import transformation_measure as tm
+import transformational_measures as tm
 from pathlib import Path
 from pytorch.pytorch_image_dataset import TransformationStrategy
 from utils.profiler import Profiler

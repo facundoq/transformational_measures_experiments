@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
-import transformation_measure.measure
-from transformation_measure import MeasureResult
+import transformational_measures.measure
+from transformational_measures import MeasureResult
 import config
 import matplotlib as mpl
 mpl.use('Agg')
@@ -9,9 +9,9 @@ import matplotlib.pyplot as plt
 from typing import List
 plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
-from transformation_measure import visualization
+from transformational_measures import visualization
 
-import transformation_measure as tm
+import transformational_measures as tm
 
 # def plot_last_layers_per_class(results,folderpath):
 #
@@ -82,10 +82,10 @@ for f in sorted(folder.iterdir()):
     visualization.plot_heatmap(result.measure_result,filepath)
 
     measure_result= result.measure_result
-    if measure_result.__class__ == transformation_measure.measure.StratifiedMeasureResult:
+    if measure_result.__class__ == transformational_measures.measure.StratifiedMeasureResult:
         stratified_folderpath = model_folderpath / f"{result.id()}_stratified"
         stratified_folderpath.mkdir(exist_ok=True,parents=True)
-        measure_result: transformation_measure.measure.StratifiedMeasureResult = measure_result
+        measure_result: transformational_measures.measure.StratifiedMeasureResult = measure_result
         n = len(measure_result.class_labels)
         for i,class_name,measure in zip(range(n),measure_result.class_labels,measure_result.class_measures):
             title = f"{i:02}_{class_name}"

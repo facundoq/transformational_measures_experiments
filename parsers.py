@@ -96,7 +96,7 @@ class FloatParser(SimpleValueParser):
 
 
 
-import transformation_measure as tm
+import transformational_measures as tm
 
 class ClassParser(Parser):
     def __init__(self, klass:type, parameters:[KeyValueParameterParser], short_name:str=None):

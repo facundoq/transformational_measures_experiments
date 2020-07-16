@@ -8,7 +8,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from models import Flatten
 from models import SequentialWithIntermediates
-from transformation_measure import  ObservableLayersModule
+from transformational_measures import  ObservableLayersModule
 
 class ConvBNRelu(ObservableLayersModule):
 

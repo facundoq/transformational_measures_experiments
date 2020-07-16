@@ -1,4 +1,4 @@
-import transformation_measure.measure
+import transformational_measures.measure
 from .common import *
 
 class ValidateMeasure(Experiment):
@@ -77,15 +77,15 @@ class ValidateGoodfellow(Experiment):
 
             experiment_result = config.load_experiment_result(config.results_path(p_variance))
 
-            result: transformation_measure.measure.MeasureResult =experiment_result.measure_result
-            global_result: transformation_measure.measure.MeasureResult = result.extra_values[tm.GoodfellowNormal.g_key]
-            local_result: transformation_measure.measure.MeasureResult =result.extra_values[tm.GoodfellowNormal.l_key]
+            result: transformational_measures.measure.MeasureResult =experiment_result.measure_result
+            global_result: transformational_measures.measure.MeasureResult = result.extra_values[tm.GoodfellowNormal.g_key]
+            local_result: transformational_measures.measure.MeasureResult =result.extra_values[tm.GoodfellowNormal.l_key]
             visualization.plot_heatmap(result, plot_filepath)
             visualization.plot_heatmap(global_result, plot_filepath_global)
             visualization.plot_heatmap(local_result, plot_filepath_local)
 
             plot_filepath_thresholds = self.plot_folderpath / f"{experiment_name}_thresholds.jpg"
             thresholds = global_result.extra_values[tm.GoodfellowGlobalVarianceNormal.thresholds_key]
-            thresholds_result= transformation_measure.measure.MeasureResult(thresholds, result.layer_names, global_result.measure)
+            thresholds_result= transformational_measures.measure.MeasureResult(thresholds, result.layer_names, global_result.measure)
             visualization.plot_heatmap(thresholds_result, plot_filepath_thresholds)
 

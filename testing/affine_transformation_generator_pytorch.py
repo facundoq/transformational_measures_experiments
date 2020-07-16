@@ -3,7 +3,7 @@ import torch
 from utils import profiler
 from pytorch.numpy_dataset import NumpyDataset
 import config
-import transformation_measure as tm
+import transformational_measures as tm
 import matplotlib
 
 matplotlib.use('Agg')
