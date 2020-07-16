@@ -21,7 +21,7 @@ class AggregationBeforeAfter(Experiment):
             self.experiment_training(p_training)
             measures = [tm.NormalizedVariance(ca) for ca in before_functions]
             variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
-            model_path = config.model_path(p_training)
+            # model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
             normal_results = config.load_measure_results(config.results_paths(variance_parameters))
@@ -31,7 +31,7 @@ class AggregationBeforeAfter(Experiment):
             self.experiment_measure(ca_none_variance_parameter)
             ca_none_variance_parameters = [ca_none_variance_parameter] * len(after_functions)
             ca_none_results = config.load_measure_results(config.results_paths(ca_none_variance_parameters))
-            ca_none_results = [r.collapse_convolutions(ca) for ca,r in zip(after_functions , ca_none_results)]
+            ca_none_results = [ca.collapse_convolutions(r) for ca,r in zip(after_functions , ca_none_results)]
 
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
@@ -63,7 +63,7 @@ class AggregationFunctionsVariance(Experiment):
             self.experiment_training(p_training)
             measures = [tm.NormalizedVariance(ca) for ca in before_functions]
             variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
-            model_path = config.model_path(p_training)
+            # model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
             results = config.load_measure_results(config.results_paths(variance_parameters))
@@ -101,7 +101,7 @@ class AggregationFunctionsDistance(Experiment):
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
             results = config.load_measure_results(config.results_paths(variance_parameters))
-            results[0]=results[0].collapse_convolutions(ca_mean)
+            results[0]=ca_mean.collapse_convolutions(results[0])
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
