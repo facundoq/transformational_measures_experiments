@@ -1,4 +1,6 @@
-* finish example in google colab
+* Separate Google Colab Example into two Notebooks
+    * 1) Pre trains a network with data augmentation and without
+    * 2) Measure invariance on a network
 * change lib name to "tmeasure"
 * Split measures for every framework
     * Measures for PyTorch/TF receive Model, Dataset and Transformation objects
