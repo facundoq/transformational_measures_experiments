@@ -1,5 +1,7 @@
 from .common import *
 from models.simple_conv import ActivationFunction as af
+import experiment.measure as measure_package
+import datasets
 
 class BatchNormalization(Experiment):
     def description(self):
@@ -21,8 +23,8 @@ class BatchNormalization(Experiment):
                 self.experiment_training(p_training)
 
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
-                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
+                p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                 model_path = config.model_path(p_training)
                 batch_size = 64
                 if model_config.name.startswith("ResNet"):

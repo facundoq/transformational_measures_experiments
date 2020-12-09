@@ -1,5 +1,6 @@
-numpy --no-binary=numpy
-scipy --no-binary=scipy
+git+git://github.com/facundoq/transformational_measures.git
+numpy
+scipy
 protobuf
 six
 matplotlib
@@ -21,4 +22,4 @@ imageio
 Shapely
 imgaug
 texttable
-git+git://github.com/facundoq/transformational_measures.git
+

@@ -1,5 +1,6 @@
 from .common import *
 import experiment.measure as measure_package
+import transformational_measures.visualization as tmv
 
 class CompareMeasures(Experiment):
     def description(self):
@@ -8,29 +9,29 @@ class CompareMeasures(Experiment):
     def run(self):
 
         measure_sets = {"Variance": [
-            tm.TransformationVariance(),
-            tm.SampleVariance(),
+            tm.TransformationVarianceInvariance(),
+            tm.SampleVarianceInvariance(),
         ],
             "Distance": [
-               tm.TransformationDistance(da),
-               tm.SampleDistance(da),
+               tm.TransformationDistanceInvariance(da),
+               tm.SampleDistanceInvariance(da),
             ],
             "HighLevel": [
-                tm.AnovaMeasure(0.99, bonferroni=True),
-                tm.NormalizedVariance(ca_sum),
-                tm.NormalizedDistance(da_keep, ca_mean),
-                tm.GoodfellowNormal(alpha=0.99),
+                tm.ANOVAInvariance(0.99, bonferroni=True),
+                tm.NormalizedVarianceInvariance(ca_sum),
+                tm.NormalizedDistanceInvariance(da_keep, ca_mean),
+                tm.GoodfellowNormalInvariance(alpha=0.99),
             ],
             "Normalized": [
-                tm.NormalizedVariance(ca_sum),
-                tm.NormalizedDistance(da_keep, ca_mean),
+                tm.NormalizedVarianceInvariance(ca_sum),
+                tm.NormalizedDistanceInvariance(da_keep, ca_mean),
             ],
             "NormalizedVariance": [
-                tm.NormalizedVariance(ca_sum),
+                tm.NormalizedVarianceInvariance(ca_sum),
             ],
             "Basic": [
-                tm.AnovaMeasure(0.99, bonferroni=True),
-                tm.GoodfellowNormal(alpha=0.99),
+                tm.ANOVAInvariance(0.99, bonferroni=True),
+                tm.GoodfellowNormalInvariance(alpha=0.99),
             ],
             "Equivariance": [
                 tm.NormalizedVarianceSameEquivariance(ca_mean),
@@ -80,16 +81,17 @@ class CompareMeasures(Experiment):
             # plot results
             experiment_name = f"{measure_set_name}_{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+
             results = config.load_measure_results(config.results_paths(variance_parameters_all))
             labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m in measures]
             n = len(measures)
-            # cmap = visualization.discrete_colormap(n=n)
-            cmap = tm.visualization.default_discrete_colormap()
+
+            cmap = tmv.default_discrete_colormap()
             color = cmap(range(n))
             colors = np.vstack([color, color])
             linestyles = ["--" for i in range(n)] + ["-" for i in range(n)]
             ylim = self.get_ylim(measure_set_name, dataset)
-            tm.visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,linestyles=linestyles,colors=colors, ylim=ylim)
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,linestyles=linestyles,colors=colors, ylim=ylim)
 
     def get_ylim(self, measure_set_name, dataset):
         if measure_set_name == "Distance":
@@ -114,7 +116,7 @@ class CompareGoodfellowAlpha(Experiment):
 
         model_names = simple_models_generators
         alphas = [0.5, 0.9, 0.95, 0.99, 0.999]
-        measures = [tm.GoodfellowNormal(alpha) for alpha in alphas]
+        measures = [tm.GoodfellowNormalInvariance(alpha) for alpha in alphas]
         # transformations=config.common_transformations()
         combinations = itertools.product(model_names, dataset_names, common_transformations_combined)
         for model_config_generator, dataset, transformation in combinations:
@@ -128,7 +130,7 @@ class CompareGoodfellowAlpha(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_measure_results(config.results_paths(variance_parameters))
             labels = [f"α={alpha}" for alpha in alphas]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
 class CompareGoodfellow(Experiment):
@@ -138,7 +140,7 @@ class CompareGoodfellow(Experiment):
 
     def run(self):
         model_names = simple_models_generators
-        measure = tm.GoodfellowNormal(0.999)
+        measure = tm.GoodfellowNormalInvariance(0.999)
         # transformations=config.common_transformations()
         combinations = itertools.product(model_names, dataset_names, common_transformations_combined)
         labels = ["Local", "Global"]
@@ -148,10 +150,10 @@ class CompareGoodfellow(Experiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
             result = config.load_experiment_result(config.results_path(p_variance)).measure_result
-            local_result, global_result = result.extra_values[tm.GoodfellowNormal.l_key], result.extra_values[
-                tm.GoodfellowNormal.g_key]
+            local_result, global_result = result.extra_values[tm.GoodfellowNormalInvariance.l_key], result.extra_values[
+                tm.GoodfellowNormalInvariance.g_key]
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            visualization.plot_collapsing_layers_same_model([local_result, global_result], plot_filepath,labels=labels, ylim=0.1)
+            tmv.plot_collapsing_layers_same_model([local_result, global_result], plot_filepath,labels=labels, ylim=0.1)
 
 
 
@@ -183,7 +185,7 @@ class CompareSameEquivarianceNormalized(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_measure_results(config.results_paths(variance_parameters))
 
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
 class CompareSameEquivarianceSimple(Experiment):
@@ -212,7 +214,7 @@ class CompareSameEquivarianceSimple(Experiment):
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             results = config.load_measure_results(config.results_paths(variance_parameters))
 
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 class CompareSameEquivariance(Experiment):
 
     def description(self):
@@ -237,4 +239,4 @@ class CompareSameEquivariance(Experiment):
             transformation_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.transformation_key]
             sample_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.sample_key]
             results=[transformation_results,sample_results]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)

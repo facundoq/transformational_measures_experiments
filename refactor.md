@@ -1,15 +1,26 @@
-* Separate Google Colab Example into two Notebooks
-    * 1) Pre trains a network with data augmentation and without
-    * 2) Measure invariance on a network
-* change lib name to "tmeasure"
+
+* Rerun all experiments
+    * IMPORTANT BEFORE
+        * Restore dataset percentage from 0.01 to 0.5
+        * Restore training epochs from 1 to formula
+        * Restore min accuracy from 0 to formula
 * Split measures for every framework
     * Measures for PyTorch/TF receive Model, Dataset and Transformation objects
     * Measures for Numpy still receive an Iterator adapter. 
     * Transformations are specific to each framework now.
-
 * fix numpy transformations
 * see TODOs
-* 
+
+* Add tqdm for training
+    * by epochs, not batches
+* Add tqdm for measures
+    * Apply in iterator
+    * Datasets need to have a __len__ property
+
+
+
+* Add more examples and documentation to lib
+* Reference papers in code
 
 LISTO:
 

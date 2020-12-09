@@ -2,6 +2,9 @@ from .common import *
 from .weights import DuringTraining
 
 from .visualization import accuracies
+import experiment.measure as measure_package
+import datasets
+
 
 class TrainModels(Experiment):
 
@@ -114,8 +117,8 @@ class CompareModels(Experiment):
                 self.experiment_training(p_training)
                 # generate variance params
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
-                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
+                p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 self.experiment_measure(p_variance)

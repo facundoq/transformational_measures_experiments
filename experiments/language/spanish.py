@@ -18,7 +18,7 @@ class Spanish(Language):
         self.combined = "Combinadas"
         self.normalized = "Normalizada"
         self.unnormalized = "Sin normalizar"
-        self.meandeviation = "Media y desviación"
+        self.meandeviation = "μ/σ"
         self.epoch = "Época"
         self.train = "Entrenamiento"
         self.test = "Prueba"

@@ -1,13 +1,14 @@
 import config
 import torch
 import transformational_measures as tm
+from transformational_measures.visualization import plot_collapsing_layers_same_model,plot_collapsing_layers_different_models
 from .base import Experiment
 from .language import l
 from pytorch.pytorch_image_dataset import TransformationStrategy
 import datasets
 from experiment import measure, training, accuracy
 from transformational_measures import visualization
-from experiment.measure import MeasureExperimentResult
+from experiment.measure import MeasureExperimentResult,DatasetParameters,Parameters
 import models
 import numpy as np
 import itertools
@@ -19,7 +20,8 @@ from transformational_measures.transformations.parameters import UniformRotation
 
 from config.transformations import common_transformations,common_transformations_da,common_transformations_combined,identity_transformation
 
-
+# TODO restore to 0.5
+default_dataset_percentage = 0.01
 default_dataset_percentage = 0.5
 
 common_models_generators = [
@@ -35,7 +37,7 @@ small_models_generators = [config.SimpleConvConfig,
 simple_models_generators = [config.SimpleConvConfig]
 # common_models_generators  = simple_models_generators
 
-ca_none, ca_mean, ca_sum, ca_max = tm.ConvAggregation.none, tm.ConvAggregation.mean, tm.ConvAggregation.sum, tm.ConvAggregation.max
+ca_none, ca_mean, ca_sum, ca_max = tm.IdentityTransformation(), tm.AggregateConvolutions(), tm.AggregateTransformation(tm.AggregateFunction.sum),  tm.AggregateTransformation(tm.AggregateFunction.max)
 da = tm.DistanceAggregation(normalize=False, keep_shape=False)
 da_normalize = tm.DistanceAggregation(normalize=True, keep_shape=False)
 da_normalize_keep = tm.DistanceAggregation(normalize=True, keep_shape=True)
@@ -45,11 +47,11 @@ df = tm.DistanceFunction(normalize=False)
 df_normalize = tm.DistanceFunction(normalize=True)
 
 measures = config.common_measures()
-nv = tm.NormalizedVariance(ca_mean)
-nd = tm.NormalizedDistance(da_keep, ca_mean)  # TODO change to ca_none, its the same because of da_keep but still..
+nv = tm.NormalizedVarianceInvariance(ca_mean)
+nd = tm.NormalizedDistanceInvariance(da_keep, ca_mean)  # TODO change to ca_none, its the same because of da_keep but still..
 dse = tm.NormalizedDistanceSameEquivariance(da_normalize_keep)
 vse = tm.NormalizedVarianceSameEquivariance(ca_mean)
-gf = tm.GoodfellowNormal()
+gf = tm.GoodfellowNormalInvariance()
 
 normalized_measures_validation = [nv, nd, vse]
 normalized_measures = [nv, vse]
@@ -65,9 +67,9 @@ def get_ylim_normalized(measure: tm.NumpyMeasure):
         return 8
     elif measure.__class__ == tm.NormalizedVarianceSameEquivariance:
         return 8
-    elif measure.__class__ == tm.NormalizedVariance:
+    elif measure.__class__ == tm.NormalizedVarianceInvariance:
         return 1.4
-    elif measure.__class__ == tm.NormalizedDistance:
+    elif measure.__class__ == tm.NormalizedDistanceInvariance:
         return 1.4
     else:
         raise ValueError(measure)

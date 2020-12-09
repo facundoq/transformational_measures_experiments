@@ -240,6 +240,8 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
     # if not model_config.bn:
     #     factor *= 1.5
     final_epochs= int(epochs[dataset] * factor)
+    ## TODO restore
+    #return 1
     return final_epochs
 
 def min_accuracy(model: str, dataset: str) -> float:
@@ -253,5 +255,6 @@ def min_accuracy(model: str, dataset: str) -> float:
             min_accuracy = 0.45
         else:
             min_accuracy=min_accuracy*0.8
-
+    ## TODO restore
+    #return 0
     return min_accuracy

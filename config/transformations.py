@@ -21,6 +21,7 @@ common_transformations= [AffineGenerator(r=r,),
 hard = AffineGenerator(r=UniformRotation(8,rotation_max_degrees), #8
                        s=ScaleUniform(1,scale_min_downscale,scale_max_upscale), #7=6+1
                        t=TranslationUniform(1,translation_max)) #9=8+1
+
 common_transformations_combined = common_transformations + [hard]
 common_transformations_da = common_transformations_combined
 identity_transformation = AffineGenerator()

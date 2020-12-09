@@ -95,7 +95,7 @@ class DatasetTransfer(Experiment):
 
             variance_parameters = []
             for dataset_test in dataset_names:
-                p = 0.5 if measure.__class__ == tm.AnovaMeasure else default_dataset_percentage
+                p = 0.5 if measure.__class__ == tm.ANOVAInvariance else default_dataset_percentage
                 p_dataset = measure.DatasetParameters(dataset_test, measure.DatasetSubset.test, p)
                 p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
                 model_path = config.model_path(p_training)

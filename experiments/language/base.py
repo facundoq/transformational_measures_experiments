@@ -4,6 +4,9 @@ from datasets import DatasetSubset
 import transformational_measures as tm
 
 class Language(abc.ABC):
+    goodfellow = "Goodfellow"
+    ANOVA = "ANOVA"
+
     def __init__(self):
         self.name = ""
         self.message = ""
@@ -41,8 +44,6 @@ class Language(abc.ABC):
         self.transformational_distance = ""
         self.sample_variance = ""
         self.transformational_variance = ""
-        self.goodfellow = "Goodfellow"
-        self.ANOVA = "ANOVA"
         self.normalized_distance_sameequivariance= ""
 
         self.sample_distance_sameequivariance= ""
@@ -63,25 +64,25 @@ class Language(abc.ABC):
         self.max=""
         self.min=""
         self.sum=""
+
     def measure_name(self, m:tm.NumpyMeasure):
         dict = {
-            tm.NormalizedDistance: self.normalized_distance,
-            tm.NormalizedVariance: self.normalized_variance,
-            tm.SampleDistance: self.sample_distance,
-            tm.TransformationDistance: self.transformational_distance,
-            tm.TransformationVariance: self.transformational_variance,
-            tm.SampleVariance: self.sample_variance,
-            tm.GoodfellowNormal: self.goodfellow,
-            tm.GoodfellowMeasure: self.goodfellow,
-            tm.AnovaMeasure: self.ANOVA,
+            tm.NormalizedDistanceInvariance: self.normalized_distance,
+            tm.NormalizedVarianceInvariance: self.normalized_variance,
+            tm.SampleDistanceInvariance: self.sample_distance,
+            tm.TransformationDistanceInvariance: self.transformational_distance,
+            tm.TransformationVarianceInvariance: self.transformational_variance,
+            tm.SampleVarianceInvariance: self.sample_variance,
+            tm.GoodfellowNormalInvariance: self.goodfellow,
+            tm.GoodfellowInvariance: self.goodfellow,
+            tm.ANOVAInvariance: self.ANOVA,
             tm.NormalizedDistanceSameEquivariance:self.normalized_distance_sameequivariance,
-            tm.TransformationDistanceSameEquivariance:self.transformational_distance_sameequivariance,
+            tm.TransformationDistanceSameEquivariance:self  .transformational_distance_sameequivariance,
             tm.SampleDistanceSameEquivariance:self.sample_distance_sameequivariance,
             tm.SampleVarianceSameEquivariance:self.sample_variance_sameequivariance,
             tm.TransformationVarianceSameEquivariance:self.transformational_variance_sameequivariance,
             tm.NormalizedVarianceSameEquivariance:self.normalized_variance_sameequivariance,
             tm.DistanceSameEquivarianceSimple:self.simple_sameequivariance,
-
         }
         return dict[m.__class__]
 
@@ -93,15 +94,15 @@ class Language(abc.ABC):
         else:
             raise ValueError(s)
 
-    def format_aggregation(self, ca:tm.ConvAggregation):
+    def format_aggregation(self, ca:tm.AggregateFunction):
 
-        if ca == tm.ConvAggregation.mean:
+        if ca == tm.AggregateFunction.mean:
             return self.mean
-        elif ca == tm.ConvAggregation.max:
+        elif ca == tm.AggregateFunction.max:
             return self.max
-        elif ca == tm.ConvAggregation.sum:
+        elif ca == tm.AggregateFunction.sum:
             return self.sum
-        elif ca == tm.ConvAggregation.min:
-            return self.min
+        # elif ca == tm.AggregateFunction.min:
+        #     return self.min
         else:
             raise ValueError(ca)

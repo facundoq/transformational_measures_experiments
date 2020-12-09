@@ -19,7 +19,7 @@ class AggregationBeforeAfter(Experiment):
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
-            measures = [tm.NormalizedVariance(ca) for ca in before_functions]
+            measures = [tm.NormalizedVarianceInvariance(ca) for ca in before_functions]
             variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
             # model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
@@ -27,7 +27,7 @@ class AggregationBeforeAfter(Experiment):
             normal_results = config.load_measure_results(config.results_paths(variance_parameters))
 
             ca_none_variance_parameter = measure.Parameters(p_training.id(), p_dataset, transformation,
-                                                            tm.NormalizedVariance(ca_none))
+                                                            tm.NormalizedVarianceInvariance(ca_none))
             self.experiment_measure(ca_none_variance_parameter)
             ca_none_variance_parameters = [ca_none_variance_parameter] * len(after_functions)
             ca_none_results = config.load_measure_results(config.results_paths(ca_none_variance_parameters))
@@ -40,7 +40,7 @@ class AggregationBeforeAfter(Experiment):
             all_results = normal_results + ca_none_results
             labels = [f"{l.aggregation}: {ca.value}, {l.after_normalization}." for ca in before_functions] + [
                 f"{l.aggregation}: {ca.value}, {l.before_normalization}." for ca in after_functions ]
-            visualization.plot_collapsing_layers_same_model(all_results, plot_filepath, labels=labels)
+            plot_collapsing_layers_same_model(all_results, plot_filepath, labels=labels)
 
 
 class AggregationFunctionsVariance(Experiment):
@@ -61,7 +61,7 @@ class AggregationFunctionsVariance(Experiment):
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs, 0)
             self.experiment_training(p_training)
-            measures = [tm.NormalizedVariance(ca) for ca in before_functions]
+            measures = [tm.NormalizedVarianceInvariance(ca) for ca in before_functions]
             variance_parameters = [measure.Parameters(p_training.id(), p_dataset, transformation, m) for m in measures]
             # model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
@@ -71,16 +71,17 @@ class AggregationFunctionsVariance(Experiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
             labels = [f"{l.aggregation}: {l.format_aggregation(ca)}, {l.before_normalization}." for ca in before_functions]
-            tm.visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+
+            plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 class AggregationFunctionsDistance(Experiment):
     def description(self):
         return """Test different Convolutional Aggregation strategies for Distance-based invariance measures."""
 
     def run(self):
-        measures = [  tm.NormalizedDistance(da, ca_none)
-                    , tm.NormalizedDistance(da, ca_mean)
-                    , tm.NormalizedDistance(da_keep, ca_none)
+        measures = [  tm.NormalizedDistanceInvariance(da, ca_none)
+                    , tm.NormalizedDistanceInvariance(da, ca_mean)
+                    , tm.NormalizedDistanceInvariance(da_keep, ca_none)
                     ]
         labels = [l.normal,l.feature_map_aggregation,l.feature_map_distance]
 
@@ -106,4 +107,4 @@ class AggregationFunctionsDistance(Experiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)

@@ -90,44 +90,44 @@ if __name__ == '__main__':
 
     all_experiments = [
         TrainModels(),# run this first or you'll need to retrain some models
-        DataAugmentationClassical(),
-        DataAugmentationHandshape(),
-        SimpleConvAccuracies(),
-        ModelAccuracies(),
+        # DataAugmentationClassical(),
+        # DataAugmentationHandshape(),
+        # SimpleConvAccuracies(),
+        # ModelAccuracies(),
         #
-        CompareMeasures(),
-        CompareSameEquivariance(),
-        CompareSameEquivarianceNormalized(),
-        CompareSameEquivarianceSimple(),
-
-        CompareGoodfellowAlpha(),
+        # CompareMeasures(),
+        # CompareSameEquivariance(),
+        # CompareSameEquivarianceNormalized(),
+        # CompareSameEquivarianceSimple(),
+        #
+        # CompareGoodfellowAlpha(),
         # CompareGoodfellow(),
         # Stratified(),
-        #
+        # #
         # DatasetSize(),
         # DatasetSubset(),
         # DatasetTransfer(),
-        #
+        # #
         # AggregationFunctionsVariance(),
         # AggregationBeforeAfter(),
         # AggregationFunctionsDistance(),
         # SameEquivarianceNormalization(),
         #
-        # TransformationDiversity(),
+        #TransformationDiversity(),
         # TransformationComplexity(),
         # TransformationSetSize(),
         #
-        # BatchNormalization(),
-        # ActivationFunction(),
-        # MaxPooling(),
-        # KernelSize(),
+        #BatchNormalization(),
+        #ActivationFunction(),
+        MaxPooling(),
+        KernelSize(),
         #
         # RandomInitialization(),
         # RandomWeights(),
         # DuringTraining(),
         # # VisualizeInvariantFeatureMaps(),
         #
-        # CompareModels(),
+        CompareModels(),
         # TIPooling(),
         #
         # ValidateMeasure(),
