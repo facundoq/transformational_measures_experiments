@@ -90,41 +90,41 @@ if __name__ == '__main__':
 
     all_experiments = [
         TrainModels(),# run this first or you'll need to retrain some models
-        # DataAugmentationClassical(),
-        # DataAugmentationHandshape(),
-        # SimpleConvAccuracies(),
-        # ModelAccuracies(),
-        #
-        # CompareMeasures(),
-        # CompareSameEquivariance(),
-        # CompareSameEquivarianceNormalized(),
-        # CompareSameEquivarianceSimple(),
-        #
-        # CompareGoodfellowAlpha(),
-        # CompareGoodfellow(),
-        # Stratified(),
+        DataAugmentationClassical(),
+        DataAugmentationHandshape(),
+        SimpleConvAccuracies(),
+        ModelAccuracies(),
+
+        CompareMeasures(),
+        CompareSameEquivariance(),
+        CompareSameEquivarianceNormalized(),
+        CompareSameEquivarianceSimple(),
+
+        CompareGoodfellowAlpha(),
+        CompareGoodfellow(),
+        Stratified(),
+
+        DatasetSize(),
+        DatasetSubset(),
+        DatasetTransfer(),
         # #
-        # DatasetSize(),
-        # DatasetSubset(),
-        # DatasetTransfer(),
-        # #
-        # AggregationFunctionsVariance(),
-        # AggregationBeforeAfter(),
-        # AggregationFunctionsDistance(),
-        # SameEquivarianceNormalization(),
+        AggregationFunctionsVariance(),
+        AggregationBeforeAfter(),
+        AggregationFunctionsDistance(),
+        SameEquivarianceNormalization(),
         #
-        #TransformationDiversity(),
-        # TransformationComplexity(),
-        # TransformationSetSize(),
+        TransformationDiversity(),
+        TransformationComplexity(),
+        TransformationSetSize(),
         #
-        #BatchNormalization(),
-        #ActivationFunction(),
+        BatchNormalization(),
+        ActivationFunction(),
         MaxPooling(),
         KernelSize(),
         #
-        # RandomInitialization(),
-        # RandomWeights(),
-        # DuringTraining(),
+        RandomInitialization(),
+        RandomWeights(),
+        DuringTraining(),
         # # VisualizeInvariantFeatureMaps(),
         #
         CompareModels(),

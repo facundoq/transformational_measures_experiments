@@ -1,4 +1,7 @@
 from .common import *
+import experiment.measure as measure_package
+import datasets
+
 
 class Stratified(Experiment):
     def description(self):
@@ -23,12 +26,12 @@ class Stratified(Experiment):
             self.experiment_training(p_training)
             # generate variance params
             p = config.dataset_size_for_measure(measure)
+            # make 1/number of classes
+            p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.train, 0.1)
+            p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
             
-            p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.train, 0.1)
-            p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
-            
-            p_dataset_variance = measure.DatasetParameters(dataset, measure.DatasetSubset.train, 1.0)
-            p_variance_stratified = measure.Parameters(p_training.id(), p_dataset_variance, transformation, measure, stratified=True)
+            p_dataset_variance = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.train, 1.0)
+            p_variance_stratified = measure_package.Parameters(p_training.id(), p_dataset_variance, transformation, measure, stratified=True)
             
             # evaluate variance
             model_path = config.model_path(p_training)
