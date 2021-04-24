@@ -30,7 +30,7 @@ class ClassificationDataset:
         if subset == DatasetSubset.test:
             return self.x_test,self.y_test
         elif subset == DatasetSubset.train:
-            return self.x_train,self.x_test
+            return self.x_train,self.y_train
         else:
             raise ValueError(subset)
 

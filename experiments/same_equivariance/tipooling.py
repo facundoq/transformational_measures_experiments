@@ -1,8 +1,9 @@
 import transformational_measures.measure
 from .common import *
 from transformational_measures.numpy.stats_running import RunningMeanWelford
+import experiment.measure as measure_package
 
-class TIPooling(Experiment):
+class TIPooling(SameEquivarianceExperiment):
     def description(self):
         return """Compare SimpleConv with the TIPooling SimpleConv Network"""
 
@@ -31,8 +32,8 @@ class TIPooling(Experiment):
                 self.experiment_training(p_training)
                 # generate variance params
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
-                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
+                p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 model_path = config.model_path(p_training)

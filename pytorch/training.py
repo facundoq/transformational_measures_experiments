@@ -1,13 +1,15 @@
-import progressbar
+
 import torch,torch.multiprocessing
 import numpy as np
+from tqdm.auto import tqdm
+
 import transformational_measures as tm
 from typing import Callable
 def print_results(dataset,loss,accuracy,correct,n):
     print('{} => Loss: {:.4f}, Accuracy: {:.2f}% ({}/{})'.format(dataset,
         loss, 100. * accuracy, correct, n),flush=True)
 
-def train(model:torch.nn.Module,epochs:int,optimizer,use_cuda:bool,train_dataset,test_dataset,loss_function,verbose=True,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3,eval_test_every_n_epochs:int=None,epochs_callbacks:{int:Callable}={}):
+def train(model:torch.nn.Module,epochs:int,optimizer,use_cuda:bool,train_dataset,test_dataset,loss_function,verbose=True,batch_verbose=False,max_epochs_without_improvement_p=0.1,max_epochs_without_improvement_treshold=1e-3,eval_test_every_n_epochs:int=None,epochs_callbacks:{int:Callable}={}):
 
     if eval_test_every_n_epochs == None:
         eval_test_every_n_epochs= max(epochs//10,1)
@@ -17,26 +19,29 @@ def train(model:torch.nn.Module,epochs:int,optimizer,use_cuda:bool,train_dataset
     max_epochs_without_improvement=max(int(max_epochs_without_improvement_p*epochs),1)
 
     model.train()
-
     last_accuracy=0
     no_improvement_epochs=0
 
     test_results=(0,0)
-
+    pbar = tqdm(total=epochs,desc="Training",disable=not verbose)
     for epoch in range(1, epochs + 1):
-        loss,accuracy,correct,n=train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose)
+        loss,accuracy,correct,n=train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,batch_verbose)
 
         if epoch in epochs_callbacks:
             epochs_callbacks[epoch]()
 
         if epoch == 0 or epoch==epochs or epoch % eval_test_every_n_epochs == 0:
             test_results = test(model,test_dataset,use_cuda,loss_function)
-            if verbose:
-                print_results("Test", *test_results)
+            # if verbose:
+            #     print_results("Test", *test_results)
+        loss_val,acc_val=test_results[0],test_results[1]
         history["loss"].append(loss)
-        history["loss_val"].append(test_results[0])
+        history["loss_val"].append(loss_val)
         history["acc"].append(accuracy)
-        history["acc_val"].append(test_results[1])
+        history["acc_val"].append(acc_val)
+        pbar.set_postfix_str(f"(loss={loss:.3f}, acc={accuracy:.3f}) (val_loss={loss_val:.3f}, val_acc={acc_val:.3f})")
+        pbar.update(1)
+
 
         # abort if no improvement in various epochs
         if abs(last_accuracy-accuracy)<max_epochs_without_improvement_treshold:
@@ -47,7 +52,7 @@ def train(model:torch.nn.Module,epochs:int,optimizer,use_cuda:bool,train_dataset
             if verbose:
                 print(f"Stopping training early, epoch {epoch}/{epochs}, epochs without improvement= {max_epochs_without_improvement_treshold}")
             break
-
+    pbar.close()
     return history
 
 
@@ -73,24 +78,18 @@ def test(model, dataset, use_cuda,loss_function):
 
 def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose):
     n=len(train_dataset)
-    update_every_n_batches= max(n // 5,1)
-    if verbose:
-        widgets = ["Epoch {}: ".format(epoch), progressbar.Percentage()
-                   ,progressbar.FormatLabel(' (batch %(value)d/%(max_value)d) ')
-                   ,' ==stats==> ', progressbar.DynamicMessage("loss")
-                   ,', ',progressbar.DynamicMessage("accuracy")
-                   ,', ',progressbar.ETA()
-                   ]
-        progress_bar = progressbar.ProgressBar(widgets=widgets, max_value=len(train_dataset)).start()
+    update_every_n_batches= max(n // 7,1)
+
+
     batches=len(train_dataset)
     losses=np.zeros(batches)
     accuracies=np.zeros(batches)
     correct=0
-
+    pbar = tqdm(total=batches,desc=f"Epoch {epoch}",bar_format="{l_bar}{bar} [{n_fmt}/{total_fmt} {elapsed}<{remaining}] {postfix}",disable=not verbose)
+    last_batch_idx=0
     for batch_idx, (data, target) in enumerate(train_dataset):
         if use_cuda:
             data, target = data.cuda(), target.cuda()
-
         optimizer.zero_grad()
         #MODEL OUTPUT
         output = model(data)
@@ -99,8 +98,7 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbo
         loss.backward()
         optimizer.step()
 
-
-        # ESTIMATE BATCH LOSS AND ACCURACY
+    # ESTIMATE BATCH LOSS AND ACCURACY
         pred = output.data.max(1, keepdim=True)[1]  # get the index of the max log-probability
         matches = pred.eq(target.data.view_as(pred)).cpu()
         correct += matches.sum()
@@ -108,10 +106,15 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbo
         losses[batch_idx] = loss.cpu().item()
 
         # UPDATE UI
-        if (batch_idx % update_every_n_batches == 0 or batch_idx+1 == n) and verbose:
-            progress_bar.update(batch_idx+1,loss=losses[:batch_idx+1].mean(),accuracy=accuracies[:batch_idx+1].mean())
-    if verbose:
-        progress_bar.finish()
+        if (batch_idx % update_every_n_batches == 0 or batch_idx+1 == n):
+            elapsed=batch_idx-last_batch_idx
+            last_batch_idx=batch_idx
+            loss = losses[:batch_idx+1].mean()
+            accuracy =  accuracies[:batch_idx+1].mean()
+            pbar.set_postfix_str(f"loss={loss:.3f}, acc={accuracy:.3f}")
+            pbar.update(elapsed)
+    pbar.close()
+
     return losses.mean(),accuracies.mean(),correct,len(train_dataset.dataset)
 
 

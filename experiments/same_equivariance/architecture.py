@@ -3,7 +3,7 @@ from models.simple_conv import ActivationFunction as af
 import experiment.measure as measure_package
 import datasets
 
-class BatchNormalization(Experiment):
+class BatchNormalization(SameEquivarianceExperiment):
     def description(self):
         return """Compare invariance of models trained with/without batchnormalization."""
 
@@ -49,13 +49,13 @@ class BatchNormalization(Experiment):
             visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
-class ActivationFunction(Experiment):
+class ActivationFunction(SameEquivarianceExperiment):
     def description(self):
         return """Determine how the activation function affects invariance"""
 
     def run(self):
         measures = normalized_measures
-        activation_functions = list(af)
+        activation_functions = [af.ELU,af.ReLU,af.PReLU,af.Tanh]
 
         combinations = itertools.product(dataset_names, common_transformations, measures)
         for (dataset, transformation, measure) in combinations:
@@ -75,7 +75,7 @@ class ActivationFunction(Experiment):
             visualization.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
 
 
-class KernelSize(Experiment):
+class KernelSize(SameEquivarianceExperiment):
     def description(self):
         return """Determine how the kernel sizes affect invariance"""
 
@@ -101,7 +101,7 @@ class KernelSize(Experiment):
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
-class MaxPooling(Experiment):
+class MaxPooling(SameEquivarianceExperiment):
     def description(self):
         return """Determine wheter MaxPooling affects the invariance structure of the network or it is similar to a network with strided convolutions"""
 
@@ -115,6 +115,7 @@ class MaxPooling(Experiment):
             variance_parameters = []
             for mp in max_pooling :
                 model_config = config.SimpleConvConfig.for_dataset(dataset, max_pooling=mp)
+
                 p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
                 variance_parameters.append(p_variance)
 

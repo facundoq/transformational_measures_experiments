@@ -1,7 +1,7 @@
 import transformational_measures.measure
 from .common import *
 
-class ValidateMeasure(Experiment):
+class ValidateMeasure(InvarianceExperiment):
 
     def description(self):
         return """Validate numpy/transformation. Just for testing purposes."""
@@ -49,7 +49,7 @@ class ValidateMeasure(Experiment):
             visualization.plot_heatmap(result.measure_result, plot_filepath)
 
 
-class ValidateGoodfellow(Experiment):
+class ValidateGoodfellow(InvarianceExperiment):
 
     def description(self):
         return """Validate goodfellow. Just for testing purposes."""

@@ -9,6 +9,7 @@ class Language(abc.ABC):
 
     def __init__(self):
         self.name = ""
+        self.batch_size = ""
         self.message = ""
         self.accuracy = ""
         self.layer = ""
@@ -44,6 +45,7 @@ class Language(abc.ABC):
         self.transformational_distance = ""
         self.sample_variance = ""
         self.transformational_variance = ""
+
         self.normalized_distance_sameequivariance= ""
 
         self.sample_distance_sameequivariance= ""

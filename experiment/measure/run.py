@@ -15,15 +15,13 @@ from utils.profiler import Profiler
 from .parameters import  Parameters,Options,DatasetParameters,MeasureExperimentResult
 from .adapt import adapt_dataset
 
-def experiment(p: Parameters, o: Options):
+def experiment(p: Parameters, o: Options,model_path:Path):
     assert(len(p.transformations)>0)
     use_cuda = torch.cuda.is_available()
 
     dataset = datasets.get(p.dataset.name)
     if o.verbose:
         print(dataset.summary())
-
-    model_path = config.model_path_from_id(p.model_id)
     if o.verbose:
         print(f"Loading model {model_path}")
     model, training_parameters, training_options, scores = training.load_model(model_path, use_cuda)
@@ -59,11 +57,13 @@ def experiment(p: Parameters, o: Options):
         if o.verbose:
             print(f"Calculating measure {p.measure} dataset size {len(numpy_dataset)}...")
 
-        measure_result = p.measure.eval(iterator)
+        measure_result = p.measure.eval(iterator,verbose=False)
     else:
         if o.verbose:
             print(f"Calculating stratified version of measure {p.measure}...")
         stratified_numpy_datasets = numpy_dataset.stratify_dataset(y)
+
+
         stratified_iterators = [tm.NormalPytorchActivationsIterator(model, numpy_dataset, p.transformations, o.batch_size,o.num_workers,use_cuda) for numpy_dataset in stratified_numpy_datasets]
         measure_result = p.measure.eval_stratified(stratified_iterators,dataset.labels)
 
@@ -74,12 +74,13 @@ def experiment(p: Parameters, o: Options):
     return MeasureExperimentResult(p, measure_result)
 
 
-def main(p:Parameters,o:Options):
+def main(p:Parameters,o:Options,model_path:Path)->MeasureExperimentResult:
     profiler= Profiler()
     profiler.event("start")
     if o.verbose:
         print(f"Experimenting with parameters: {p}")
-    measures_results=experiment(p,o)
+    measures_results=experiment(p,o,model_path)
     profiler.event("end")
     print(profiler.summary(human=True))
     config.save_experiment_results(measures_results)
+    return measures_results

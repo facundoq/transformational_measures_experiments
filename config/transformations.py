@@ -12,7 +12,7 @@ scale_max_upscale=1.25
 s=ScaleUniform(n_s,scale_min_downscale,scale_max_upscale)
 translation_max=0.15
 t=TranslationUniform(n_t,translation_max)
-common_transformations= [AffineGenerator(r=r,),
+common_transformations= [AffineGenerator(r=r,)      ,
                          AffineGenerator(s=s),
                          AffineGenerator(t=t),
                          ]

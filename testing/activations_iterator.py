@@ -5,7 +5,7 @@ from testing import util
 import itertools
 import transformational_measures as tm
 import matplotlib
-from pytorch.pytorch_image_dataset import ImageDataset
+from pytorch.pytorch_image_dataset import ImageClassificationDataset
 matplotlib.use('Agg')
 import numpy as np
 import config
@@ -28,7 +28,7 @@ if __name__ == '__main__':
         print(f"### Transformation {transformation}, iterator {iterator_class.__name__}")
         dataset = datasets.get(dataset_name)
         numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
-        image_dataset=ImageDataset(numpy_dataset)
+        image_dataset=ImageClassificationDataset(numpy_dataset)
 
         model = model_config.make_model(dataset.input_shape, dataset.num_classes, use_cuda)
 

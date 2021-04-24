@@ -1,19 +1,11 @@
-import os
-from pathlib import Path
-from datetime import datetime
-from experiment import measure, training, accuracy
-import config
-import transformational_measures as tm
 import abc
-import torch
-from .language import Spanish, English
-import datasets
-import train
-
+from pathlib import Path
 import sys
-import torch
-from utils.profiler import Profiler
-
+from datetime import datetime
+from experiments.language import Spanish
+import texttable
+import config
+import os
 
 class Experiment(abc.ABC):
 
@@ -22,14 +14,11 @@ class Experiment(abc.ABC):
         self.plot_folderpath.mkdir(exist_ok=True, parents=True)
         with open(self.plot_folderpath / "description.txt", "w") as f:
             f.write(self.description())
-        self.venv = Path(".")
         self.l = language
 
     def id(self):
         return self.__class__.__name__
 
-    def set_venv(self, venv: Path):
-        self.venv = venv
 
     def __call__(self, force=False, venv=".", *args, **kwargs):
         stars = "*" * 15
@@ -49,6 +38,13 @@ class Experiment(abc.ABC):
             self.mark_as_finished()
         else:
             print(f"[{dt_started_string}] {stars}Experiment {self.id()} already finished, skipping. {stars}")
+
+    def print_date(self, message):
+        strf_format = "%Y/%m/%d %H:%M:%S"
+        dt = datetime.now()
+        dt_string = dt.strftime(strf_format)
+        message = f"[{dt_string}] *** {message}"
+        print(message)
 
     def has_finished(self):
         return self.finished_filepath().exists()
@@ -72,24 +68,6 @@ class Experiment(abc.ABC):
     def description(self) -> str:
         pass
 
-    def experiment_finished(self, p: training.Parameters):
-        model_path = config.model_path(p)
-        if model_path.exists():
-            if p.savepoints == []:
-                return True
-            else:
-                savepoint_missing = [sp for sp in p.savepoints if not config.model_path(p, sp).exists()]
-                return savepoint_missing == []
-        else:
-            return False
-
-    def print_date(self, message):
-        strf_format = "%Y/%m/%d %H:%M:%S"
-        dt = datetime.now()
-        dt_string = dt.strftime(strf_format)
-        message = f"[{dt_string}] *** {message}"
-        print(message)
-
     def experiment_fork(self, message, function):
         self.print_date(message)
         new_pid = os.fork()
@@ -101,49 +79,16 @@ class Experiment(abc.ABC):
             if status != 0:
                 self.print_date(f" Error in: {message}")
                 sys.exit(status)
-
-    def experiment_training(self, p: training.Parameters, min_accuracy=None, num_workers=0, batch_size=256):
-        if min_accuracy is None:
-            min_accuracy = config.min_accuracy(p.model, p.dataset)
-        if self.experiment_finished(p):
-            return
-
-        o = training.Options(verbose=False, train_verbose=True, save_model=True, batch_size=batch_size,
-                             num_workers=num_workers, use_cuda=torch.cuda.is_available(), plots=True, max_restarts=5)
-        message = f"Training with {p}\n{o}"
-        self.print_date(message)
-        train.main(p, o, min_accuracy)
-
-    def experiment_measure(self, p: measure.Parameters, batch_size: int = 64, num_workers: int = 0,adapt_dataset=False):
-
-        results_path = config.results_path(p)
-        if results_path.exists():
-            return
-        o = measure.Options(verbose=False, batch_size=batch_size, num_workers=num_workers, adapt_dataset=adapt_dataset)
-
-        message = f"Measuring:\n{p}\n{o}"
-        self.print_date(message)
-
-        measure.main(p, o)
-
-    default_accuracy_options = accuracy.Options(False, 64, 0, torch.cuda.is_available())
-
-    def experiment_accuracy(self, p: accuracy.Parameters, o=default_accuracy_options):
-        results_path = config.accuracy_path(p)
-        if results_path.exists():
-            return
-        accuracy.main(p, o)
-
-    def train_measure(self, model_config: config.ModelConfig, dataset: str, transformation: tm.TransformationSet,
-                      m: tm.NumpyMeasure, p=None):
-
-        epochs = config.get_epochs(model_config, dataset, transformation)
-        p_training = training.Parameters(model_config, dataset, transformation, epochs)
-        self.experiment_training(p_training)
-        if p is None:
-            p = config.dataset_size_for_measure(m)
-        p_dataset = measure.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
-        p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, m)
-        model_path = config.model_path(p_training)
-        self.experiment_measure(p_variance)
-        return p_training, p_variance, p_dataset
+    @classmethod
+    def print_table(cls, experiments: ['Experiment']):
+        table = texttable.Texttable()
+        header = ["Experiment", "Finished"]
+        table.header(header)
+        experiments.sort(key=lambda e: e.__class__.__name__)
+        for e in experiments:
+            status = "Y" if e.has_finished() else "N"
+            name = e.__class__.__name__
+            name = name[:40]
+            table.add_row((name, status))
+            # print(f"{name:40}     {status}")
+        print(table.draw())

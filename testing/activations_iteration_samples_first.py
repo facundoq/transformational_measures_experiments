@@ -5,7 +5,7 @@ from testing import util
 
 import transformational_measures as tm
 import matplotlib
-from pytorch.pytorch_image_dataset import ImageDataset
+from pytorch.pytorch_image_dataset import ImageClassificationDataset
 matplotlib.use('Agg')
 
 import config
@@ -18,7 +18,7 @@ print(f"### Loading dataset {dataset_name} and model {model_config.name}....")
 use_cuda=True
 dataset = datasets.get(dataset_name)
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
-image_dataset=ImageDataset(numpy_dataset)
+image_dataset=ImageClassificationDataset(numpy_dataset)
 
 model,optimizer = model_config.make_model_and_optimizer(dataset.input_shape, dataset.num_classes, use_cuda)
 

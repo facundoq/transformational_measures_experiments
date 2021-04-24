@@ -16,7 +16,7 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
 
     # p.transformations.set_input_shape(dataset.input_shape)
     # p.transformations.set_pytorch(True)
-    if o.verbose:
+    if o.verbose_general:
         print("Parameters: ",p)
         print("Options: ",o)
         print("Min accuracy: ",min_accuracy)
@@ -35,7 +35,7 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
             for epoch in p.savepoints:
                 def callback(epoch=epoch):
                     scores=training.eval_scores(model,dataset,p.transformations,TransformationStrategy.random_sample,o.get_eval_options())
-                    if o.verbose:
+                    if o.verbose_general:
                         print(f"Saving model {model.name} at epoch {epoch}/{p.epochs}.")
                     training.save_model(p, o, model, scores, config.model_path(p, epoch))
                 epochs_callbacks.append((epoch,callback))

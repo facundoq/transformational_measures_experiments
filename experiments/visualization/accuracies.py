@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
-from experiments.language import l
+from ..language import l
 
 from transformational_measures.visualization import default_discrete_colormap
 
@@ -32,9 +32,9 @@ def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[s
     # Add xticks on the middle of the group bars
     plt.xlabel(l.model)
     plt.ylabel(l.accuracy)
-    def shorten(l:str): return l if len(l)<=10  else l[:9]+"."
+    def shorten(label:str): return label if len(label)<=10  else label[:9]+"."
 
-    group_names = [shorten(l) for l in group_names]
+    group_names = [shorten(label) for label in group_names]
 
     plt.xticks([r + barWidth for r in range(len(group_names))], group_names)
     plt.tick_params(axis='both', which='both', length=0)
@@ -62,7 +62,7 @@ def plot_accuracies_single_model(plot_filepath:Path, accuracies:[float], labels:
 
     plt.gca().yaxis.grid(which="major", color='gray', linestyle='-', linewidth=0.5)
     # Add xticks on the middle of the group bars
-    plt.xlabel(l.make_transformation)
+    plt.xlabel(l.transformation)
     plt.ylabel(l.accuracy)
 
     plt.xticks(x, labels)

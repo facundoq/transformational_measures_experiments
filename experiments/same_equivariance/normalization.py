@@ -1,7 +1,7 @@
 from .common import *
 
 
-class SameEquivarianceNormalization(Experiment):
+class SameEquivarianceNormalization(SameEquivarianceExperiment):
 
     def description(self):
         return """Compare the result of DistanceSameEquivariance normalized or not."""

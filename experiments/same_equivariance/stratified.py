@@ -3,12 +3,12 @@ import experiment.measure as measure_package
 import datasets
 
 
-class Stratified(Experiment):
+class Stratified(SameEquivarianceExperiment):
     def description(self):
         return """Determine the differences between stratified and non-stratified measures."""
 
     def run(self):
-        measures = normalized_measures
+        measures = normalized_measures #+ [tm.ANOVAInvariance(),tm.GoodfellowNormalInvariance()]
 
         # model_names=["SimpleConv","VGGLike","AllConvolutional"]
         # model_names=["ResNet"]

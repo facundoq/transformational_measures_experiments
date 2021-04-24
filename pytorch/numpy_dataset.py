@@ -9,7 +9,7 @@ def check_equal(lst):
 class NumpyDataset(Dataset):
 
 
-    def stratify_dataset(self,y):
+    def stratify_dataset(self,y,add_class=False):
         '''
 
         :param y: class labels
@@ -20,7 +20,6 @@ class NumpyDataset(Dataset):
             assert(d.shape[0]==y.shape[0])
         classes = np.unique(y)
         classes.sort()
-
         per_class_variance = []
         # calculate the var numpy for each class
         iterators=[]
@@ -29,8 +28,9 @@ class NumpyDataset(Dataset):
             ids = np.where(y == c)
             ids = ids[0]
             data_sources_class=[ x[ids, :] for x in self.data_sources ]
-            y_class = y[ids]
-            data_sources_class.append(y_class)
+            if add_class:
+                y_class = y[ids]
+                data_sources_class.append(y_class)
             iterators.append(NumpyDataset(*data_sources_class))
         return iterators
 
@@ -41,7 +41,12 @@ class NumpyDataset(Dataset):
         assert(check_equal(lengths))
 
     def __getitem__(self, idx):
-        return self.get_batch(idx)[0,:]
+        # print("__getitem__ idx:",idx)
+        sources = self.get_batch(idx)
+        batch = tuple(s[0,] for s in sources)
+        if len(batch)==1:
+            batch=batch[0]
+        return batch
 
     def __len__(self):
         return self.data_sources[0].shape[0]
@@ -50,9 +55,6 @@ class NumpyDataset(Dataset):
         if isinstance(idx, int):
             idx = [idx]
         batch=tuple( torch.from_numpy(d[idx,]) for d in self.data_sources)
-        if len(batch)==1:
-            return batch[0]
-
         return batch
 
     def get_all(self):

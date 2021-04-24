@@ -1,7 +1,11 @@
 from .common import *
 import torch
 import datasets
-class VisualizeInvariantFeatureMaps(Experiment):
+import experiment.measure as measure_package
+from pytorch.numpy_dataset import NumpyDataset
+from transformational_measures.pytorch import NormalPytorchActivationsIterator, ObservableLayersModule
+
+class VisualizeInvariantFeatureMaps(InvarianceExperiment):
     def description(self):
         return """Visualize the output of invariant feature maps, to analyze qualitatively if they are indeed invariant."""
 
@@ -28,18 +32,26 @@ class VisualizeInvariantFeatureMaps(Experiment):
             # train
             self.experiment_training(p_training)
             p = config.dataset_size_for_measure(measure)
-            p_dataset = measure.DatasetParameters(dataset_name, measure.DatasetSubset.test, p)
-            p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
+            p_dataset = measure_package.DatasetParameters(dataset_name, datasets.DatasetSubset.test, p)
+            p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
             model_path = config.model_path(p_training)
             self.experiment_measure(p_variance)
 
             model_filepath = config.model_path(p_training)
             model, p_model, o, scores = training.load_model(model_filepath, use_cuda=torch.cuda.is_available())
             result_filepath = config.results_path(p_variance)
-            result = config.load_experiment_result(result_filepath)
+            result = config.load_experiment_result(result_filepath).measure_result
             dataset = datasets.get(dataset_name)
 
             plot_folderpath.mkdir(parents=True, exist_ok=True)
 
-            visualization.plot_invariant_feature_maps_pytorch(plot_folderpath, model, dataset, transformation, result,images=2, most_invariant_k=4, least_invariant_k=4,conv_aggregation=ca_mean)
+            self.plot(plot_folderpath, model, dataset, transformation, result,images=2, most_invariant_k=4, least_invariant_k=4,conv_aggregation=ca_mean)
             finished.touch()
+
+    def plot(self,plot_folderpath:Path, model: ObservableLayersModule, dataset:datasets.ClassificationDataset, transformations:tm.TransformationSet, result:tm.MeasureResult, images=8, most_invariant_k:int=4, least_invariant_k:int=4, conv_aggregation=tm.AggregateTransformation()):
+
+        numpy_dataset = NumpyDataset(dataset.x_test[:images,:],dataset.y_test[:images])
+        iterator = tm.NormalPytorchActivationsIterator(model, numpy_dataset, transformations, 32,0,torch.cuda.is_available())
+        visualization.plot_invariant_feature_maps(plot_folderpath,iterator,result,most_invariant_k,least_invariant_k,conv_aggregation)
+
+

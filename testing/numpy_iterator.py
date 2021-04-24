@@ -1,7 +1,7 @@
 from testing.util import plot_image_grid
 import datasets
 import config
-from pytorch.pytorch_image_dataset import ImageDataset
+from pytorch.pytorch_image_dataset import ImageClassificationDataset
 from pytorch.numpy_dataset import NumpyDataset
 import itertools
 folderpath=config.testing_path()/ "numpy_iterator"
@@ -20,7 +20,7 @@ for dataset_name,preprocessing,normalize in itertools.product(datasets.names,[Tr
 
     numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
     if preprocessing:
-        numpy_dataset= ImageDataset(numpy_dataset)
+        numpy_dataset= ImageClassificationDataset(numpy_dataset)
 
 
     x,y= numpy_dataset.get_batch(list(range(images)))

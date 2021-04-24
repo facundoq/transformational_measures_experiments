@@ -8,7 +8,7 @@ import datasets
 
 
 
-class TrainModels(Experiment):
+class TrainModels(InvarianceExperiment):
 
     def description(self):
         return """Analyze the evolution of invariance in models while they are trained."""
@@ -28,13 +28,13 @@ class TrainModels(Experiment):
             p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
             self.experiment_training(p_training)
 
-class SimpleConvAccuracies(Experiment):
+class SimpleConvAccuracies(InvarianceExperiment):
     def description(self):
         return """Compare the accuracies of the SimpleConv model for each set of transformations"""
 
     def run(self):
-        transformations = common_transformations_combined
-        transformation_labels = [l.rotation,l.scale,l.translation,l.combined]
+        transformations = common_transformations
+        transformation_labels = [l.rotation,l.scale,l.translation]
         for dataset in dataset_names:
             transformation_scores = []
             for transformation in transformations:
@@ -52,10 +52,10 @@ class SimpleConvAccuracies(Experiment):
             experiment_name = f"{dataset}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
 
-            accuracies.plot_accuracies_single_model(plot_filepath, transformation_scores, transformation_labels )
+            accuracies.plot_accuracies_single_model(plot_filepath, transformation_scores, transformation_labels)
 
 
-class ModelAccuracies(Experiment):
+class ModelAccuracies(InvarianceExperiment):
     def description(self):
         return """Compare the accuracies of the models for each set of transformations"""
 
@@ -84,11 +84,11 @@ class ModelAccuracies(Experiment):
             # plot results
             experiment_name = f"{dataset}"
             plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-
+            transformation_scores = np.array(transformation_scores)
             accuracies.plot_accuracies(plot_filepath, transformation_scores, transformation_labels, model_names)
 
 
-class CompareModels(Experiment):
+class CompareModels(InvarianceExperiment):
     def description(self):
         return """Determine which model is more invariant. Plots invariance of models as layers progress"""
 
@@ -132,10 +132,10 @@ class CompareModels(Experiment):
             visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=model_names,
                                                                   markers=self.fc_layers_indices(results),ylim=get_ylim_normalized(measure))
 
-    def fc_layers_indices(self, results: [MeasureExperimentResult]) -> [[int]]:
+    def fc_layers_indices(self, results: [tm.MeasureResult]) -> [[int]]:
         indices = []
         for r in results:
-            layer_names = r.measure_result.layer_names
+            layer_names = r.layer_names
             n = len(layer_names)
             index = n
             for i in range(n):

@@ -1,4 +1,4 @@
-git+git://github.com/facundoq/transformational_measures.git
+#git+git://github.com/facundoq/transformational_measures.git
 numpy
 scipy
 protobuf
@@ -10,16 +10,15 @@ h5py
 ipython
 jupyter
 argcomplete
-torchvision
-progressbar2
-torchsummary
+#progressbar2
 requests
 nose
 nptyping
 Pillow
 opencv-python
 imageio
-Shapely
-imgaug
+#Shapely
+#imgaug
 texttable
-
+tqdm
+handshape_datasets

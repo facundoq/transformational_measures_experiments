@@ -2,7 +2,7 @@ from .common import *
 import datasets
 import abc
 from .visualization.accuracies import plot_accuracies
-class DataAugmentation(Experiment):
+class DataAugmentation(InvarianceExperiment):
     def description(self):
         return """Compare the accuracies of the models for each set of transformations"""
 

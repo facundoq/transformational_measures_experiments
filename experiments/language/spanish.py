@@ -42,8 +42,6 @@ class Spanish(Language):
         self.sample_variance = "Varianza Muestral"
         self.transformational_variance = "Varianza Transformacional"
 
-        self.distance_equivariance = "Auto-Equivarianza"
-
         self.normalized_distance_sameequivariance= "Auto-Equivarianza de Distancia Normalizada"
 
         self.sample_distance_sameequivariance= "Auto-Equivarianza de Distancia Muestral"

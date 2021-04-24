@@ -14,7 +14,7 @@ import datasets
 from typing import *
 
 from torch.utils.data import DataLoader
-from pytorch.pytorch_image_dataset import ImageDataset,TransformationStrategy
+from pytorch.pytorch_image_dataset import ImageClassificationDataset,TransformationStrategy
 from pytorch.numpy_dataset import NumpyDataset
 import config
 
@@ -62,11 +62,12 @@ class Parameters:
         return result
 
 class Options:
-    def __init__(self, verbose:bool,train_verbose:bool, save_model:bool, batch_size:int, num_workers:int, use_cuda:bool, plots:bool,max_restarts:int):
+    def __init__(self, save_model:bool, batch_size:int, num_workers:int, use_cuda:bool, plots:bool, max_restarts:int, verbose_general:bool=False, verbose_train:bool=False, verbose_batch:bool=False):
         self.batch_size=batch_size
         self.num_workers=num_workers
-        self.verbose=verbose
-        self.train_verbose = train_verbose
+        self.verbose_general=verbose_general
+        self.verbose_train = verbose_train
+        self.verbose_batch = verbose_batch
         self.save_model=save_model
         self.plots=plots
         self.use_cuda=use_cuda
@@ -75,7 +76,7 @@ class Options:
         return EvalOptions(self.use_cuda,self.batch_size,self.num_workers)
 
     def __repr__(self):
-        return f"batch_size={self.batch_size}, num_workers={self.num_workers}, verbose={self.verbose}, train_verbose={self.train_verbose}," \
+        return f"batch_size={self.batch_size}, num_workers={self.num_workers}, verbose_dataset={self.verbose_general}, verbose_train={self.verbose_train}," \
             f" save_model={self.save_model}, plots={self.plots}, use_cuda={self.use_cuda}, max_restarts={self.max_restarts}"
 
 
@@ -87,7 +88,7 @@ def do_run(model:nn.Module,dataset:datasets.ClassificationDataset,t:tm.Transform
     train_dataset = get_data_generator(dataset.x_train, dataset.y_train, t, o.batch_size, o.num_workers,TransformationStrategy.random_sample)
     test_dataset = get_data_generator(dataset.x_test, dataset.y_test, t, o.batch_size, o.num_workers,TransformationStrategy.random_sample)
 
-    history = train(model, epochs, optimizer, o.use_cuda, train_dataset, test_dataset, loss_function,verbose=o.train_verbose,epochs_callbacks=epochs_callbacks)
+    history = train(model, epochs, optimizer, o.use_cuda, train_dataset, test_dataset, loss_function, verbose=o.verbose_train, epochs_callbacks=epochs_callbacks,batch_verbose=o.verbose_batch)
     return history
 
 
@@ -95,16 +96,16 @@ def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
         dataset:datasets.ClassificationDataset,loss_function=torch.nn.NLLLoss(),epochs_callbacks:{int:Callable}={}):
 
     if p.notransform_epochs == 0:
-        if o.train_verbose:
+        if o.verbose_train:
             print(f"### Skipping pretraining model |{p.model}| with dataset |{dataset.name}| and no transformation")
     else:
-        if o.train_verbose:
+        if o.verbose_train:
             print(f"### Pretraining models |{p.model}| with untransformed dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=config.identity_transformation
         pre_history =do_run(model,dataset,t,o,optimizer,p.epochs,loss_function,epochs_callbacks)
 
     history =do_run(model,dataset,p.transformations,o,optimizer,p.epochs,loss_function,epochs_callbacks)
-    if o.train_verbose:
+    if o.verbose_batch:
         print("### Testing models on dataset...",flush=True)
     scores=eval_scores(model, dataset, p.transformations, TransformationStrategy.random_sample, o.get_eval_options(), loss_function)
 
@@ -143,7 +144,7 @@ def get_data_generator(x:np.ndarray, y:np.ndarray,
 
     dataset=NumpyDataset(x,y)
     # TODO verify this
-    image_dataset=ImageDataset(dataset,transformation,transformation_strategy)
+    image_dataset=ImageClassificationDataset(dataset, transformation, transformation_strategy)
     dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=False,)
 
     return dataloader
@@ -190,7 +191,7 @@ def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:Path):
 
 
 def load_model(model_filepath:Path,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
-    print("load_model",model_filepath)
+    #print("load_model",model_filepath)
     logging.info(f"Loading models from {model_filepath}...")
     if use_cuda:
         data = torch.load(model_filepath)

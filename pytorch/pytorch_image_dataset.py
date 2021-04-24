@@ -1,6 +1,8 @@
 import torch
-from torchvision import transforms
-from torchvision.transforms import functional
+#
+# from torchvision import transforms
+# from torchvision.transforms import functional
+
 from torch.utils.data import Dataset
 from PIL import Image
 import numpy as np
@@ -13,7 +15,6 @@ class TransformationStrategy(Enum):
 
 
 class ImageDataset(Dataset):
-
     def __init__(self, image_dataset, transformations:tm.TransformationSet=None, transformation_scheme:TransformationStrategy=None ):
 
         if transformation_scheme is None:
@@ -64,12 +65,16 @@ class ImageDataset(Dataset):
         else:
             raise ValueError(self.transformation_strategy)
 
+
+    def get_all(self):
+        ids = list(range(len(self)))
+        return self.get_batch(ids)
+
     def __getitem__(self, idx):
         assert(isinstance(idx,int))
         x,y=self.get_batch(idx)
         # print(y.shape)
         return x[0,],y
-
 
     def transform_batch(self,x,i_transformation):
         x = x.float()
@@ -80,24 +85,39 @@ class ImageDataset(Dataset):
             x[i,:] = t(sample)
         return x
 
-    def get_batch(self,idx):
-        if isinstance(idx,int):
+    def get_indices(self, idx):
+        if isinstance(idx, int):
             idx = [idx]
         if self.transformation_strategy == TransformationStrategy.iterate_all:
-            i_sample=[i % self.n_samples for i in idx]
-            i_transformation= [i // self.n_samples for i in idx]
+            i_sample = [i % self.n_samples for i in idx]
+            i_transformation = [i // self.n_samples for i in idx]
         elif self.transformation_strategy == TransformationStrategy.random_sample:
             i_sample = idx
-            i_transformation = np.random.randint(0,self.n_transformations,size=(len(idx),))
+            i_transformation = np.random.randint(0, self.n_transformations, size=(len(idx),))
         else:
             raise ValueError(self.transformation_strategy)
+        return i_sample, i_transformation
+
+
+class ImageClassificationDataset(ImageDataset):
+
+    def get_batch(self,idx):
+        i_sample,i_transformation = self.get_indices(idx)
 
         x,y=self.dataset.get_batch(i_sample)
         x=self.transform_batch(x,i_transformation)
+
         y=y.type(dtype=torch.LongTensor)
         return x, y
 
 
-    def get_all(self):
-        ids = list(range(len(self)))
-        return self.get_batch(ids)
+class ImageTransformRegressionDataset(ImageDataset):
+
+    def get_batch(self, idx):
+        i_sample, i_transformation = self.get_indices(idx)
+
+        x, _ = self.dataset.get_batch(i_sample)
+        x = self.transform_batch(x, i_transformation)
+        t = self.transformations[i_transformation]
+        y = t.parameters()
+        return x, y

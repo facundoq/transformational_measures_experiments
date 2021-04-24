@@ -22,26 +22,28 @@ class DatasetParameters:
         return str(self)
 
 class Parameters:
-    def __init__(self, model_id:str, dataset:DatasetParameters, transformations:tm.TransformationSet, measure:tm.NumpyMeasure, stratified:bool=False):
+    def __init__(self, model_id:str, dataset:DatasetParameters, transformations:tm.TransformationSet, measure:tm.NumpyMeasure, stratified:bool=False,suffix=None):
         self.model_id=model_id
         self.dataset=dataset
         self.measure=measure
         self.transformations=transformations
         self.stratified=stratified
+        self.suffix=suffix
 
     def id(self):
         measure=self.measure.id()
 
         if self.stratified:
             measure=f"Stratified({measure})"
-
-        return f"{self.model_id}/{self.dataset}_{self.transformations.id()}_{measure}"
+        suffix = "" if self.suffix is None else f"_{self.suffix}"
+        return f"{self.model_id}/{self.dataset}_{self.transformations.id()}_{measure}{suffix}"
 
     def __repr__(self):
         measure = self.measure.id()
         if self.stratified:
             measure = f"Stratified({measure})"
-        return f"Parameters(model={self.model_id}, dataset={self.dataset}, transformations={self.transformations}, measure={measure})"
+        suffix = "" if self.suffix is None else f", {self.suffix}"
+        return f"Parameters(model={self.model_id}, dataset={self.dataset}, transformations={self.transformations}, measure={measure}{suffix})"
 
 class Options:
     def __init__(self,verbose:bool,batch_size:int,num_workers:int,adapt_dataset:bool):

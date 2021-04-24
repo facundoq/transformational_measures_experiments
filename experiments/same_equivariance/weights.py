@@ -1,14 +1,15 @@
 from .common import *
+import experiment.measure as measure_package
+import datasets
 
-
-class RandomWeights(Experiment):
+class RandomWeights(SameEquivarianceExperiment):
     def description(self):
         return """Analyze the invariance of untrained networks, ie, with random weights."""
 
     def run(self):
         random_models_folderpath = config.models_folder() / "random"
         random_models_folderpath.mkdir(exist_ok=True, parents=True)
-        o = training.Options(False, False, False, 32, 4, torch.cuda.is_available(), False, 0)
+        o = training.Options(False, 32,4, torch.cuda.is_available(), False, 0)
         measures = normalized_measures
 
         # number of random models to generate
@@ -40,12 +41,12 @@ class RandomWeights(Experiment):
 
             # generate variance params
             variance_parameters = []
-            p_dataset = measure.DatasetParameters(dataset_name, measure.DatasetSubset.test, p)
+            p_dataset = measure_package.DatasetParameters(dataset_name, datasets.DatasetSubset.test, p)
 
             for model_path in models_paths:
                 model_id, ext = os.path.splitext(os.path.basename(model_path))
-                p_variance = measure.Parameters(model_id, p_dataset, transformation, measure)
-                self.experiment_measure(p_variance)
+                p_variance = measure_package.Parameters(model_id, p_dataset, transformation, measure)
+                self.experiment_measure(p_variance,model_path=model_path)
                 variance_parameters.append(p_variance)
 
             # plot results
@@ -62,7 +63,7 @@ class RandomWeights(Experiment):
                                                             colors=color)
 
 
-class DuringTraining(Experiment):
+class DuringTraining(SameEquivarianceExperiment):
     savepoints_percentages = [0, 1, 3, 5, 10, 30, 50, 100]
 
     def description(self):
@@ -100,11 +101,11 @@ class DuringTraining(Experiment):
         variance_parameters = []
         model_paths = []
         p = config.dataset_size_for_measure(measure)
-        p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
+        p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
         for sp in savepoints:
             model_path = config.model_path(p_training, savepoint=sp)
             model_id = p_training.id(savepoint=sp)
-            p_variance = measure.Parameters(model_id, p_dataset, transformation, measure)
+            p_variance = measure_package.Parameters(model_id, p_dataset, transformation, measure)
             variance_parameters.append(p_variance)
             model_paths.append(model_path)
 
@@ -135,7 +136,7 @@ class DuringTraining(Experiment):
                                                         legend_location=legend_location, colors=colors,ylim=get_ylim_normalized(measure))
 
 
-class RandomInitialization(Experiment):
+class RandomInitialization(SameEquivarianceExperiment):
     def description(self):
         return """Test measures with various instances of the same architecture/transformation/dataset to see if the numpy is dependent on the random initialization in the training or simply on the architecture"""
 
@@ -161,8 +162,8 @@ class RandomInitialization(Experiment):
             for p_training in training_parameters:
                 model_path = config.model_path(p_training)
                 p = config.dataset_size_for_measure(measure)
-                p_dataset = measure.DatasetParameters(dataset, measure.DatasetSubset.test, p)
-                p_variance = measure.Parameters(p_training.id(), p_dataset, transformation, measure)
+                p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
+                p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
                 self.experiment_measure(p_variance)

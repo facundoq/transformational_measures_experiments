@@ -84,8 +84,12 @@ class SimpleConvConfig(ModelConfig):
 
     def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = self.make_model(input_shape,num_classes,cuda)
-        model, optimizer = self.default_optimizer(model,cuda,lr=5e-4)
+        lr = 5e-4
+        if not self.max_pooling:
+            lr = 1e-4
+        model, optimizer = self.default_optimizer(model,cuda,lr=lr)
         return model,optimizer
+
     def make_model(self, input_shape:[int, int, int], num_classes:int, cuda:bool):
         model = models.SimpleConv(input_shape, num_classes, self.conv, self.fc, self.bn, self.k, self.activation_function,self.max_pooling)
         if cuda:
