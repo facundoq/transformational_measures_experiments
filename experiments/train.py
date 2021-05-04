@@ -2,31 +2,32 @@
 # PYTHON_ARGCOMPLETE_OK
 
 from utils.profiler import Profiler
-import config
+
 import torch
 import datasets
 from experiment import  training
 from pytorch.pytorch_image_dataset import TransformationStrategy
+from . import TMExperiment
 
+def print_summary(dataset:datasets.ClassificationDataset,p:training.Parameters,o:training.Options,min_accuracy:float):
+    print("Parameters: ", p)
+    print("Options: ", o)
+    print("Min accuracy: ", min_accuracy)
+    print(f"Dataset {p.dataset}.")
+    print(dataset.summary())
+    print(f"Model {p.model}.")
 
-def main(p:training.Parameters,o:training.Options,min_accuracy:float):
+    if len(p.savepoints):
+        epochs_str = ", ".join([str(sp) for sp in p.savepoints])
+        print(f"Savepoints at epochs {epochs_str}.")
 
-    dataset = datasets.get(p.dataset)
+def main(experiment:TMExperiment,p:training.Parameters,o:training.Options,min_accuracy:float):
+    dataset = datasets.get_classification(p.dataset)
     dataset.normalize_features()
 
-    # p.transformations.set_input_shape(dataset.input_shape)
-    # p.transformations.set_pytorch(True)
     if o.verbose_general:
-        print("Parameters: ",p)
-        print("Options: ",o)
-        print("Min accuracy: ",min_accuracy)
-        print(f"Dataset {p.dataset}.")
-        print(dataset.summary())
-        print(f"Model {p.model}.")
+        print_summary(dataset,p,o,min_accuracy)
 
-        if len(p.savepoints):
-            epochs_str= ", ".join([ str(sp) for sp in p.savepoints])
-            print(f"Savepoints at epochs {epochs_str}.")
 
     def do_train():
         model,optimizer = p.model.make_model_and_optimizer(dataset.input_shape, dataset.num_classes, o.use_cuda)
@@ -37,7 +38,7 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
                     scores=training.eval_scores(model,dataset,p.transformations,TransformationStrategy.random_sample,o.get_eval_options())
                     if o.verbose_general:
                         print(f"Saving model {model.name} at epoch {epoch}/{p.epochs}.")
-                    training.save_model(p, o, model, scores, config.model_path(p, epoch))
+                    training.save_model(p, o, model, scores, experiment.model_path(p, epoch))
                 epochs_callbacks.append((epoch,callback))
 
             return dict(epochs_callbacks)
@@ -49,7 +50,7 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
         if 0 in p.savepoints:
             scores = training.eval_scores(model, dataset, p.transformations,TransformationStrategy.random_sample, o.get_eval_options())
             print(f"Saving model {model.name} at epoch {0} (before training).")
-            training.save_model(p, o, model, scores, config.model_path(p, 0))
+            training.save_model(p, o, model, scores, experiment.model_path(p, 0))
         pr = Profiler()
         pr.event("start")
         scores,history= training.run(p, o, model, optimizer, dataset,epochs_callbacks=epochs_callbacks)
@@ -70,7 +71,7 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
             message =f"""Model did not converge since it did not reach minimum accuracy ({test_accuracy}<{min_accuracy}). Restarting.. {restarts}/{o.max_restarts}"""
             print(message)
         model,history,scores=do_train()
-        training.plot_history(history, p, config.training_plots_path())
+        training.plot_history(history, p, experiment.training_plots_path())
         test_accuracy = scores["test"][1]
         converged= test_accuracy > min_accuracy
         restarts += 1
@@ -78,7 +79,7 @@ def main(p:training.Parameters,o:training.Options,min_accuracy:float):
     # SAVING
     if o.save_model:
         if converged:
-            path=config.model_path(p)
+            path=experiment.model_path(p)
             training.save_model(p, o, model, scores, path)
             print(f"Model saved to {path}")
         else:

@@ -59,7 +59,7 @@ class DatasetTransformationPlots(InvarianceExperiment):
             image = get_image(sample_path)
             transformations_sets=transformations[sample_id]
             for transformation_set in transformations_sets:
-                filepath= self.plot_folderpath / f"{sample_id}_{transformation_set.id()}.jpg"
+                filepath= self.folderpath / f"{sample_id}_{transformation_set.id()}.jpg"
                 n_transformations=rows*cols
                 n = len(transformation_set)
                 #indices=np.random.permutation(n)[:n_transformations]
@@ -96,7 +96,7 @@ class STMatrixSamples(InvarianceExperiment):
             image = get_image(sample_path)
             transformations_sets=common_transformations
             for transformation_set in transformations_sets:
-                transformation_results_path = self.plot_folderpath / Path(transformation_set.id())
+                transformation_results_path = self.folderpath / Path(transformation_set.id())
                 transformation_results_path.mkdir(parents=True,exist_ok=True)
                 for t in transformation_set:
                     filepath = transformation_results_path  / f"{sample_id}_{str(t)}.png"

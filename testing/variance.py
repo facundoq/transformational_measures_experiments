@@ -10,7 +10,7 @@ model_name= models.SimpleConv.__name__
 print(f"### Loading dataset {dataset_name} and model {model_name}....")
 
 use_cuda=torch.cuda.is_available()
-dataset = datasets.get(dataset_name)
+dataset = datasets.get_classification(dataset_name)
 
 from experiment import model_loading
 

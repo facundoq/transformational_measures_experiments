@@ -35,47 +35,6 @@ measure_transformations=[IdentityTransformation(),
                          AggregateTransformation(AggregateFunction.max),
                          ]
 
-def all_measures()-> [NumpyMeasure]:
-
-
-
-    das = [da,da_normalize_keep,da_normalize,da_keep]
-    dfs = [df , df_normalize]
-    measure_functions = [MeasureFunction.std]
-    measures=[]
-    measures.append(SampleVarianceInvariance())
-    measures.append(TransformationVarianceInvariance())
-    measures.append(SampleVarianceSameEquivariance())
-    measures.append(TransformationVarianceSameEquivariance())
-    for ca in measure_transformations:
-        measures.append(NormalizedVarianceInvariance(ca))
-        measures.append(NormalizedVarianceSameEquivariance(ca))
-
-
-    for (d,mf) in itertools.product(das,measure_functions):
-        measures.append(SampleDistanceInvariance(d))
-        measures.append(TransformationDistanceInvariance(d))
-        for ca in measure_transformations:
-            measures.append(NormalizedDistanceInvariance(d,ca))
-        measures.append(NormalizedDistanceSameEquivariance(d))
-        measures.append(SampleDistanceSameEquivariance(d))
-        measures.append(TransformationDistanceSameEquivariance(d))
-
-    for d in dfs:
-        measures.append(DistanceSameEquivarianceSimple(d))
-
-    for percentage in [0.01,0.001,0.1,0.5,0.05]:
-        measures.append(GoodfellowInvariance(activations_percentage=percentage))
-        measures.append(GoodfellowNormalInvariance(alpha=1 - percentage))
-
-    measures.append(ANOVAFInvariance())
-    alphas=[0.90, 0.95, 0.99, 0.999]
-    for alpha in alphas:
-            measures.append(ANOVAInvariance(alpha=alpha, bonferroni=True ))
-            measures.append(ANOVAInvariance(alpha=alpha, bonferroni=False))
-    return measures
-
-
 def common_measures()-> [NumpyMeasure]:
 
     mt_none, mt_mean, mt_sum, mt_max = measure_transformations

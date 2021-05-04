@@ -11,7 +11,7 @@ preprocessing=True
 print(f"Using datasets: {datasets.names}")
 for dataset_name,preprocessing,normalize in itertools.product(datasets.names,[True,False],[True,False]):
     print(dataset_name,preprocessing,normalize)
-    dataset = datasets.get(dataset_name)
+    dataset = datasets.get_classification(dataset_name)
     # print(dataset.summary())
 
     pre_str = 'preprocessing_' if preprocessing else ""

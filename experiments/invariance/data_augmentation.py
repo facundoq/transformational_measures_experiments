@@ -1,7 +1,8 @@
 from .common import *
 import datasets
 import abc
-from .visualization.accuracies import plot_accuracies
+from ..visualization.accuracies import plot_accuracies
+
 class DataAugmentation(InvarianceExperiment):
     def description(self):
         return """Compare the accuracies of the models for each set of transformations"""
@@ -45,13 +46,13 @@ class DataAugmentation(InvarianceExperiment):
                         else:
                             batch_size=64
                         self.experiment_training(p_training,batch_size=batch_size)
-                        model_path=config.model_path(p_training)
+                        model_path=self.model_path(p_training)
                         # Test
                         # print("***")
                         for t_test in [identity_transformation,transformation]:
                             p_accuracy = accuracy.Parameters(model_path,p_dataset,t_test)
                             self.experiment_accuracy(p_accuracy)
-                            result= config.load_accuracy(config.accuracy_path(p_accuracy))
+                            result= self.load_accuracy(self.accuracy_path(p_accuracy))
                             # print(dataset,t_train,model_config,t_test,result.accuracy)
                             model_accuracies.append(result.accuracy)
                     accuracies.append(model_accuracies)
@@ -61,7 +62,7 @@ class DataAugmentation(InvarianceExperiment):
                 # plot results
                 accuracies=np.array(accuracies)
                 experiment_name = f"{dataset}_{transformation.id()}"
-                plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+                plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 plot_accuracies(plot_filepath, accuracies,labels,model_labels  )
 
 

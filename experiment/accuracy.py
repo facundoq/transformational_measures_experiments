@@ -74,7 +74,7 @@ def experiment(p: Parameters, o: Options):
         print("### Scores obtained:")
         training.print_scores(scores)
 
-    dataset = datasets.get(p.dataset.name)
+    dataset = datasets.get_classification(p.dataset.name)
     dataset.normalize_features()
     dataset = dataset.reduce_size_stratified(p.dataset.percentage)
     if o.verbose:

@@ -25,7 +25,7 @@ class BatchNormalization(InvarianceExperiment):
                 p = config.dataset_size_for_measure(measure)
                 p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
                 p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
-                model_path = config.model_path(p_training)
+                model_path = self.model_path(p_training)
                 batch_size = 64
                 if model_config.name.startswith("ResNet"):
                     batch_size = 32
@@ -33,17 +33,17 @@ class BatchNormalization(InvarianceExperiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            bn_result, result = config.load_measure_results(config.results_paths(variance_parameters))
+            bn_result, result = self.load_measure_results(self.results_paths(variance_parameters))
             layer_names = bn_result.layer_names
             bn_indices = [i for i, n in enumerate(layer_names) if n.endswith("bn")]
             # single
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             visualization.plot_collapsing_layers_same_model([bn_result], plot_filepath, mark_layers=bn_indices)
 
             # comparison
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}_comparison"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             bn_result = bn_result.remove_layers(bn_indices)
             labels = [l.with_bn,l.without_bn]
             visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
@@ -67,10 +67,10 @@ class ActivationFunction(InvarianceExperiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            results= config.load_measure_results(config.results_paths(variance_parameters))
+            results= self.load_measure_results(self.results_paths(variance_parameters))
             # single
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [a.value for a in activation_functions]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
 
@@ -93,10 +93,10 @@ class KernelSize(InvarianceExperiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             # single
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [f"k={k}" for k in kernel_sizes]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
@@ -120,10 +120,10 @@ class MaxPooling(InvarianceExperiment):
                 variance_parameters.append(p_variance)
 
             # plot results
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             # single
             experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [l.maxpooling,l.strided_convolution]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 

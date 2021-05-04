@@ -26,7 +26,7 @@ if __name__ == '__main__':
     for dataset_name,model_config,transformation,iterator_class in itertools.product(dataset_names,model_configs,transformations,iterator_classes):
         print(f"### Loading dataset {dataset_name} and model {model_config.name}....")
         print(f"### Transformation {transformation}, iterator {iterator_class.__name__}")
-        dataset = datasets.get(dataset_name)
+        dataset = datasets.get_classification(dataset_name)
         numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
         image_dataset=ImageClassificationDataset(numpy_dataset)
 

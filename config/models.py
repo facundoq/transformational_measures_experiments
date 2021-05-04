@@ -7,6 +7,7 @@ import transformational_measures as tm
 
 
 
+
 import abc
 class ModelConfig(abc.ABC):
 
@@ -43,7 +44,7 @@ class ModelConfig(abc.ABC):
 class TIPoolingSimpleConvConfig(ModelConfig):
 
     @classmethod
-    def for_dataset(cls, dataset: str, bn: bool,t:tm.TransformationSet):
+    def for_dataset(cls, dataset: str, bn: bool,t:tm.TransformationSet,mode):
         # TODO different from SimpleConv, half the filters
         conv = {"mnist": 16, "cifar10": 64, "fashion_mnist": 32,"lsa16":16,"rwth":32}
         fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128,"lsa16":64,"rwth":128}
@@ -244,21 +245,18 @@ def get_epochs(model_config: ModelConfig, dataset: str, t: tm.TransformationSet)
     # if not model_config.bn:
     #     factor *= 1.5
     final_epochs= int(epochs[dataset] * factor)
-    ## TODO restore
-    #return 1
+
     return final_epochs
 
-def min_accuracy(model: str, dataset: str) -> float:
+def min_accuracy(model: ModelConfig, dataset: str) -> float:
     min_accuracies = {"mnist": .90, "cifar10": .5,"lsa16":.6,"rwth":.45}
     min_accuracy = min_accuracies[dataset]
 
-    if model == models.FFNet.__name__:
+    if model.__class__.__name__ == FFNetConfig.__name__:
         if dataset == "mnist" :
             min_accuracy = 0.85
         elif dataset == "cifar10":
             min_accuracy = 0.45
         else:
             min_accuracy=min_accuracy*0.8
-    ## TODO restore
-    #return 0
     return min_accuracy

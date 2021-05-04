@@ -71,7 +71,7 @@ def test(model, dataset, use_cuda,loss_function):
             pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
             correct += pred.eq(target.data.view_as(pred)).cpu().sum().item()
 
-    n=len(dataset.dataset)
+    n=len(dataset.dataset_name)
     loss /= n
     accuracy = float(correct) / float(n)
     return loss,accuracy,correct,n
@@ -115,7 +115,7 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbo
             pbar.update(elapsed)
     pbar.close()
 
-    return losses.mean(),accuracies.mean(),correct,len(train_dataset.dataset)
+    return losses.mean(),accuracies.mean(),correct,len(train_dataset.dataset_name)
 
 
 def eval_scores(models,datasets,config,loss_function):

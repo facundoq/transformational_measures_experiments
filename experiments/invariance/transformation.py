@@ -35,7 +35,7 @@ class TransformationSetSize(InvarianceExperiment):
                 # TRAIN
                 epochs = config.get_epochs(model_config, dataset, train_transformation)
                 p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
-                model_path = config.model_path(p_training)
+                model_path = self.model_path(p_training)
                 self.experiment_training(p_training)
                 # MEASURE
                 variance_parameters = []
@@ -48,8 +48,8 @@ class TransformationSetSize(InvarianceExperiment):
 
                 # PLOT
                 experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
-                plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-                results = config.load_measure_results(config.results_paths(variance_parameters))
+                plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+                results = self.load_measure_results(self.results_paths(variance_parameters))
                 visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
 
 
@@ -96,15 +96,15 @@ class TransformationComplexity(InvarianceExperiment):
                 for k, test_transformation in enumerate(transformation_set):
                     p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, default_dataset_percentage)
                     p_variance = measure_package.Parameters(p_training.id(), p_dataset, test_transformation, measure)
-                    model_path = config.model_path(p_training)
+                    model_path = self.model_path(p_training)
                     self.experiment_measure(p_variance)
                     variance_parameters.append(p_variance)
                 # PLOT
                 experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
-                plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+                plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 #title = f" transformation: {train_transformation.id()}"
 
-                results = config.load_measure_results(config.results_paths(variance_parameters))
+                results = self.load_measure_results(self.results_paths(variance_parameters))
 
                 visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
 
@@ -184,12 +184,12 @@ class TransformationDiversity(InvarianceExperiment):
                     print(f"{i}, ", end="")
                     p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, default_dataset_percentage)
                     p_variance = measure_package.Parameters(p_training.id(), p_dataset, test_transformation, measure)
-                    model_path = config.model_path(p_training)
+                    model_path = self.model_path(p_training)
                     self.experiment_measure(p_variance)
                     variance_parameters.append(p_variance)
-                results = config.load_measure_results(config.results_paths(variance_parameters))
+                results = self.load_measure_results(self.results_paths(variance_parameters))
                 experiment_name = f"{model_config.name}_{dataset}_{train_transformation}_{measure.id()}"
-                plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+                plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 # title = f"Train transformation: {train_transformation.id()}"
                 visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 

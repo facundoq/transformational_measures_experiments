@@ -19,7 +19,7 @@ def experiment(p: Parameters, o: Options,model_path:Path):
     assert(len(p.transformations)>0)
     use_cuda = torch.cuda.is_available()
 
-    dataset = datasets.get(p.dataset.name)
+    dataset = datasets.get_classification(p.dataset.name)
     if o.verbose:
         print(dataset.summary())
     if o.verbose:
@@ -27,16 +27,16 @@ def experiment(p: Parameters, o: Options,model_path:Path):
     model, training_parameters, training_options, scores = training.load_model(model_path, use_cuda)
 
 
-    if training_parameters.dataset != p.dataset.name:
+    if training_parameters.dataset_name != p.dataset.name:
         if o.adapt_dataset:
             if o.verbose:
-                print(f"Adapting dataset {p.dataset.name} to model trained on dataset {training_parameters.dataset} (resizing spatial dims and channels)")
+                print(f"Adapting dataset {p.dataset.name} to model trained on dataset {training_parameters.dataset_name} (resizing spatial dims and channels)")
 
-            adapt_dataset(dataset,training_parameters.dataset)
+            adapt_dataset(dataset, training_parameters.dataset_name)
             if o.verbose:
                 print(dataset.summary())
         else:
-            print(f"Error: model trained on dataset {training_parameters.dataset}, but requested to measure on dataset {p.dataset.name}; specify the option '-adapt_dataset True' to adapt the test dataset to the model and test anyway.")
+            print(f"Error: model trained on dataset {training_parameters.dataset_name}, but requested to measure on dataset {p.dataset.name}; specify the option '-adapt_dataset True' to adapt the test dataset to the model and test anyway.")
 
     if o.verbose:
         print("### ", model)

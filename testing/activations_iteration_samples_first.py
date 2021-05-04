@@ -16,7 +16,7 @@ dataset_name="mnist"
 print(f"### Loading dataset {dataset_name} and model {model_config.name}....")
 
 use_cuda=True
-dataset = datasets.get(dataset_name)
+dataset = datasets.get_classification(dataset_name)
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)
 image_dataset=ImageClassificationDataset(numpy_dataset)
 

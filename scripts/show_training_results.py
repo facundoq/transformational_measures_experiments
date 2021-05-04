@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
         train_accuracy=scores["train"][1]
         test_accuracy = scores["test"][1]
-        row=(model.name,p.dataset,p.transformations.id(),p.epochs,train_accuracy,test_accuracy)
+        row=(model.name, p.dataset_name, p.transformations.id(), p.epochs, train_accuracy, test_accuracy)
         del model
         del scores
         del p

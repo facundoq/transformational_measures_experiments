@@ -5,7 +5,7 @@ from pytorch.numpy_dataset import NumpyDataset
 from transformational_measures.pytorch import ImageDataset
 import transformational_measures as tm
 dataformat="NCHW"
-dataset = datasets.get("cifar10",dataformat=dataformat)
+dataset = datasets.get_classification("cifar10", dataformat=dataformat)
 print(dataset.summary())
 
 numpy_dataset=NumpyDataset(dataset.x_test,dataset.y_test)

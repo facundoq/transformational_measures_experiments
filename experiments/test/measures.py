@@ -1,5 +1,5 @@
 import transformational_measures.measure
-from .common import *
+from ..invariance.common import *
 
 class ValidateMeasure(InvarianceExperiment):
 
@@ -41,7 +41,7 @@ class ValidateMeasure(InvarianceExperiment):
 
             self.experiment_measure(p_measure)
             print(experiment_name)
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
             title = f"Invariance to \n. Model: {model_config.name}, Dataset: {dataset}, Measure {measure.id()} \n transformation: {transformation.id()} "
             result = config.load_experiment_result(config.results_path(p_measure))
@@ -71,9 +71,9 @@ class ValidateGoodfellow(InvarianceExperiment):
 
             p_training,p_variance,p_dataset = self.train_measure(model_config,dataset,transformation,measure,p=0.05)
 
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            plot_filepath_global = self.plot_folderpath / f"{experiment_name}_global.jpg"
-            plot_filepath_local = self.plot_folderpath / f"{experiment_name}_local.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            plot_filepath_global = self.folderpath / f"{experiment_name}_global.jpg"
+            plot_filepath_local = self.folderpath / f"{experiment_name}_local.jpg"
 
             experiment_result = config.load_experiment_result(config.results_path(p_variance))
 
@@ -84,7 +84,7 @@ class ValidateGoodfellow(InvarianceExperiment):
             visualization.plot_heatmap(global_result, plot_filepath_global)
             visualization.plot_heatmap(local_result, plot_filepath_local)
 
-            plot_filepath_thresholds = self.plot_folderpath / f"{experiment_name}_thresholds.jpg"
+            plot_filepath_thresholds = self.folderpath / f"{experiment_name}_thresholds.jpg"
             thresholds = global_result.extra_values[tm.GoodfellowNormalGlobalInvariance.thresholds_key]
             thresholds_result= transformational_measures.measure.MeasureResult(thresholds, result.layer_names, global_result.measure)
             visualization.plot_heatmap(thresholds_result, plot_filepath_thresholds)

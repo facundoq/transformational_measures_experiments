@@ -15,19 +15,19 @@ class DatasetSize(InvarianceExperiment):
         combinations = list(itertools.product(
             model_names, dataset_names, common_transformations_combined, measures))
         for i, (model, dataset, transformation, measure) in enumerate(combinations):
-            print(f"{i}/{len(combinations)}", end=", ")
+            #print(f"{i}/{len(combinations)}", end=", ")
             model_config = model.for_dataset(dataset)
             epochs = config.get_epochs(model_config, dataset, transformation)
             p_training = training.Parameters(model_config, dataset, transformation, epochs)
             self.experiment_training(p_training)
             p_datasets = [measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p) for p in dataset_sizes]
             experiment_name = f"{model_config}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             variance_parameters = [measure_package.Parameters(p_training.id(), p_dataset, transformation, measure) for p_dataset in p_datasets]
-            model_path = config.model_path(p_training)
+            model_path = self.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             #p_datasets = [r.parameters.dataset for r in results]
 
             labels = [f"{d * 100:2}%" for d in dataset_sizes]
@@ -54,7 +54,7 @@ class DatasetSubset(InvarianceExperiment):
             model_names, dataset_names, common_transformations_combined, measures))
 
         for i, (model_config_generator, dataset, transformation, measure) in enumerate(combinations):
-            print(f"{i}/{len(combinations)}", end=", ")
+            # print(f"{i}/{len(combinations)}", end=", ")
 
             model_config = model_config_generator.for_dataset(dataset)
             epochs = config.get_epochs(model_config, dataset, transformation)
@@ -67,13 +67,13 @@ class DatasetSubset(InvarianceExperiment):
                 p = config.dataset_size_for_measure(measure, subset)
                 p_datasets.append(measure_package.DatasetParameters(dataset, subset, p))
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             variance_parameters = [measure_package.Parameters(p_training.id(), p_dataset, transformation, measure) for
                                    p_dataset in p_datasets]
-            model_path = config.model_path(p_training)
+            model_path = self.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             labels = [f"{l.format_subset(d.subset)}" for d in p_datasets]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
@@ -100,13 +100,13 @@ class DatasetTransfer(InvarianceExperiment):
                 p = 0.5 if measure.__class__ == tm.ANOVAInvariance else default_dataset_percentage
                 p_dataset = measure_package.DatasetParameters(dataset_test, datasets.DatasetSubset.test, p)
                 p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
-                model_path = config.model_path(p_training)
+                model_path = self.model_path(p_training)
                 self.experiment_measure(p_variance, adapt_dataset=True)
                 variance_parameters.append(p_variance)
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             labels = dataset_names
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))

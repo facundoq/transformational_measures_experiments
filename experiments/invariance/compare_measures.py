@@ -46,15 +46,15 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
                     p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, default_dataset_percentage)
 
                     p_variance = measure_package.Parameters(p_training.id(), p_dataset, test_transformation, measure)
-                    model_path = config.model_path(p_training)
+                    model_path = self.model_path(p_training)
                     self.experiment_measure(p_variance)
                     variance_parameters.append(p_variance)
                 # PLOT
                 experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{test_transformation.id()}"
-                plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+                plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 #title = f" transformation: {train_transformation.id()}"
 
-                results = config.load_measure_results(config.results_paths(variance_parameters))
+                results = self.load_measure_results(self.results_paths(variance_parameters))
                 visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
 
 
@@ -107,7 +107,7 @@ class InvarianceMeasureCorrelation(InvarianceExperiment):
                     p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                     variance_parameters.append(p_variance)
                 # evaluate variance
-                model_path = config.model_path(p_training)
+
                 for p_variance in variance_parameters:
                     self.experiment_measure(p_variance)
                 variance_parameters_both.append(variance_parameters)
@@ -117,9 +117,9 @@ class InvarianceMeasureCorrelation(InvarianceExperiment):
             variance_parameters_all = variance_parameters_id + variance_parameters_data_augmentation
             # plot results
             experiment_name = f"{measure_set_name}_{model_config.name}_{dataset}_{transformation.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
-            results = config.load_measure_results(config.results_paths(variance_parameters_all))
+            results = self.load_measure_results(self.results_paths(variance_parameters_all))
             labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m in measures]
             n = len(measures)
 
@@ -198,16 +198,16 @@ class CompareMeasures(InvarianceExperiment):
                 p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
             # evaluate variance
-            model_path = config.model_path(p_training)
+            model_path = self.model_path(p_training)
 
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance,model_path=model_path)
 
             # plot results
             experiment_name = f"{measure_set_name}_{model_config.name}_{dataset}_{transformation.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             labels =[l.measure_name(m) for m in measures]
             n = len(measures)
 
@@ -252,8 +252,8 @@ class CompareGoodfellowAlpha(InvarianceExperiment):
             for measure in measures:
                 p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
                 variance_parameters.append(p_variance)
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             labels = [f"α={alpha}" for alpha in alphas]
             tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
@@ -274,43 +274,14 @@ class CompareGoodfellow(InvarianceExperiment):
             # train
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
-            result = config.load_experiment_result(config.results_path(p_variance)).measure_result
+            result = self.load_experiment_result(self.results_path(p_variance)).measure_result
             local_result, global_result = result.extra_values[tm.GoodfellowNormalInvariance.l_key], result.extra_values[
                 tm.GoodfellowNormalInvariance.g_key]
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             tmv.plot_collapsing_layers_same_model([local_result, global_result], plot_filepath,labels=labels, ylim=0.1)
 
 
 
-
-class CompareSameEquivarianceNormalized(InvarianceExperiment):
-
-    def description(self):
-        return """Compare same equivariance normalized measures"""
-
-    def run(self):
-
-        model_names = simple_models_generators
-
-        measures = [tm.DistanceSameEquivarianceSimple(df_normalize),
-                    tm.NormalizedDistanceSameEquivariance(da_keep),
-                    tm.NormalizedVarianceSameEquivariance(ca_mean)]
-        #labels = [l.simple,l.normalized_distance,l.normalized_variance]
-        labels = ["Auto-Equivarianza Simple","AutoEquivarianza por Distancia", "AutoEquivarianza por Varianza"]
-        # transformations=config.common_transformations()
-        combinations = itertools.product(model_names, dataset_names, common_transformations_combined)
-        for model_config_generator, dataset, transformation in combinations:
-            model_config = model_config_generator.for_dataset(dataset, bn=False)
-            # train
-            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
-            variance_parameters = []
-            for measure in measures:
-                p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
-                variance_parameters.append(p_variance)
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
-
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 
 
 class CompareSameEquivarianceSimple(InvarianceExperiment):
@@ -336,8 +307,8 @@ class CompareSameEquivarianceSimple(InvarianceExperiment):
             for measure in measures:
                 p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
                 variance_parameters.append(p_variance)
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
 
             tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
 class CompareSameEquivariance(InvarianceExperiment):
@@ -358,8 +329,8 @@ class CompareSameEquivariance(InvarianceExperiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             measure = tm.NormalizedVarianceSameEquivariance(ca_mean)
             p_training, p_variance, p_dataset = self.train_measure(model_config, dataset, transformation, measure)
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            normalized_results = config.load_measure_result(config.results_path(p_variance))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            normalized_results = self.load_measure_result(self.results_path(p_variance))
 
             transformation_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.transformation_key]
             sample_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.sample_key]
@@ -408,7 +379,7 @@ class DistanceApproximation(InvarianceExperiment):
                 results.append(variance_result)
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
             labels = [l.measure_name(variance_measure)]+[l.measure_name(distance_measure)+f"(b={b})" for b in batch_sizes]
             n = len(results)

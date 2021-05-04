@@ -25,7 +25,7 @@ class VisualizeInvariantFeatureMaps(InvarianceExperiment):
             p_training = training.Parameters(model_config, dataset_name, transformation, epochs)
 
             experiment_name = f"{model_config.name}_{dataset_name}_{transformation.id()}_{measure.id()}"
-            plot_folderpath = self.plot_folderpath / experiment_name
+            plot_folderpath = self.folderpath / experiment_name
             finished = Path(plot_folderpath) / "finished"
             if finished.exists():
                 continue
@@ -34,14 +34,14 @@ class VisualizeInvariantFeatureMaps(InvarianceExperiment):
             p = config.dataset_size_for_measure(measure)
             p_dataset = measure_package.DatasetParameters(dataset_name, datasets.DatasetSubset.test, p)
             p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
-            model_path = config.model_path(p_training)
+            model_path = self.model_path(p_training)
             self.experiment_measure(p_variance)
 
-            model_filepath = config.model_path(p_training)
+            model_filepath = self.model_path(p_training)
             model, p_model, o, scores = training.load_model(model_filepath, use_cuda=torch.cuda.is_available())
-            result_filepath = config.results_path(p_variance)
-            result = config.load_experiment_result(result_filepath).measure_result
-            dataset = datasets.get(dataset_name)
+            result_filepath = self.results_path(p_variance)
+            result = self.load_experiment_result(result_filepath).measure_result
+            dataset = datasets.get_classification(dataset_name)
 
             plot_folderpath.mkdir(parents=True, exist_ok=True)
 

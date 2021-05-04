@@ -1,7 +1,7 @@
 from .common import *
 from .weights import DuringTraining
 
-from .visualization import accuracies
+from ..visualization import accuracies
 import experiment.measure as measure_package
 import datasets
 
@@ -43,14 +43,14 @@ class SimpleConvAccuracies(InvarianceExperiment):
                 epochs = config.get_epochs(model_config, dataset, transformation)
                 p_training = training.Parameters(model_config, dataset, transformation, epochs)
                 self.experiment_training(p_training)
-                model, p, o, scores = training.load_model(config.model_path(p_training), load_state=False,
+                model, p, o, scores = training.load_model(self.model_path(p_training), load_state=False,
                                                           use_cuda=False)
                 loss, acc = scores["test"]
                 transformation_scores.append(acc)
 
             # plot results
             experiment_name = f"{dataset}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
             accuracies.plot_accuracies_single_model(plot_filepath, transformation_scores, transformation_labels)
 
@@ -76,14 +76,14 @@ class ModelAccuracies(InvarianceExperiment):
                     epochs = config.get_epochs(model_config, dataset, transformation)
                     p_training = training.Parameters(model_config, dataset, transformation, epochs)
                     self.experiment_training(p_training)
-                    model, p, o, scores = training.load_model(config.model_path(p_training), load_state=False,
+                    model, p, o, scores = training.load_model(self.model_path(p_training), load_state=False,
                                                               use_cuda=False)
                     loss, acc = scores["test"]
                     model_scores.append(acc)
                 transformation_scores.append(model_scores)
             # plot results
             experiment_name = f"{dataset}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             transformation_scores = np.array(transformation_scores)
             accuracies.plot_accuracies(plot_filepath, transformation_scores, transformation_labels, model_names)
 
@@ -127,8 +127,8 @@ class CompareModels(InvarianceExperiment):
 
             # plot results
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=model_names,
                                                                   markers=self.fc_layers_indices(results),ylim=get_ylim_normalized(measure))
 

@@ -36,18 +36,18 @@ class TIPooling(InvarianceExperiment):
                 p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
                 variance_parameters.append(p_variance)
                 # evaluate variance
-                model_path = config.model_path(p_training)
+                model_path = self.model_path(p_training)
                 self.experiment_measure(p_variance)
 
-            model, _, _, _ = config.load_model(p_training_siamese,use_cuda=False,load_state=False)
+            model, _, _, _ = self.load_model(p_training_siamese,use_cuda=False,load_state=False)
             model: models.TIPoolingSimpleConv = model
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             results[0] = self.average_paths_tipooling(model, results[0])
             # plot results
             # print("simpleconv",len(results[1].measure_result.layer_names),results[1].measure_result.layer_names)
             labels = ["TIPooling SimpleConv", "SimpleConv"]
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             mark_layers = range(model.layer_before_pooling_each_transformation())
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,mark_layers=mark_layers,ylim=get_ylim_normalized(measure))
 

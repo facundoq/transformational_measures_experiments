@@ -72,6 +72,7 @@ class Options:
         self.plots=plots
         self.use_cuda=use_cuda
         self.max_restarts=max_restarts
+
     def get_eval_options(self):
         return EvalOptions(self.use_cuda,self.batch_size,self.num_workers)
 
@@ -145,7 +146,7 @@ def get_data_generator(x:np.ndarray, y:np.ndarray,
     dataset=NumpyDataset(x,y)
     # TODO verify this
     image_dataset=ImageClassificationDataset(dataset, transformation, transformation_strategy)
-    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=False,)
+    dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=True,)
 
     return dataloader
 

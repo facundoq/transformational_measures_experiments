@@ -24,18 +24,18 @@ class AggregationBeforeAfter(InvarianceExperiment):
             # model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
-            normal_results = config.load_measure_results(config.results_paths(variance_parameters))
+            normal_results = self.load_measure_results(self.results_paths(variance_parameters))
 
             ca_none_variance_parameter = measure.Parameters(p_training.id(), p_dataset, transformation,
                                                             tm.NormalizedVarianceInvariance(ca_none))
             self.experiment_measure(ca_none_variance_parameter)
             ca_none_variance_parameters = [ca_none_variance_parameter] * len(after_functions)
-            ca_none_results = config.load_measure_results(config.results_paths(ca_none_variance_parameters))
+            ca_none_results = self.load_measure_results(self.results_paths(ca_none_variance_parameters))
             ca_none_results = [ca.apply(r) for ca,r in zip(after_functions , ca_none_results)]
 
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
             all_results = normal_results + ca_none_results
             labels = [f"{l.aggregation}: {ca.f}, {l.after_normalization}." for ca in before_functions] + [
@@ -66,10 +66,10 @@ class AggregationFunctionsVariance(InvarianceExperiment):
             # model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [f"{l.aggregation}: {l.format_aggregation(ca.f)}, {l.before_normalization}." for ca in before_functions]
 
             plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
@@ -101,10 +101,10 @@ class AggregationFunctionsDistance(InvarianceExperiment):
             model_path = config.model_path(p_training)
             for p_variance in variance_parameters:
                 self.experiment_measure(p_variance)
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             results[0]=ca_mean.apply(results[0])
 
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
             plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)

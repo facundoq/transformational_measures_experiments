@@ -53,7 +53,7 @@ def resize(dataset:datasets.ClassificationDataset,h:int,w:int,c:int):
         dataset.x_test = np.transpose(dataset.x_test, axes=(0, 3, 1, 2))
 
 def adapt_dataset(dataset:datasets.ClassificationDataset, dataset_template:str):
-    dataset_template = datasets.get(dataset_template)
+    dataset_template = datasets.get_classification(dataset_template)
     h,w,c= dataset_template.input_shape
     del dataset_template
     oh,ow,oc=dataset.input_shape

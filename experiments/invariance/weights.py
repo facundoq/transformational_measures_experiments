@@ -7,7 +7,7 @@ class RandomWeights(InvarianceExperiment):
         return """Analyze the invariance of untrained networks, ie, with random weights."""
 
     def run(self):
-        random_models_folderpath = config.models_folder() / "random"
+        random_models_folderpath = self.models_folder() / "random"
         random_models_folderpath.mkdir(exist_ok=True, parents=True)
         o = training.Options(False, 32,4, torch.cuda.is_available(), False, 0)
         measures = normalized_measures
@@ -23,10 +23,10 @@ class RandomWeights(InvarianceExperiment):
             # generate `random_model_n` models and save them without training
             models_paths = []
             p_training = training.Parameters(model_config, dataset_name, transformation, 0)
-            dataset = datasets.get(dataset_name)
+            dataset = datasets.get_classification(dataset_name)
             for i in range(random_model_n):
 
-                model_path = config.model_path(p_training, model_folderpath=random_models_folderpath)
+                model_path = self.model_path(p_training, custom_models_folderpath=random_models_folderpath)
 
                 # append index to model name
                 name, ext = os.path.splitext(str(model_path))
@@ -51,8 +51,8 @@ class RandomWeights(InvarianceExperiment):
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset_name}_{transformation.id()}_{measure}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             n = len(results)
             labels = [f"{l.random_models} ({n} {l.samples})."] + ([None] * (n - 1))
             # get alpha colors
@@ -93,8 +93,8 @@ class DuringTraining(InvarianceExperiment):
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             self.plot(results, plot_filepath, model_paths, savepoints, epochs,measure )
 
     def measure(self, p_training, config, dataset, measure, transformation, savepoints):
@@ -103,7 +103,7 @@ class DuringTraining(InvarianceExperiment):
         p = config.dataset_size_for_measure(measure)
         p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
         for sp in savepoints:
-            model_path = config.model_path(p_training, savepoint=sp)
+            model_path = self.model_path(p_training, savepoint=sp)
             model_id = p_training.id(savepoint=sp)
             p_variance = measure_package.Parameters(model_id, p_dataset, transformation, measure)
             variance_parameters.append(p_variance)
@@ -160,7 +160,7 @@ class RandomInitialization(InvarianceExperiment):
             # generate variance params
             variance_parameters = []
             for p_training in training_parameters:
-                model_path = config.model_path(p_training)
+                model_path = self.model_path(p_training)
                 p = config.dataset_size_for_measure(measure)
                 p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
                 p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
@@ -170,6 +170,6 @@ class RandomInitialization(InvarianceExperiment):
 
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True,ylim=get_ylim_normalized(measure))

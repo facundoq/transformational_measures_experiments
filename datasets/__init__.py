@@ -12,36 +12,30 @@ class DatasetSubset(Enum):
     values=[train,test]
 
 
-class ClassificationDataset:
+class TrainTestDataset:
     def __init__(self, name: str,
-                 x_train: np.ndarray, x_test: np.ndarray, y_train: np.ndarray, y_test: np.ndarray,
-                 num_classes: int, input_shape: np.ndarray, labels: List[str], dataformat: str):
+                 x_train: np.ndarray, x_test: np.ndarray,input_shape: np.ndarray,dataformat: str):
         self.name = name
         self.x_train = x_train
         self.x_test = x_test
-        self.y_train = y_train
-        self.y_test = y_test
-        self.num_classes = num_classes
         self.input_shape = input_shape
-        self.labels = labels
         self.dataformat = dataformat
-
-    def get_subset(self,subset:DatasetSubset):
-        if subset == DatasetSubset.test:
-            return self.x_test,self.y_test
-        elif subset == DatasetSubset.train:
-            return self.x_train,self.y_train
-        else:
-            raise ValueError(subset)
 
     def size(self,subset:DatasetSubset):
         if subset==DatasetSubset.test:
-            return self.y_test.shape[0]
+            return self.x_test.shape[0]
         elif subset==DatasetSubset.train:
-            return self.y_train.shape[0]
+            return self.x_train.shape[0]
         else:
             raise ValueError(subset)
 
+    def get_subset(self,subset:DatasetSubset):
+        if subset == DatasetSubset.test:
+            return self.x_test
+        elif subset == DatasetSubset.train:
+            return self.x_train
+        else:
+            raise ValueError(subset)
 
     def normalize_features(self):
         self.x_test=self.x_test.astype(np.float32)
@@ -58,6 +52,32 @@ class ClassificationDataset:
         u,d=mean_std(self.x_train)
         normalize(self.x_train,u,d)
         normalize(self.x_test,u,d)
+
+    def summary(self):
+        result = f"Dataset {self.name}\n" \
+            f"Dataformat {self.dataformat}\n"
+        result += f"x_train: {self.x_train.shape}, {self.x_train.dtype}\n"
+        result += f"x_test: {self.x_test.shape}, {self.x_test.dtype}\n"
+        return result
+
+class ClassificationDataset(TrainTestDataset):
+    def __init__(self, name: str,
+                 x_train: np.ndarray, x_test: np.ndarray, y_train: np.ndarray, y_test: np.ndarray,
+                 num_classes: int, input_shape: np.ndarray, labels: List[str], dataformat: str):
+
+        super(name,x_train,x_test,input_shape,dataformat)
+        self.y_train = y_train
+        self.y_test = y_test
+        self.num_classes = num_classes
+        self.labels = labels
+
+    def get_subset(self,subset:DatasetSubset):
+        if subset == DatasetSubset.test:
+            return self.x_test,self.y_test
+        elif subset == DatasetSubset.train:
+            return self.x_train,self.y_train
+        else:
+            raise ValueError(subset)
 
     def reduce_size_stratified(self, percentage):
         if percentage==1:
@@ -90,23 +110,26 @@ datasets={"mnist":mnist,
 names=datasets.keys()
 
 
-def get(dataset,dataformat="NCHW",path=Path("~/.datasets/").expanduser()) -> ClassificationDataset :
-    # the data, shuffled and split between train and test sets
-    path.mkdir(exist_ok=True,parents=True)
+def get_base(dataset,dataformat:str,path:Path):
+    path.mkdir(exist_ok=True, parents=True)
 
     dataset_module = datasets[dataset]
     (x_train, y_train), (x_test, y_test), input_shape, labels = dataset_module.load_data(path)
 
     if dataformat == 'NCHW':
-        x_train,x_test=x_train.transpose([0,3,1,2]),x_test.transpose([0,3,1,2])
+        x_train, x_test = x_train.transpose([0, 3, 1, 2]), x_test.transpose([0, 3, 1, 2])
     elif dataformat == "NHWC":
-        pass #already in this format
+        pass  # already in this format
     else:
         raise ValueError("Invalid channel format %s" % dataformat)
+    return x_train,y_train,x_test,y_test,input_shape,labels
 
+def get_classification(dataset, dataformat="NCHW", path=Path("~/.datasets/").expanduser()) -> ClassificationDataset :
+    # the data, shuffled and split between train and test sets
+    x_train, y_train, x_test, y_test, input_shape, labels = get_base(dataset,dataformat,path)
     num_classes=len(labels)
-    # convert class vectors to binary class matrices
-    #y_train = to_categorical(y_train, num_classes)
-    #y_test  = to_categorical(y_test, num_classes)
-
     return ClassificationDataset(dataset, x_train, x_test, y_train, y_test, num_classes, np.array(input_shape), labels,dataformat)
+
+def get_regression(dataset,dataformat="NCHW",path=Path("~/.datasets/").expanduser()) -> TrainTestDataset:
+    x_train, y_train, x_test, y_test, input_shape, labels = get_base(dataset, dataformat, path)
+    return TrainTestDataset(dataset, x_train, x_test,dataformat)

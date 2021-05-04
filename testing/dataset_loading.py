@@ -3,7 +3,7 @@ import datasets
 import numpy as np
 
 dataset="lsa16"
-d=datasets.get(dataset)
+d=datasets.get_classification(dataset)
 
 print(d.summary())
 

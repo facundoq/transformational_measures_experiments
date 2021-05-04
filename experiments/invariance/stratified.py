@@ -34,14 +34,14 @@ class Stratified(InvarianceExperiment):
             p_variance_stratified = measure_package.Parameters(p_training.id(), p_dataset_variance, transformation, measure, stratified=True)
             
             # evaluate variance
-            model_path = config.model_path(p_training)
+            model_path = self.model_path(p_training)
             self.experiment_measure(p_variance)
             self.experiment_measure(p_variance_stratified)
             variance_parameters = [p_variance, p_variance_stratified]
             # plot results
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
-            plot_filepath = self.plot_folderpath / f"{experiment_name}.jpg"
-            results = config.load_measure_results(config.results_paths(variance_parameters))
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            results = self.load_measure_results(self.results_paths(variance_parameters))
             
             labels = [l.non_stratified,l.stratified]
             visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
