@@ -1,5 +1,5 @@
 #
-from .compare_measures import *
+from .training import *
 # from .dataset import *
 # from .weights import *
 # from .transformation import *

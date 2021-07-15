@@ -1,6 +1,7 @@
 from .common import *
 from ..tasks import train, Task
 
+from ..visualization.accuracies import plot_accuracies,plot_metrics_single_model
 
 class TrainModels(SameEquivarianceExperiment):
 
@@ -8,25 +9,43 @@ class TrainModels(SameEquivarianceExperiment):
         return """Train models and check their performance."""
 
     def run(self):
-        savepoints_percentages = [0,1,2,5,10,25,50,75,100]
+        savepoints_percentages = [0, 1, 2, 5, 10, 25, 50, 75, 100]
         model_generators = simple_models_generators
-        transformations = common_transformations_combined+[identity_transformation]
-        combinations = itertools.product(
-            model_generators, dataset_names, transformations)
-        task = Task.Regression
+        transformation_sets = common_transformations_combined
+        l=self.l
+        transformation_labels = [l.rotation, l.scale, l.translation,l.combined]
+        task = Task.TransformationRegression
+        metric = "mae"
+        for dataset, model_config_generator in itertools.product(dataset_names,model_generators):
+            transformation_scores = []
+            for transformations in transformation_sets:
+                # train
+                mc: ModelConfig = model_config_generator.for_dataset(task,dataset)
+                transformations:tm.TransformationSet=transformations
+                print(transformations.parameter_range())
+                epochs = mc.epochs(dataset, task, transformations)
+                cc = train.MaxMetricConvergence(mc.max_rmse(dataset, task, transformations),metric)
+                savepoints = [sp * epochs // 100 for sp in savepoints_percentages]
+                savepoints = sorted(list(set(savepoints)))
 
-        for model_config_generator, dataset, transformations in combinations:
-            # train
-            mc:SimpleConvConfig = model_config_generator.for_dataset(dataset,task)
+                tc = train.TrainConfig(epochs, cc, savepoints=savepoints)
+                p = train.TrainParameters(mc, tc, dataset, transformations, task)
+                self.train(p)
 
-            epochs = mc.epochs(dataset, task, transformations)
-            min_accuracy = mc.min_accuracy(dataset, task, transformations)
+                p, model, metrics = train.load_model(self.model_path_new(p), device="cpu", load_state=False)
+                transformation_scores.append(metrics[f"test_{metric}"])
 
-            savepoints = [sp * epochs // 100 for sp in savepoints_percentages]
-            savepoints = sorted(list(set(savepoints)))
-            # Training
-            # p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
-            cc = train.MaxMSEConvergence(min_accuracy)
-            tc = train.TrainConfig(epochs,cc,savepoints=savepoints)
-            p = train.TrainParameters(mc,tc,dataset,transformations,task)
-            train.train(p,self)
+            experiment_name = f"{model_config_generator.__name__}_{dataset}"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            plot_metrics_single_model(plot_filepath, transformation_scores, transformation_labels,metric=metric)
+
+
+    def train(self,p:train.TrainParameters):
+        if not self.model_trained(p):
+            print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria})...")
+            train.train(p, self)
+        else:
+            print(f"Model {p.id()} already trained.")
+
+
+

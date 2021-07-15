@@ -65,7 +65,7 @@ class ClassificationDataset(TrainTestDataset):
                  x_train: np.ndarray, x_test: np.ndarray, y_train: np.ndarray, y_test: np.ndarray,
                  num_classes: int, input_shape: np.ndarray, labels: List[str], dataformat: str):
 
-        super(name,x_train,x_test,input_shape,dataformat)
+        super().__init__(name,x_train,x_test,input_shape,dataformat)
         self.y_train = y_train
         self.y_test = y_test
         self.num_classes = num_classes
@@ -132,4 +132,4 @@ def get_classification(dataset, dataformat="NCHW", path=Path("~/.datasets/").exp
 
 def get_regression(dataset,dataformat="NCHW",path=Path("~/.datasets/").expanduser()) -> TrainTestDataset:
     x_train, y_train, x_test, y_test, input_shape, labels = get_base(dataset, dataformat, path)
-    return TrainTestDataset(dataset, x_train, x_test,dataformat)
+    return TrainTestDataset(dataset, x_train, x_test,input_shape,dataformat)

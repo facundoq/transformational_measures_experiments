@@ -1,13 +1,5 @@
-* Copy code from invariance experiments to same_equivariance experiments
 
-* Add parameter to modelconfig to indicate if should add classification head
-
-* Modify training for SE to use parameters as Y
-    * Reencode parameters? rotation as (cos,sin)
-* Adapt trainer to use MSE as loss function
-    * Adopt Poutyne for training to see if can speed up transformations 
-* Train models for same_equivariance
-    * Check performance
+* Change rotation parameter so that it's naturally from 0 to 1 and therefore combined measures have a controlled range
 * Modify same_equivariance to use SE measures
 
 * Split measures for every framework

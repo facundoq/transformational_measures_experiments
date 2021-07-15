@@ -6,81 +6,12 @@ from experiments import language,Experiment
 
 if __name__ == '__main__':
     language.set_language(language.English())
-    todo = [
-
-    ]
-    if len(todo)>0:
-        print("TODO implement invariance:", ",".join([e.__class__.__name__ for e in todo]))
 
 
     all_experiments = {
         "Initial":[
-        TrainModels(),
+        TrainModels()
         ],
-        "SamplePlots":[
-        DatasetTransformationPlots(),
-        STMatrixSamples(),
-
-        # DataAugmentationClassical(),
-        # DataAugmentationHandshape(),
-        ],
-        "Accuracies":[
-        SimpleConvAccuracies(),
-        ModelAccuracies(),
-        ],
-        "Measures":[
-        # InvarianceMeasureCorrelation(),
-        MeasureCorrelationWithTransformation(),
-        CompareMeasures(),
-        DistanceApproximation(),
-        # CompareSameEquivariance(),
-        #   CompareSameEquivarianceNormalized(),
-        # CompareSameEquivarianceSimple(),
-        ],
-        "Weights":[
-        RandomInitialization(),
-        RandomWeights(),
-        DuringTraining(),
-
-        ],
-        "Dataset":[
-        DatasetSize(),
-        DatasetSubset(),
-        DatasetTransfer(),
-        # #
-        ]
-        ,"Variants":[
-        AggregationFunctionsVariance(),
-        AggregationBeforeAfter(),
-        # AggregationFunctionsDistance(),
-        Stratified(),
-        # SameEquivarianceNormalization(),
-        #
-        ]
-        ,"Transformations":[
-        TransformationDiversity(),
-        TransformationComplexity(),
-        TransformationSetSize(),
-        ]
-        ,"Hiperparameters":[
-        BatchNormalization(),
-        ActivationFunction(),
-        MaxPooling(),
-        KernelSize(),
-        ],
-        "Goodfellow":[
-            CompareGoodfellowAlpha(),
-            CompareGoodfellow(),
-        ]
-        ,"Models":[
-        CompareModels(),
-        TIPooling(),
-        ]
-        ,"Validate":[
-        # VisualizeInvariantFeatureMaps(),
-        # ValidateMeasure(),
-        # ValidateGoodfellow(),
-        ]
     }
     experiments, o = Experiment.parse_args(all_experiments)
     if o.show_list:

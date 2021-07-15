@@ -42,10 +42,7 @@ class NumpyDataset(Dataset):
 
     def __getitem__(self, idx):
         # print("__getitem__ idx:",idx)
-        sources = self.get_batch(idx)
-        batch = tuple(s[0,] for s in sources)
-        if len(batch)==1:
-            batch=batch[0]
+        batch = tuple(torch.from_numpy(s[idx,]) for s in self.data_sources)
         return batch
 
     def __len__(self):

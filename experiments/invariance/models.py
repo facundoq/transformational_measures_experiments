@@ -6,7 +6,7 @@ import experiment.measure as measure_package
 import datasets
 
 
-
+from ..tasks import train,Task
 
 class TrainModels(InvarianceExperiment):
 
@@ -20,13 +20,22 @@ class TrainModels(InvarianceExperiment):
             model_generators, dataset_names, transformations)
         for model_config_generator, dataset, transformation in combinations:
             # train
-            model_config = model_config_generator.for_dataset(dataset)
-            epochs = config.get_epochs(model_config, dataset, transformation)
+            mc = model_config_generator.for_dataset(dataset)
+            epochs = config.get_epochs(mc, dataset, transformation)
             savepoints = [sp * epochs // 100 for sp in DuringTraining.savepoints_percentages]
             savepoints = sorted(list(set(savepoints)))
             # Training
-            p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
-            self.experiment_training(p_training)
+            #p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
+            task = Task.TransformationRegression
+            cc = train.MinAccuracyConvergence(mc.(dataset, task, transformations))
+            tc = train.TrainConfig(epochs, cc, savepoints=savepoints)
+            p = train.TrainParameters(mc, tc, dataset, transformations, task)
+            p_trainint = train.TrainParameters(mc,dataset,transformation,)
+            # self.experiment_training(p_training)
+            self.train(p_training)
+
+
+
 
 class SimpleConvAccuracies(InvarianceExperiment):
     def description(self):
@@ -52,7 +61,7 @@ class SimpleConvAccuracies(InvarianceExperiment):
             experiment_name = f"{dataset}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
-            accuracies.plot_accuracies_single_model(plot_filepath, transformation_scores, transformation_labels)
+            accuracies.plot_metrics_single_model(plot_filepath, transformation_scores, transformation_labels)
 
 
 class ModelAccuracies(InvarianceExperiment):

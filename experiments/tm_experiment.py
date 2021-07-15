@@ -10,7 +10,8 @@ from .base import Experiment
 
 import config
 import datasets
-from .tasks.train import TrainParameters
+from .tasks.train import TrainParameters,Task
+from .tasks import train
 
 class TMExperiment(Experiment):
 
@@ -24,10 +25,17 @@ class TMExperiment(Experiment):
         model_folderpath.mkdir(parents=True, exist_ok=True)
         return model_folderpath
 
+    def model_trained(self,p: TrainParameters):
+        # custom_models_folderpath = self.models_folder() if custom_models_folderpath is None else custom_models_folderpath
+        filepaths = [self.model_path_new(p)]+[self.model_path_new(p,s) for s in p.tc.savepoints]
+        exist = [p.exists() for p in filepaths]
+        return all(exist)
+
     def model_path_new(self,p:TrainParameters,savepoint=None, custom_models_folderpath=None):
         custom_models_folderpath = self.models_folder() if custom_models_folderpath is None else custom_models_folderpath
         filename = f"{p.id(savepoint)}.pt"
-        filepath = custom_models_folderpath / filename
+        folder = p.mc.__class__.__name__
+        filepath = custom_models_folderpath / folder / filename
         return filepath
 
     def model_path(self, p: training.Parameters, savepoint=None, custom_models_folderpath=None) -> Path:
@@ -174,7 +182,16 @@ class TMExperiment(Experiment):
         else:
             return False
 
+    def train(self,p:train.TrainParameters):
+        if not self.model_trained(p):
+            print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria})...")
+            train.train(p, self)
+        else:
+            print(f"Model {p.id()} already trained.")
+
     def experiment_training(self, p: training.Parameters, min_accuracy=None, num_workers=0, batch_size=256):
+
+
         # import train here to avoid circular dependency
         from . import train
         if min_accuracy is None:
@@ -187,6 +204,8 @@ class TMExperiment(Experiment):
         message = f"Training with {p}\n{o}"
         self.print_date(message)
         train.main(self,p, o, min_accuracy)
+
+
 
     def experiment_measure(self, p: measure.Parameters, batch_size: int = 64, num_workers: int = 0,adapt_dataset=False,model_path:Path=None):
         if model_path==None:

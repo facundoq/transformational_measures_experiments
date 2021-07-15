@@ -45,25 +45,32 @@ def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[s
     plt.savefig(plot_filepath,bbox_inches='tight')
     plt.close()
 
-def plot_accuracies_single_model(plot_filepath:Path, accuracies:[float], labels:[str]):
+def plot_metrics_single_model(plot_filepath:Path, metrics:[float], labels:[str], metric="accuracy"):
     # set width of bar
     f=plt.figure(dpi=300)
     n=len(labels)
-    assert len(accuracies)==n, f"Different number of labels {n} and accuracies {len(accuracies)} "
+    assert len(metrics) == n, f"Different number of labels {n} and {metric} {len(metrics)} "
     cmap = default_discrete_colormap()
     # Set position of bar on X axis
     x = np.arange(n,dtype=float)
     colors = np.array([cmap(i) for i in range(n)])
     # print(colors)
     # Make the plot
-    plt.bar(x, accuracies,color=colors, edgecolor='white')
+    plt.bar(x, metrics, color=colors, edgecolor='white')
+    if metric == "accuracy":
+        plt.gca().set_ylim(0,1)
+    # elif metric in ["rmse" , "mse", "mae","mape"]:
+    else:
+        mi,ma=min(metrics),max(metrics)
+        mi = 0
+        delta=0.1
+        plt.gca().set_ylim(mi*delta,ma*(1+delta))
 
-    plt.gca().set_ylim(0,1)
 
     plt.gca().yaxis.grid(which="major", color='gray', linestyle='-', linewidth=0.5)
     # Add xticks on the middle of the group bars
     plt.xlabel(l.transformation)
-    plt.ylabel(l.accuracy)
+    plt.ylabel(metric)
 
     plt.xticks(x, labels)
     plt.tick_params(axis='both', which='both', length=0)
