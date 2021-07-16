@@ -57,23 +57,29 @@ def train(model:torch.nn.Module,epochs:int,optimizer,use_cuda:bool,train_dataset
 
 
 def test(model, dataset, use_cuda,loss_function):
+
     with torch.no_grad():
         model.eval()
         loss = 0
         correct = 0
-
+        n = 0
         for data, target in dataset:
             if use_cuda:
                 data, target = data.cuda(), target.cuda()
             output = model(data)
 
-            loss += loss_function(output,target[:,0]).item()*data.shape[0]
+            loss += loss_function(output,target[:,0]).item()#*data.shape[0]
             pred = output.max(1, keepdim=True)[1] # get the index of the max log-probability
             correct += pred.eq(target.data.view_as(pred)).cpu().sum().item()
+            n+=data.shape[0]
 
-    n=len(dataset.dataset_name)
-    loss /= n
+    n_batch=len(dataset)
+    loss /= float(n_batch)
+
+
+
     accuracy = float(correct) / float(n)
+    # print(loss, accuracy, correct, n_batch, n)
     return loss,accuracy,correct,n
 
 def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbose):
@@ -115,7 +121,7 @@ def train_epoch(model,epoch,optimizer,use_cuda,train_dataset,loss_function,verbo
             pbar.update(elapsed)
     pbar.close()
 
-    return losses.mean(),accuracies.mean(),correct,len(train_dataset.dataset_name)
+    return losses.mean(),accuracies.mean(),correct,len(train_dataset)
 
 
 def eval_scores(models,datasets,config,loss_function):

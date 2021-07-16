@@ -17,7 +17,7 @@ class NumpyDataset(Dataset):
         :return: a list of NumpyDatasets, one for each class in np.unique(y), with the samples corresponding to each class
         '''
         for d in self.data_sources:
-            assert(d.shape[0]==y.shape[0])
+            assert d.shape[0]==y.shape[0], "number of samples must match number of y"
         classes = np.unique(y)
         classes.sort()
         per_class_variance = []
@@ -37,12 +37,16 @@ class NumpyDataset(Dataset):
     def __init__(self, *data_sources):
         assert(len(data_sources)>0)
         self.data_sources=data_sources
+
+        for d in self.data_sources:
+            assert len(d.shape)>=2, "all arrays must have at least 2 dimensions (batch,features1,..,featuresN)"
         lengths=[ d.shape[0] for d in self.data_sources]
         assert(check_equal(lengths))
 
     def __getitem__(self, idx):
         # print("__getitem__ idx:",idx)
         batch = tuple(torch.from_numpy(s[idx,]) for s in self.data_sources)
+
         return batch
 
     def __len__(self):

@@ -96,10 +96,7 @@ def do_run(model:nn.Module,dataset:datasets.ClassificationDataset,t:tm.Transform
 def run(p:Parameters,o:Options,model:nn.Module,optimizer:Optimizer,
         dataset:datasets.ClassificationDataset,loss_function=torch.nn.NLLLoss(),epochs_callbacks:{int:Callable}={}):
 
-    if p.notransform_epochs == 0:
-        if o.verbose_train:
-            print(f"### Skipping pretraining model |{p.model}| with dataset |{dataset.name}| and no transformation")
-    else:
+    if p.notransform_epochs > 0:
         if o.verbose_train:
             print(f"### Pretraining models |{p.model}| with untransformed dataset |{dataset.name}|for {p.notransform_epochs} epochs...",flush=True)
         t=config.identity_transformation
@@ -120,7 +117,6 @@ class EvalOptions:
 
 
 def eval_scores(m:nn.Module, dataset:datasets.ClassificationDataset, transformations:tm.TransformationSet, transformation_strategy:TransformationStrategy, o:EvalOptions, loss_function=torch.nn.NLLLoss(), subsets=["train", "test"].copy()):
-
     train_dataset = get_data_generator(dataset.x_train, dataset.y_train, transformations, o.batch_size, o.num_workers,transformation_strategy)
     test_dataset = get_data_generator(dataset.x_test, dataset.y_test, transformations, o.batch_size, o.num_workers,transformation_strategy)
 
@@ -143,7 +139,7 @@ def eval_scores(m:nn.Module, dataset:datasets.ClassificationDataset, transformat
 def get_data_generator(x:np.ndarray, y:np.ndarray,
                        transformation:tm.TransformationSet, batch_size:int, num_workers:int, transformation_strategy:TransformationStrategy)->DataLoader:
 
-    dataset=NumpyDataset(x,y)
+    dataset=NumpyDataset(x,y[:,np.newaxis])
     # TODO verify this
     image_dataset=ImageClassificationDataset(dataset, transformation, transformation_strategy)
     dataloader=DataLoader(image_dataset,batch_size=batch_size,shuffle=True,num_workers=num_workers,drop_last=True,pin_memory=True,)

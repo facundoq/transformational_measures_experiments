@@ -6,36 +6,40 @@ import experiment.measure as measure_package
 import datasets
 
 
-from ..tasks import train,Task
+
 
 class TrainModels(InvarianceExperiment):
 
     def description(self):
-        return """Analyze the evolution of invariance in models while they are trained."""
+        return """Train models and record intermediate instances of them to 
+         analize the evolution of invariance while they are training."""
 
     def run(self):
         model_generators = simple_models_generators
+
         transformations = common_transformations_combined+[identity_transformation]
-        combinations = itertools.product(
-            model_generators, dataset_names, transformations)
-        for model_config_generator, dataset, transformation in combinations:
-            # train
-            mc = model_config_generator.for_dataset(dataset)
-            epochs = config.get_epochs(mc, dataset, transformation)
-            savepoints = [sp * epochs // 100 for sp in DuringTraining.savepoints_percentages]
-            savepoints = sorted(list(set(savepoints)))
-            # Training
-            #p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
-            task = Task.TransformationRegression
-            cc = train.MinAccuracyConvergence(mc.(dataset, task, transformations))
-            tc = train.TrainConfig(epochs, cc, savepoints=savepoints)
-            p = train.TrainParameters(mc, tc, dataset, transformations, task)
-            p_trainint = train.TrainParameters(mc,dataset,transformation,)
-            # self.experiment_training(p_training)
-            self.train(p_training)
+        transformation_labels = [l.rotation, l.scale, l.translation, l.combined, "id"]
 
+        combinations = itertools.product(model_generators, dataset_names)
 
-
+        for model_config_generator, dataset in combinations:
+            transformation_scores = []
+            experiment_name = f"{dataset}_{model_config_generator}"
+            plot_filepath = self.folderpath / f"{experiment_name}.jpg"
+            for transformation in transformations:
+                # train
+                model_config = model_config_generator.for_dataset(dataset)
+                epochs = config.get_epochs(model_config, dataset, transformation)
+                savepoints = [sp * epochs // 100 for sp in DuringTraining.savepoints_percentages]
+                savepoints = sorted(list(set(savepoints)))
+                # Training
+                p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
+                self.experiment_training(p_training)
+                model, p, o, scores = training.load_model(self.model_path(p_training), load_state=False,
+                                                          use_cuda=False)
+                loss, acc = scores["test"]
+                transformation_scores.append(acc)
+            accuracies.plot_metrics_single_model(plot_filepath, transformation_scores, transformation_labels)
 
 class SimpleConvAccuracies(InvarianceExperiment):
     def description(self):
