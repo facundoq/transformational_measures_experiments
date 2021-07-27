@@ -23,8 +23,6 @@ def queue_as_generator(q:Queue):
 
 class Generators():
 
-
-
     def run(self):
         c1 = Consumer()
         c2 = Consumer()

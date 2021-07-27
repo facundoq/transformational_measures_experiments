@@ -9,7 +9,7 @@ from pathlib import Path
 from poutyne import Model, Callback
 
 from pytorch.pytorch_image_dataset import ImageClassificationDataset, TransformationStrategy, \
-    ImageTransformRegressionDataset
+    ImageTransformRegressionNormalizedDataset
 
 from pytorch.numpy_dataset import NumpyDataset
 from abc import ABC, abstractmethod
@@ -37,13 +37,36 @@ class ModelConfig(ABC):
 
         return min_accuracies[dataset]
 
+    def max_smape(self, dataset: str, task: Task, transformations: tm.TransformationSet):
+
+        mi,ma=transformations.parameter_range()
+        n_parameters = len(mi)
+        coefficient = {"mnist": 0.20, "cifar10": 0.20}
+        val = n_parameters * coefficient[dataset]
+        return val
+
+    def max_mae(self, dataset: str, task: Task, transformations: tm.TransformationSet):
+        mi, ma = transformations.parameter_range()
+        n_parameters = len(mi)
+        coefficient = {"mnist": 0.20, "cifar10": 0.20}
+        val = n_parameters * coefficient[dataset]
+        return val
+
+    def max_rae(self, dataset: str, task: Task, transformations: tm.TransformationSet):
+        mi, ma = transformations.parameter_range()
+        n_parameters = len(mi)
+        coefficient = {"mnist": 0.30, "cifar10": 0.30}
+        val = coefficient[dataset]
+        return val
+
     def max_rmse(self, dataset: str, task: Task, transformations: tm.TransformationSet):
 
         mi,ma=transformations.parameter_range()
-        max_mse_coefficient = {"mnist": 0.40, "cifar10": 0.5}
-        max_rmse = (ma - mi) * max_mse_coefficient[dataset]
-
+        n_parameters = len(mi)
+        coefficient = {"mnist": 0.20, "cifar10": 0.20}
+        max_rmse = n_parameters * coefficient[dataset]
         return max_rmse
+
 
     def scale_by_transformations(self, epochs: int, transformations: tm.TransformationSet):
         m = len(transformations)
@@ -96,11 +119,12 @@ class MaxRMSEConvergence(MaxMetricConvergence):
         super(MaxRMSEConvergence, self).__init__(max_mse,"mse")
 
 class TrainConfig:
-    def __init__(self, epochs: int, cc: ConvergenceCriteria, save_model=True, max_restarts: int = 5,
+    def __init__(self, epochs: int, cc: ConvergenceCriteria, optimizer="adam",save_model=True, max_restarts: int = 5,
                  savepoints: List[int] = None,
                  device=default_device(), suffix="",
-                 verbose=False, num_workers=2, batch_size=32, plots=True):
+                 verbose=False, num_workers=2, batch_size=64, plots=True):
         self.epochs = epochs
+        self.optimizer=optimizer
         self.suffix = suffix
         self.device = device
         self.savepoints = savepoints
@@ -147,10 +171,8 @@ def prepare_dataset(p: TrainParameters):
         dataset = datasets.get_regression(dataset_name)
         dim_output = len(transformations[0].parameters())
         dataset.normalize_features()
-        train_dataset = ImageTransformRegressionDataset(NumpyDataset(dataset.x_train), p.transformations, strategy)
-        test_dataset = ImageTransformRegressionDataset(NumpyDataset(dataset.x_test), p.transformations, strategy)
-        x, y = train_dataset[0]
-
+        train_dataset = ImageTransformRegressionNormalizedDataset(NumpyDataset(dataset.x_train), p.transformations, strategy)
+        test_dataset = ImageTransformRegressionNormalizedDataset(NumpyDataset(dataset.x_test), p.transformations, strategy)
     elif task == Task.Classification:
         dataset = datasets.get_classification(dataset_name)
         dim_output = dataset.num_classes
@@ -176,14 +198,15 @@ def prepare_model(p: TrainParameters, input_shape, dim_output):
         batch_metrics = ['accuracy']
     elif task == Task.TransformationRegression:
         loss_function = "mse"
-        batch_metrics = ["mae", "smape"]+p.tc.convergence_criteria.metrics()
+        batch_metrics = ["mae", "smape","rae"]+p.tc.convergence_criteria.metrics()
     else:
         raise ValueError(task)
-    batch_metrics = list(set(batch_metrics))
+    batch_metrics = sorted(list(set(batch_metrics)))
 
     model = p.mc.make(input_shape, dim_output)
+
     poutyne_model = Model(model,
-                          optimizer='adam',
+                          optimizer=p.tc.optimizer,
                           loss_function=loss_function,
                           batch_metrics=batch_metrics,
                           device=p.tc.device)
@@ -236,10 +259,19 @@ def train(p: TrainParameters, path_config):
         savepoint_callback = SavepointCallback(p, poutyne_model, test_dataset, path_config)
         history = poutyne_model.fit_dataset(train_dataset, test_dataset, batch_size=p.tc.batch_size,
                                             epochs=p.tc.epochs, callbacks=[savepoint_callback],verbose=p.tc.verbose,
-                                            dataloader_kwargs={"shuffle":True})
+                                            num_workers=p.tc.num_workers,
+
+                                            dataloader_kwargs={"shuffle":True,"pin_memory":True})
 
         metrics = poutyne_model.evaluate_dataset(test_dataset,batch_size=p.tc.batch_size,num_workers=p.tc.num_workers,
-                                                 return_dict_format=True,verbose=False)
+                                                 return_dict_format=True,verbose=False,dataloader_kwargs={"pin_memory":True})
+        train_metrics = poutyne_model.evaluate_dataset(train_dataset, batch_size=p.tc.batch_size, num_workers=p.tc.num_workers,
+                                                 return_dict_format=True, verbose=False,dataloader_kwargs={"pin_memory":True})
+        for k in train_metrics:
+            if k.startswith("test"):
+                new_k = "train"+k[4:]
+                train_metrics[new_k]=train_metrics[k]
+                del train_metrics[k]
 
         plot_history(history, p, path_config.training_plots_path())
         if cc.converged(metrics):

@@ -56,10 +56,15 @@ def plot_metrics_single_model(plot_filepath:Path, metrics:[float], labels:[str],
     colors = np.array([cmap(i) for i in range(n)])
     # print(colors)
     # Make the plot
+    print(metrics,labels)
     plt.bar(x, metrics, color=colors, edgecolor='white')
     if metric == "accuracy":
         plt.gca().set_ylim(0,1)
     # elif metric in ["rmse" , "mse", "mae","mape"]:
+    if metric == "rae":
+        ma = max(metrics)
+        ma = max(ma,1.1)
+        plt.gca().set_ylim(0, ma)
     else:
         mi,ma=min(metrics),max(metrics)
         mi = 0

@@ -51,7 +51,7 @@ class ImageDataset(Dataset):
         if transformations is None:
             self.transformations=[tm.IdentityTransformation()]
         else:
-            self.transformations=list(transformations)
+            self.transformations=transformations
         self.n_transformations=len(self.transformations)
         self.n_samples = len(self.dataset)
 
@@ -84,3 +84,29 @@ class ImageTransformRegressionDataset(ImageDataset):
         ts = t(s).squeeze(0)
         # print(t.parameters())
         return ts,t.parameters().float()
+
+class ImageTransformRegressionNormalizedDataset(ImageDataset):
+
+    def __init__(self, image_dataset: Dataset, transformations: tm.TransformationSet = None,
+                 transformation_scheme: TransformationStrategy = None, normalize=False):
+        super().__init__(image_dataset,transformations,transformation_scheme,normalize)
+        self.min,self.max=self.transformations.parameter_range()
+        self.delta = self.max - self.min
+
+    def __getitem__(self, idx):
+        assert(isinstance(idx,int))
+        i_sample,i_transformation=self.transformation_strategy.get_index(idx,self.n_samples,self.n_transformations)
+        # print(self.dataset)
+        s, = self.dataset[i_sample]
+        # print(s.shape)
+        t = self.transformations[i_transformation]
+        s = s.float().unsqueeze(0)
+        # print(s.shape,s.dtype)
+        ts = t(s).squeeze(0)
+        # print(t.parameters())
+        target = t.parameters().float()
+        # old_target=target.clone()
+        target -= self.min
+        target /= self.delta
+        # print("old, target,mi,ma", old_target,target, mi, ma)
+        return ts,target

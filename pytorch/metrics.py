@@ -24,12 +24,18 @@ def reduce_non_batch(x, f: str):
         raise ValueError(f"Function {f} not supported. Options: 'sum', 'mean'.")
 
 
-def safe_divide(x, y, eps: float):
-    if abs(y) < eps:
-        return x / math.copysign(eps, y)
-    else:
-        return x / y
+def torch_copysign(input,sign):
+    sign = torch.sign(sign)
+    input_sign = torch.sign(input)
+    return input*input_sign*sign
 
+def safe_divide(x, y, eps: float):
+    mag = torch.abs(y)
+    test = (mag < eps)*1
+
+    test2 = torch_copysign(test, y)
+    denom = test2 * eps  + (1-test) * y
+    return x / denom
 
 def replace_zero_eps(x, eps):
     x[x.abs() < eps] = eps * torch.sign(x)
@@ -59,17 +65,6 @@ def squared_error(x, y, feature_normalize: bool):
 def absolute_error(x, y, feature_normalize: bool):
     return norm1(x - y, feature_normalize)
 
-
-# def debatch_normalize_mean(num, den, eps):
-#     num = sum_non_batch(num)
-#     den = sum_non_batch(den)
-#     replace_zero_eps(den, eps)
-#     return torch.mean(num / den)
-#
-# def debatch_sum_normalize(num, den, eps):
-#     ds = den.sum()
-#     ds = eps if abs(ds) < eps else ds
-#     return torch.mean(num.sum() / ds)
 
 # Root Mean Squared Error (RMSE)
 @register_batch_metric('mse2')
@@ -120,9 +115,9 @@ def rse(y_pred, y_true, feature_normalize=False, eps=default_eps):
 # https://www.sciencedirect.com/science/article/pii/S0024379501005729
 # Relative Absolute Error (RAE)
 @register_batch_metric('rae')
-def rse(y_pred, y_true, feature_normalize=False, eps=default_eps):
-    se = absolute_error(y_pred, y_true, feature_normalize)
-    scale = absolute_error(y_true, y_true.mean(0, keepdim=True), feature_normalize)
+def rae(y_pred, y_true, feature_normalize=False, eps=default_eps):
+    se = mae(y_pred, y_true, feature_normalize=feature_normalize)
+    scale = mae(y_true, y_true.mean(0, keepdim=True), feature_normalize=feature_normalize)
     return safe_divide(se, scale, eps)
 
 

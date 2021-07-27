@@ -35,13 +35,14 @@ class SimpleConvConfig(ModelConfig):
 
     @classmethod
     def for_dataset(cls,task:Task,dataset:str,bn:bool=False,k=3, activation=ActivationFunction.ELU,max_pooling=True):
-        conv = {"mnist": 32, "cifar10": 128, "fashion_mnist": 64,"lsa16":128,"rwth":128}
-        fc = {"mnist": 64, "cifar10": 128, "fashion_mnist": 128,"lsa16":64,"rwth":128}
+
+        conv = {"mnist": 128, "cifar10": 128, "fashion_mnist": 64,"lsa16":128,"rwth":128}
+        fc = {"mnist": 128, "cifar10": 128, "fashion_mnist": 128,"lsa16":64,"rwth":128}
         return SimpleConvConfig(task,conv=conv[dataset], fc=fc[dataset],bn=bn,kernel_size=k,activation=activation,max_pooling=max_pooling)
 
     def epochs(self,dataset:str,task:Task,transformations:tm.TransformationSet):
 
-        epochs = {'cifar10': 25, 'mnist': 5, 'fashion_mnist': 12, "lsa16": 25, "rwth": 25}
+        epochs = {'cifar10': 35, 'mnist': 45, 'fashion_mnist': 12, "lsa16": 25, "rwth": 25}
         return self.scale_by_transformations(epochs[dataset],transformations)
 
     def __init__(self, task:Task,
@@ -120,9 +121,14 @@ class SimpleConv(ObservableLayersModule):
 
         if c.task == Task.Classification:
             fc_layers.append(nn.LogSoftmax(dim=-1))
+        elif c.task == Task.TransformationRegression:
+            fc_layers.append(nn.Sigmoid())
+        else:
+            raise ValueError(f"Unsupported task {c.task}")
 
         if c.bn:
             fc_layers.insert(2,nn.BatchNorm1d(c.fc))
+
         fc = SequentialWithIntermediates(*fc_layers)
         self.layers=SequentialWithIntermediates(conv,fc)
 

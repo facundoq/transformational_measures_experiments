@@ -38,7 +38,9 @@ class MockSameEquivarianceExperiment(SameEquivarianceExperiment):
     def get_row(self,model_path):
         p, model, scores = train.load_model(model_path, "cpu", load_state=False)
         header = [k for k in scores.keys() if k.startswith("test_") or k.startswith("train_")]
+        # print(header)
         values = [scores[k] for k in header]
+        # print(values)
 
         # train_accuracy = scores["train"][1]
         # test_accuracy = scores["test"][1]
@@ -81,11 +83,14 @@ if __name__ == '__main__':
             continue
         row,row_header = experiment.get_row(model_path)
         data.append(row)
-    header = header + row_header
-    table.header(header)
-    table.add_rows(data,header=False)
-    table_str=table.draw()
-    print(table_str)
+    if len(data)>0:
+        header = header + row_header
+        table.header(header)
+        table.add_rows(data,header=False)
+        table_str=table.draw()
+        print(table_str)
 
-    with open(os.path.join(config.base_path(), f"{args.experiment}_latest_training_results.txt"), "w") as f:
-        f.write(table_str)
+        with open(os.path.join(config.base_path(), f"{args.experiment}_latest_training_results.txt"), "w") as f:
+            f.write(table_str)
+    else:
+        print("No models found")

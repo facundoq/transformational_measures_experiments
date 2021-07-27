@@ -15,24 +15,28 @@ class TrainModels(SameEquivarianceExperiment):
         l=self.l
         transformation_labels = [l.rotation, l.scale, l.translation,l.combined]
         task = Task.TransformationRegression
-        metric = "mae"
+        metric = "rae"
         for dataset, model_config_generator in itertools.product(dataset_names,model_generators):
             transformation_scores = []
             for transformations in transformation_sets:
                 # train
                 mc: ModelConfig = model_config_generator.for_dataset(task,dataset)
                 transformations:tm.TransformationSet=transformations
-                print(transformations.parameter_range())
                 epochs = mc.epochs(dataset, task, transformations)
-                cc = train.MaxMetricConvergence(mc.max_rmse(dataset, task, transformations),metric)
+                cc = train.MaxMetricConvergence(mc.max_rae(dataset, task, transformations),metric)
                 savepoints = [sp * epochs // 100 for sp in savepoints_percentages]
                 savepoints = sorted(list(set(savepoints)))
+                optimizer = dict(optim="adam", lr=0.0001)
+                tc = train.TrainConfig(epochs, cc,optimizer=optimizer, savepoints=savepoints,verbose=False,num_workers=4)
 
-                tc = train.TrainConfig(epochs, cc, savepoints=savepoints)
                 p = train.TrainParameters(mc, tc, dataset, transformations, task)
                 self.train(p)
 
                 p, model, metrics = train.load_model(self.model_path_new(p), device="cpu", load_state=False)
+                # print(metrics)
+                # v = metrics[f"test_{metric}"]
+                # # print(f"{v:.3f}")
+                # print(metric)
                 transformation_scores.append(metrics[f"test_{metric}"])
 
             experiment_name = f"{model_config_generator.__name__}_{dataset}"
@@ -40,12 +44,12 @@ class TrainModels(SameEquivarianceExperiment):
             plot_metrics_single_model(plot_filepath, transformation_scores, transformation_labels,metric=metric)
 
 
-    def train(self,p:train.TrainParameters):
-        if not self.model_trained(p):
-            print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria})...")
-            train.train(p, self)
-        else:
-            print(f"Model {p.id()} already trained.")
+    # def train(self,p:train.TrainParameters):
+    #     if not self.model_trained(p):
+    #         print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria})...")
+    #         train.train(p, self)
+    #     else:
+    #         print(f"Model {p.id()} already trained.")
 
 
 

@@ -7,6 +7,7 @@ from ..language import English
 from ..tasks.train import TrainParameters,Task
 from ..tasks import train
 
+
 class SameEquivarianceExperiment(TMExperiment):
 
     def __init__(self,l=English()):
@@ -35,3 +36,6 @@ class SameEquivarianceExperiment(TMExperiment):
             train.train(p, self)
         else:
             print(f"Model {p.id()} already trained.")
+
+    def measure(self,):
+        pass
