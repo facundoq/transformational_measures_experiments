@@ -187,24 +187,21 @@ def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:Path):
     }, filepath)
 
 
-def load_model(model_filepath:Path,use_cuda:bool,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
+def load_model(model_filepath:Path,device:torch.device,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
     #print("load_model",model_filepath)
     logging.info(f"Loading models from {model_filepath}...")
-    if use_cuda:
-        data = torch.load(model_filepath)
-    else:
-        data = torch.load(model_filepath,map_location='cpu')
+    data = torch.load(model_filepath,map_location=device)
     model_state=data["model_state"]
     model=data["models"]
     p:Parameters=data["parameters"]
-    o:Options = data["options"]
+    # o:Options = data["options"]
     scores=data["scores"]
     # dataset=datasets.get(p.dataset)
     #models, optimizer = model_loading.get_model(p.models,dataset,use_cuda)
     if load_state:
         model.load_state_dict(model_state)
         model.eval()
-    return model,p,o,scores
+    return model,p,scores
 
 def print_scores(scores):
     for k, v in scores.items():

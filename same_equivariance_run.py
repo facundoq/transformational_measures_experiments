@@ -10,7 +10,10 @@ if __name__ == '__main__':
 
     all_experiments = {
         "Initial":[
-        TrainModels()
+        TrainModels(),
+        # CompareSameEquivarianceNormalized(),
+        TransformationSampleSizes(),
+
         ],
     }
     experiments, o = Experiment.parse_args(all_experiments)

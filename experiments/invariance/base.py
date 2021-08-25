@@ -46,7 +46,7 @@ class InvarianceExperiment(TMExperiment):
 
 
     def experiment_measure(self, p: measure.Parameters, batch_size: int = 64, num_workers: int = 0,adapt_dataset=False,model_path:Path=None):
-        if model_path==None:
+        if model_path is None:
             model_path=self.model_path_from_id(p.model_id)
         results_path = self.results_path(p)
         if results_path.exists():
@@ -67,7 +67,7 @@ class InvarianceExperiment(TMExperiment):
         accuracy.main(p, o)
 
     def train_measure(self, model_config: config.ModelConfig, dataset: str, transformation: tm.TransformationSet,
-                      m: tm.NumpyMeasure, p=None):
+                      m: tm.numpy.NumpyMeasure, p=None):
 
         epochs = config.get_epochs(model_config, dataset, transformation)
         p_training = training.Parameters(model_config, dataset, transformation, epochs,)

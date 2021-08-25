@@ -12,7 +12,7 @@ import abc
 class ModelConfig(abc.ABC):
 
     @abc.abstractmethod
-    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool)->(tm.ObservableLayersModule, Optimizer):
+    def make_model_and_optimizer(self, input_shape:[int, int, int], num_classes:int, cuda:bool)->(tm.pytorch.ObservableLayersModule, Optimizer):
         pass
 
     @abc.abstractmethod

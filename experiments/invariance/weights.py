@@ -113,7 +113,7 @@ class DuringTraining(InvarianceExperiment):
             self.experiment_measure(p_variance)
         return variance_parameters, model_paths
 
-    def plot(self, results, plot_filepath, model_paths, savepoints, epochs, measure:tm.NumpyMeasure):
+    def plot(self, results, plot_filepath, model_paths, savepoints, epochs, measure:tm.Measure):
         # TODO implement a heatmap where the x axis is the training time/epoch
         # and the y axis indicates the layer, and the color indicates the invariance
         # to see it evolve over time.

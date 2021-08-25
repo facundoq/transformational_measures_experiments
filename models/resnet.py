@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from transformational_measures import ObservableLayersModule
+from transformational_measures.pytorch import ObservableLayersModule
 from models.util import SequentialWithIntermediates,Flatten,Add,GlobalAvgPool2d
 
 class Block(ObservableLayersModule):

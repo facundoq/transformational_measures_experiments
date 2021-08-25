@@ -79,7 +79,11 @@ class ClassificationDataset(TrainTestDataset):
         else:
             raise ValueError(subset)
 
-    def reduce_size_stratified(self, percentage):
+    def reduce_size_stratified_fixed(self, new_size:int,subset:DatasetSubset):
+        original_size = self.size(subset)
+        return self.reduce_size_stratified(new_size/original_size)
+
+    def reduce_size_stratified(self, percentage:float):
         if percentage==1:
             return self
         x_train, y_train, _, _ = reduce_size_subset_stratified(percentage, self.x_train, self.y_train)

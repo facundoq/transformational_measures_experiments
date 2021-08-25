@@ -3,7 +3,9 @@ import itertools
 from datasets import DatasetSubset
 from experiment import measure
 
-def dataset_size_for_measure(measure:NumpyMeasure, subset=DatasetSubset.test)->float:
+from transformational_measures.numpy import *
+
+def dataset_size_for_measure(measure:Measure, subset=DatasetSubset.test)->float:
     if subset == DatasetSubset.test:
         if measure.__class__.__name__.endswith("Variance"):
             return 0.5
@@ -17,7 +19,7 @@ def dataset_size_for_measure(measure:NumpyMeasure, subset=DatasetSubset.test)->f
     else:
         raise ValueError(f"Invalid subset {subset}")
 
-def default_measure_dataset(dataset:str, m:NumpyMeasure):
+def default_measure_dataset(dataset:str, m:Measure):
     subset = DatasetSubset.test
     return measure.DatasetParameters(dataset, subset, dataset_size_for_measure(m, subset))
 

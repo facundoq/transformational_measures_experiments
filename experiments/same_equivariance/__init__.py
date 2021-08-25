@@ -1,5 +1,6 @@
 #
 from .training import *
+from .measures import *
 # from .dataset import *
 # from .weights import *
 # from .transformation import *

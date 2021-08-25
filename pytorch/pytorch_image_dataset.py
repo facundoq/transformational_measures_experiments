@@ -65,8 +65,7 @@ class ImageClassificationDataset(ImageDataset):
         i_sample,i_transformation=self.transformation_strategy.get_index(idx,self.n_samples,self.n_transformations)
         x,y = self.dataset[i_sample]
         t = self.transformations[i_transformation]
-        x = x.float().unsqueeze(0)
-        x= t(x).squeeze(0)
+        x= t(x.float())
         y=y.type(dtype=torch.LongTensor)
         return x, y
 
@@ -76,12 +75,10 @@ class ImageTransformRegressionDataset(ImageDataset):
         assert(isinstance(idx,int))
         i_sample,i_transformation=self.transformation_strategy.get_index(idx,self.n_samples,self.n_transformations)
         # print(self.dataset)
-        s, = self.dataset[i_sample]
+        s = self.dataset[i_sample]
         # print(s.shape)
         t = self.transformations[i_transformation]
-        s = s.float().unsqueeze(0)
-        # print(s.shape,s.dtype)
-        ts = t(s).squeeze(0)
+        ts = t(s.float())
         # print(t.parameters())
         return ts,t.parameters().float()
 
@@ -97,12 +94,12 @@ class ImageTransformRegressionNormalizedDataset(ImageDataset):
         assert(isinstance(idx,int))
         i_sample,i_transformation=self.transformation_strategy.get_index(idx,self.n_samples,self.n_transformations)
         # print(self.dataset)
-        s, = self.dataset[i_sample]
+        # print(self.dataset[i_sample])
+        s = self.dataset[i_sample]
         # print(s.shape)
         t = self.transformations[i_transformation]
-        s = s.float().unsqueeze(0)
         # print(s.shape,s.dtype)
-        ts = t(s).squeeze(0)
+        ts = t(s.float())
         # print(t.parameters())
         target = t.parameters().float()
         # old_target=target.clone()

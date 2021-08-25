@@ -26,8 +26,8 @@ class MockInvarianceExperiment(InvarianceExperiment):
         del scores
         del p
         del o
-
-        return row
+        header = ["train_acc","test_acc"]
+        return row,header
 
 class MockSameEquivarianceExperiment(SameEquivarianceExperiment):
     def run(self):

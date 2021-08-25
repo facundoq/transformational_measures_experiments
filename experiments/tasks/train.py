@@ -20,7 +20,7 @@ def default_device(): return "cuda" if torch.cuda.is_available() else "cpu"
 
 class ModelConfig(ABC):
     @abstractmethod
-    def make(self, input_shape: np.ndarray, output_dim: int) -> tm.ObservableLayersModule:
+    def make(self, input_shape: np.ndarray, output_dim: int) -> tm.pytorch.ObservableLayersModule:
         pass
 
     @abstractmethod
@@ -260,7 +260,6 @@ def train(p: TrainParameters, path_config):
         history = poutyne_model.fit_dataset(train_dataset, test_dataset, batch_size=p.tc.batch_size,
                                             epochs=p.tc.epochs, callbacks=[savepoint_callback],verbose=p.tc.verbose,
                                             num_workers=p.tc.num_workers,
-
                                             dataloader_kwargs={"shuffle":True,"pin_memory":True})
 
         metrics = poutyne_model.evaluate_dataset(test_dataset,batch_size=p.tc.batch_size,num_workers=p.tc.num_workers,
@@ -306,7 +305,7 @@ def load_model(model_filepath: Path, device: str, load_state=True):
     if load_state:
         model.load_state_dict(model_state)
         model.eval()
-    return p,model, scores
+    return model,p, scores
 
 
 import matplotlib.pyplot as plt

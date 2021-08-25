@@ -46,7 +46,7 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
                     p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, default_dataset_percentage)
 
                     p_variance = measure_package.Parameters(p_training.id(), p_dataset, test_transformation, measure)
-                    model_path = self.model_path(p_training)
+                    # model_path = self.model_path(p_training)
                     self.experiment_measure(p_variance)
                     variance_parameters.append(p_variance)
                 # PLOT

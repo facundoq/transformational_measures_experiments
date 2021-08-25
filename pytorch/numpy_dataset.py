@@ -46,21 +46,22 @@ class NumpyDataset(Dataset):
     def __getitem__(self, idx):
         # print("__getitem__ idx:",idx)
         batch = tuple(torch.from_numpy(s[idx,]) for s in self.data_sources)
-
+        if len(batch)==1:
+            batch=batch[0]
         return batch
 
     def __len__(self):
         return self.data_sources[0].shape[0]
 
-    def get_batch(self, idx):
-        if isinstance(idx, int):
-            idx = [idx]
-        batch=tuple( torch.from_numpy(d[idx,]) for d in self.data_sources)
-        return batch
-
-    def get_all(self):
-        ids = list(range(len(self)))
-        return self.get_batch(ids)
+    # def get_batch(self, idx):
+    #     if isinstance(idx, int):
+    #         idx = [idx]
+    #     batch=tuple( torch.from_numpy(d[idx,]) for d in self.data_sources)
+    #     return batch
+    #
+    # def get_all(self):
+    #     ids = list(range(len(self)))
+    #     return self.get_batch(ids)
 
 
 
