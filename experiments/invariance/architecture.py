@@ -49,7 +49,7 @@ class BatchNormalization(InvarianceExperiment):
             visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
-class ActivationFunction(InvarianceExperiment):
+class ActivationFunctionComparison(InvarianceExperiment):
     def description(self):
         return """Determine how the activation function affects invariance"""
 

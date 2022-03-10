@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     all_experiments = {
         "Initial":[
-        TrainModels(),
+        # TrainModels(),
         ],
         "SamplePlots":[
         DatasetTransformationPlots(),
@@ -26,58 +26,60 @@ if __name__ == '__main__':
         # DataAugmentationHandshape(),
         ],
         "Accuracies":[
-        SimpleConvAccuracies(),
-        ModelAccuracies(),
+        # SimpleConvAccuracies(),
+        # ModelAccuracies(),
         ],
         "Measures":[
-        # InvarianceMeasureCorrelation(),
-        MeasureCorrelationWithTransformation(),
-        CompareMeasures(),
-        DistanceApproximation(),
-        # CompareSameEquivariance(),
-        #   CompareSameEquivarianceNormalized(),
-        # CompareSameEquivarianceSimple(),
+        TransformationSampleSizes(),            
+        # # # InvarianceMeasureCorrelation(),
+        
+        # # MeasureCorrelationWithTransformation(),
+        # # CompareMeasures(),
+        # # DistanceApproximation(),
+        # # # CompareSameEquivariance(),
+        # # #   CompareSameEquivarianceNormalized(),
+        # # # CompareSameEquivarianceSimple(),
         ],
-        "Weights":[
-        RandomInitialization(),
-        RandomWeights(),
-        DuringTraining(),
+        # # "Weights":[
+        # # RandomInitialization(),
+        # # RandomWeights(),
+        # # DuringTraining(),
 
-        ],
-        "Dataset":[
-        DatasetSize(),
-        DatasetSubset(),
-        DatasetTransfer(),
-        # #
-        ]
-        ,"Variants":[
-        AggregationFunctionsVariance(),
-        AggregationBeforeAfter(),
-        # AggregationFunctionsDistance(),
-        Stratified(),
-        # SameEquivarianceNormalization(),
-        #
-        ]
-        ,"Transformations":[
-        TransformationDiversity(),
+        # # ],
+        # # "Dataset":[
+        # # DatasetSize(),
+        # # DatasetSubset(),
+        # # DatasetTransfer(),
+        # # # #
+        # # ]
+        # # ,"Variants":[
+        # # AggregationFunctionsVariance(),
+        # # AggregationBeforeAfter(),
+        # # # AggregationFunctionsDistance(),
+        # # Stratified(),
+        # # # SameEquivarianceNormalization(),
+        # # #
+        
+        "Transformations":[
+        # # TransformationDiversity(),
         TransformationComplexity(),
-        TransformationSetSize(),
-        ]
-        ,"Hiperparameters":[
-        BatchNormalization(),
-        ActivationFunction(),
-        MaxPooling(),
-        KernelSize(),
+        # # TransformationSetSize(),
         ],
-        "Goodfellow":[
-            CompareGoodfellowAlpha(),
-            CompareGoodfellow(),
-        ]
-        ,"Models":[
-        CompareModels(),
-        TIPooling(),
-        ]
-        ,"Validate":[
+        # # ,"Hiperparameters":[
+        # # BatchNormalization(),
+        # # ActivationFunctionComparison(),
+        # # MaxPooling(),
+        # # KernelSize(),
+        # # ],
+        # # "Goodfellow":[
+        # #     CompareGoodfellowAlpha(),
+        # #     CompareGoodfellow(),
+        # # ]
+        # # ,"Models":[
+        # # CompareModels(),
+        # # TIPooling(),
+        # ],
+        "Validate":[
         # VisualizeInvariantFeatureMaps(),
         ]
     }

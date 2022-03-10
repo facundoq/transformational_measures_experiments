@@ -67,7 +67,7 @@ class ImageClassificationDataset(ImageDataset):
         t = self.transformations[i_transformation]
         x= t(x.float())
         y=y.type(dtype=torch.LongTensor)
-        return x, y
+        return x, y[0]
 
 
 class ImageTransformRegressionDataset(ImageDataset):

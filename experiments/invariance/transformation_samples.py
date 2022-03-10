@@ -8,17 +8,17 @@ from pathlib import Path
 import config
 
 from testing.util import plot_image_grid
-from transformational_measures.transformations.pytorch.affine import AffineTransformation
+
 import torch
 
 def apply_transformation_pytorch(x:np.ndarray, t:AffineTransformation):
     x = torch.from_numpy(x)
-    # NHWC to NCHW
-    x = x.permute(0,3,1,2)
+    # HWC to CHW
+    x = x.permute(2,0,1)
     x=t(x)
-    # NCHW to NHWC
-    x = x.permute(0,2,3,1)
-    x= x[0, :, :,:]
+    # CHW to HWC
+    x = x.permute(1,2,0)
+    # x= x[0, :, :,:]
     x = x.numpy()
     return (x * 255).astype("uint8")
 
@@ -56,7 +56,7 @@ class DatasetTransformationPlots(InvarianceExperiment):
 
         rows,cols=3,3
         for sample_id,sample_path in samples.items():
-            image = get_image(sample_path)
+            image = get_image(sample_path)[0,:]
             transformations_sets=transformations[sample_id]
             for transformation_set in transformations_sets:
                 filepath= self.folderpath / f"{sample_id}_{transformation_set.id()}.jpg"
@@ -75,6 +75,7 @@ class DatasetTransformationPlots(InvarianceExperiment):
                 # random_indices=np.random.permutation(n)
                 # print(n,random_indices)
                 # images = images[random_indices,:]
+                # print(images.shape)
                 plot_image_grid(images,samples=rows*cols,grid_cols=cols,show=False,save=filepath)
 
 
@@ -93,7 +94,7 @@ class STMatrixSamples(InvarianceExperiment):
         }
 
         for sample_id,sample_path in samples.items():
-            image = get_image(sample_path)
+            image = get_image(sample_path)[0,]
             transformations_sets=common_transformations
             for transformation_set in transformations_sets:
                 transformation_results_path = self.folderpath / Path(transformation_set.id())

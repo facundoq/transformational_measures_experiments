@@ -15,7 +15,7 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
 
         n=4
         rotations=np.linspace(0,ct.rotation_max_degrees,n)
-        #[(0.875,1.0625),(0.75,1.125),(0.75,1.125),(0.5,1.25)
+        # [(0.875,1.0625),(0.75,1.125),(0.75,1.125),(0.5,1.25)
         upscale=np.linspace(1,ct.scale_max_upscale,n)
         downscale=np.flip(np.linspace(ct.scale_min_downscale,1,n))
         scaling= list(zip(downscale,upscale))
@@ -27,8 +27,8 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
                      ]
         labels = [
             [f"0° {l.to} {d:.0f}°" for d in rotations],
-            [f"{d:.2f} {l.to} {u:.2f}" for (d,u) in scaling],
-            [f"0 {l.to} {i:.2f}" for i in translation],
+            [f"{d*100:.2f}% {l.to} {u*100:.2f}%" for (d,u) in scaling],
+            [f"0% {l.to} {i*100:.2f}%" for i in translation],
         ]
         test_transformations = common_transformations
 

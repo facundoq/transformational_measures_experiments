@@ -34,6 +34,7 @@ def load_data(path):
     f.close()
 
     x_train, x_test = np.expand_dims(x_train, axis=3), np.expand_dims(x_test, axis=3)
+    
     input_shape=(28,28,1)
     labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"]
     return (x_train, y_train), (x_test, y_test), input_shape, labels

@@ -64,7 +64,7 @@ class TransformationComplexity(InvarianceExperiment):
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
 
         n_complexities=4
-        rotations=np.linspace(90,360,n_complexities)
+        rotations=np.linspace(0,1,n_complexities+1)[1:]
         #[(0.875,1.0625),(0.75,1.125),(0.75,1.125),(0.5,1.25)
         upscale=np.linspace(1,1.25,n_complexities+1)[1:]
         downscale=np.flip(np.linspace(0.5,1,n_complexities,endpoint=False))
@@ -76,37 +76,42 @@ class TransformationComplexity(InvarianceExperiment):
                      [AffineGenerator(t=TranslationUniform(3,t)) for t in translation],
                      ]
         labels = [
-                 [f"0° {l.to} {d}°" for d in rotations],
-                 [f"{d} {l.to} {u}" for (d,u) in scaling],
-                 [f"0 {l.to} {i}" for i in translation],
+                 [f"0° {l.to} {np.round(d*360)}°" for d in rotations],
+                 [f"{np.round(d*100)}% {l.to} {np.round(u*100)}%" for (d,u) in scaling],
+                 [f"0% {l.to} {np.round(i*100)}%" for i in translation],
         ]
-
-        train_transformations = common_transformations
+        task = Task.Classification
+        train_transformations = [test_set[-1] for test_set in test_sets]
 
         for model_config_generator, dataset, measure in combinations:
-            model_config = model_config_generator.for_dataset(dataset)
-
-            for train_transformation, transformation_set,set_labels in zip(train_transformations, test_sets,labels):
+            model_config = model_config_generator.for_dataset(task,dataset)
+ 
+            for train_transformation, test_transformations,set_labels in zip(train_transformations, test_sets,labels):
                 # TRAIN
-                epochs = config.get_epochs(model_config, dataset, train_transformation)
-                p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
-                self.experiment_training(p_training)
+                # epochs = config.get_epochs(model_config, dataset, train_transformation)
+                # p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
+                # self.experiment_training(p_training)
+
+                
+                mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+                tc,metric = self.get_train_config(mc,dataset,task,train_transformation)
+                p = train.TrainParameters(mc, tc, dataset, train_transformation, task)
+                self.train(p)
+                model_path = self.model_path_new(p)
+
                 # MEASURE
-                variance_parameters = []
-                for k, test_transformation in enumerate(transformation_set):
+                results = []
+                for k, test_transformation in enumerate(test_transformations):
                     p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, default_dataset_percentage)
-                    p_variance = measure_package.Parameters(p_training.id(), p_dataset, test_transformation, measure)
-                    model_path = self.model_path(p_training)
-                    self.experiment_measure(p_variance)
-                    variance_parameters.append(p_variance)
+                    mp = PyTorchParameters(mc.id(), p_dataset, test_transformation, measure, default_measure_options)
+                    result = self.measure(model_path, mp, verbose=False).numpy()
+                    results.append(result)
                 # PLOT
-                experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{train_transformation.id()}"
+                experiment_name = f"{model_config.id()}_{dataset}_{measure.id()}_{train_transformation.id()}"
                 plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-                #title = f" transformation: {train_transformation.id()}"
+                
 
-                results = self.load_measure_results(self.results_paths(variance_parameters))
-
-                visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
+                tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
 
 
 # class TransformationComplexityDetailed(Experiment):

@@ -4,6 +4,8 @@ from transformational_measures.pytorch import ObservableLayersModule
 
 import torch.nn.functional as F
 
+from experiments.tasks import Task
+
 
 
 class Flatten(nn.Module):
@@ -115,3 +117,13 @@ class GlobalAvgPool2d(nn.Module):
 
     def forward(self,x):
         return F.adaptive_avg_pool2d(x,(1,1))
+
+
+def task_to_head(task:Task):
+    if task == Task.Classification:
+        return nn.LogSoftmax(dim=-1)
+    elif c.task == Task.TransformationRegression:
+        return nn.Sigmoid()
+    else:
+        raise ValueError(f"Unsupported task {c.task}")
+

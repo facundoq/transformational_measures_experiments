@@ -187,7 +187,7 @@ def save_model(p:Parameters,o:Options,model:nn.Module,scores,filepath:Path):
     }, filepath)
 
 
-def load_model(model_filepath:Path,device:torch.device,load_state=True)->(nn.Module,Parameters,Options,typing.Dict):
+def load_model(model_filepath:Path,device:torch.device="cpu",load_state=True)->Tuple[nn.Module,Parameters,Options,typing.Dict]:
     #print("load_model",model_filepath)
     logging.info(f"Loading models from {model_filepath}...")
     data = torch.load(model_filepath,map_location=device)

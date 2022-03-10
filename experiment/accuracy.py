@@ -38,14 +38,14 @@ class Parameters:
         return f"AccuracyExperiment parameters: models={self.model_name()}, dataset={self.dataset} transformations={self.transformations}, transformation strategy={self.transformation_strategy.value}"
 
 class Options:
-    def __init__(self,verbose:bool,batch_size:int,num_workers:int,use_cuda:bool):
+    def __init__(self,verbose:bool,batch_size:int,num_workers:int,device:str):
         self.verbose=verbose
         self.batch_size=batch_size
         self.num_workers=num_workers
-        self.use_cuda=use_cuda
+        self.device=device
 
     def get_eval_options(self):
-        return training.EvalOptions(self.use_cuda,self.batch_size,self.num_workers)
+        return training.EvalOptions(self.device,self.batch_size,self.num_workers)
 
 class AccuracyExperimentResult:
     def __init__(self, parameters:Parameters,accuracy:float):
@@ -65,9 +65,9 @@ import config
 
 def experiment(p: Parameters, o: Options):
     assert(len(p.transformations)>0)
-    use_cuda = torch.cuda.is_available()
+    
 
-    model, training_parameters, training_options, scores = training.load_model(p.model_path, use_cuda)
+    model, training_parameters, scores = training.load_model(p.model_path, device=o.device)
 
     if o.verbose:
         print("### ", model)
@@ -105,4 +105,5 @@ def main(p:Parameters,o:Options):
     accuracy_results=experiment(p,o)
     profiler.event("end")
     print(profiler.summary(human=True))
-    config.save_accuracy(accuracy_results)
+    
+    return accuracy_results

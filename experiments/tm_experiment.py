@@ -4,12 +4,17 @@ import transformational_measures as tm
 from experiment import measure, training,accuracy
 import torch
 import os
-
 from pathlib import Path
+from .tasks.train import TrainParameters,Task
+from .tasks import train
+
+from typing import List
 from .base import Experiment
 
 import config
 import datasets
+
+
 
 
 class TMExperiment(Experiment):
@@ -58,7 +63,7 @@ class TMExperiment(Experiment):
 
     ########## TRANSFORMATIONAL MEASURES EXPERIMENTS #######################
 
-    def results_paths(self,ps: [measure.Parameters], custom_results_folder=None) -> [Path]:
+    def results_paths(self,ps: List[measure.Parameters], custom_results_folder=None) -> List[Path]:
         custom_results_folder = self.results_folder() if custom_results_folder is None else custom_results_folder
         variance_paths = [self.results_path(p,custom_results_folder) for p in ps]
         return variance_paths
@@ -81,27 +86,27 @@ class TMExperiment(Experiment):
     def load_measure_result(self,path: Path) -> tm.measure.MeasureResult:
         return self.load_experiment_result(path).measure_result
 
-    def load_results(self,filepaths: [Path]) -> [measure.MeasureExperimentResult]:
+    def load_results(self,filepaths: List[Path]) -> List[measure.MeasureExperimentResult]:
         results = []
         for filepath in filepaths:
             result = self.load_experiment_result(filepath)
             results.append(result)
         return results
 
-    def load_measure_results_p(self, ps:[measure.Parameters], custom_results_folder=None) -> [tm.measure.MeasureResult]:
+    def load_measure_results_p(self, ps:List[measure.Parameters], custom_results_folder=None) -> List[tm.measure.MeasureResult]:
         return self.load_measure_results(self.results_paths(ps,custom_results_folder=custom_results_folder))
 
-    def load_measure_results(self,filepaths: [Path]) -> [tm.measure.MeasureResult]:
+    def load_measure_results(self,filepaths: List[Path]) -> List[tm.measure.MeasureResult]:
         results = self.load_results(filepaths)
         results = [r.measure_result for r in results]
         return results
 
-    def load_measure_results(self,filepaths: [Path]) -> [tm.measure.MeasureResult]:
+    def load_measure_results(self,filepaths: List[Path]) -> List[tm.measure.MeasureResult]:
         results = self.load_results(filepaths)
         results = [r.measure_result for r in results]
         return results
 
-    def load_all_results(self,folderpath: Path) -> [measure.MeasureExperimentResult]:
+    def load_all_results(self,folderpath: Path) -> List[measure.MeasureExperimentResult]:
         filepaths = [f for f in folderpath.iterdir() if f.is_file()]
         return self.load_results(filepaths)
 
@@ -134,12 +139,12 @@ class TMExperiment(Experiment):
         r: accuracy.AccuracyExperimentResult = pickle.load(path.open(mode="rb"))
         return r
 
-    def accuracies_paths(self,ps: [accuracy.Parameters], custom_accuracies_folder=None) -> [Path]:
+    def accuracies_paths(self,ps: List[accuracy.Parameters], custom_accuracies_folder=None) -> List[Path]:
         custom_accuracies_folder = self.accuracies_folder() if custom_accuracies_folder is None else custom_accuracies_folder
         variance_paths = [self.accuracy_path(p, custom_accuracies_folder) for p in ps]
         return variance_paths
 
-    def load_accuracies(self,filepaths: [Path]) -> [accuracy.AccuracyExperimentResult]:
+    def load_accuracies(self,filepaths: List[Path]) -> List[accuracy.AccuracyExperimentResult]:
         results = []
         for filepath in filepaths:
             result = self.load_accuracy(filepath)
@@ -147,3 +152,42 @@ class TMExperiment(Experiment):
         return results
 
 
+    ################ NEW STUFF
+
+    def model_trained(self, p: TrainParameters)->bool:
+        # custom_models_folderpath = self.models_folder() if custom_models_folderpath is None else custom_models_folderpath
+        filepaths = [self.model_path_new(p)] + [self.model_path_new(p, s) for s in p.tc.savepoints]
+        exist = [p.exists() for p in filepaths]
+        return all(exist)
+
+    def model_path_new(self, p: TrainParameters, savepoint=None, custom_models_folderpath=None)->Path:
+        custom_models_folderpath = self.models_folder() if custom_models_folderpath is None else custom_models_folderpath
+        filename = f"{p.id(savepoint)}.pt"
+        folder = p.mc.__class__.__name__
+        filepath = custom_models_folderpath / folder / filename
+        return filepath
+
+    def train_measure(self,p:TrainParameters,mp:measure.PyTorchParameters,verbose=False):
+        self.train(p)
+        model_path = self.model_path_new(p)
+        return self.measure(model_path,mp,verbose=verbose)
+
+
+    def measure(self,model_path:str,p:measure.PyTorchParameters,verbose=False)->tm.pytorch.PyTorchMeasureResult:
+        
+        results_path = self.results_path(p)
+        if results_path.exists():
+            return self.load_measure_result(results_path)
+
+        message = f"Measuring:\n{p}\n{p.options}"
+        self.print_date(message)
+        measure_experiment_result = measure.main_pytorch(p,model_path,verbose=verbose)
+        self.save_experiment_results(measure_experiment_result)
+        return measure_experiment_result.measure_result
+
+    def train(self,p:TrainParameters):
+        if not self.model_trained(p):
+            print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria})...")
+            train.train(p, self)
+        else:
+            print(f"Model {p.id()} already trained.")

@@ -5,40 +5,40 @@ from ..visualization import accuracies
 import experiment.measure as measure_package
 import datasets
 
-
+from ..tasks import train, Task
 
 
 class TrainModels(InvarianceExperiment):
 
     def description(self):
-        return """Train models and record intermediate instances of them to 
+        return """Train models and record intermediate instances of them to later
          analize the evolution of invariance while they are training."""
 
     def run(self):
         model_generators = simple_models_generators
+        
 
-        transformations = common_transformations_combined+[identity_transformation]
+        transformation_sets = common_transformations_combined+[identity_transformation]
         transformation_labels = [l.rotation, l.scale, l.translation, l.combined, "id"]
 
-        combinations = itertools.product(model_generators, dataset_names)
+        combinations = itertools.product(model_generators,dataset_names)
+        task = Task.Classification
+        device = torch.device("cpu")
 
         for model_config_generator, dataset in combinations:
             transformation_scores = []
+            for transformations in transformation_sets:
+                # train
+                mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+                tc,metric = self.get_train_config(mc,dataset,task,transformations,savepoints=True,verbose=True,batch_size=512)
+                
+                p = train.TrainParameters(mc, tc, dataset, transformations, task)
+                self.train(p)
+                p, model, metrics = train.load_model(self.model_path_new(p), device=device, load_state=False)
+                transformation_scores.append(metrics[f"test_{metric}"])
+                
             experiment_name = f"{dataset}_{model_config_generator}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            for transformation in transformations:
-                # train
-                model_config = model_config_generator.for_dataset(dataset)
-                epochs = config.get_epochs(model_config, dataset, transformation)
-                savepoints = [sp * epochs // 100 for sp in DuringTraining.savepoints_percentages]
-                savepoints = sorted(list(set(savepoints)))
-                # Training
-                p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
-                self.experiment_training(p_training)
-                model, p, o, scores = training.load_model(self.model_path(p_training), load_state=False,
-                                                          use_cuda=False)
-                loss, acc = scores["test"]
-                transformation_scores.append(acc)
             accuracies.plot_metrics_single_model(plot_filepath, transformation_scores, transformation_labels)
 
 class SimpleConvAccuracies(InvarianceExperiment):
@@ -46,20 +46,21 @@ class SimpleConvAccuracies(InvarianceExperiment):
         return """Compare the accuracies of the SimpleConv model for each set of transformations"""
 
     def run(self):
-        transformations = common_transformations
+        model_config_generator = SimpleConvConfig
+        transformation_sets = common_transformations
+        task = Task.Classification
         transformation_labels = [l.rotation,l.scale,l.translation]
         for dataset in dataset_names:
             transformation_scores = []
-            for transformation in transformations:
-                model_config = config.SimpleConvConfig.for_dataset(dataset)
-                # train
-                epochs = config.get_epochs(model_config, dataset, transformation)
-                p_training = training.Parameters(model_config, dataset, transformation, epochs)
-                self.experiment_training(p_training)
-                model, p, o, scores = training.load_model(self.model_path(p_training), load_state=False,
-                                                          use_cuda=False)
-                loss, acc = scores["test"]
-                transformation_scores.append(acc)
+            for transformations in transformation_sets:
+                mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+                tc,metric = self.get_train_config(mc,dataset,task,transformations,savepoints=True,verbose=True,batch_size=512)
+                
+                p = train.TrainParameters(mc, tc, dataset, transformations, task)
+                self.train(p)
+
+                p, model, metrics = train.load_model(self.model_path_new(p), device=device, load_state=False)
+                transformation_scores.append(metrics[f"test_{metric}"])
 
             # plot results
             experiment_name = f"{dataset}"
@@ -75,24 +76,25 @@ class ModelAccuracies(InvarianceExperiment):
     def run(self):
         models = common_models_generators
         transformations = common_transformations_combined
-        model_names = [m.for_dataset("mnist").name for m in models]
+        task = Task.Classification
+        model_names = [m.for_dataset(task,"mnist").name() for m in models]
         transformation_labels = [l.rotation,l.scale,l.translation,l.combined]
+
         for dataset in dataset_names:
             transformation_scores = []
             for transformation in transformations:
                 model_scores = []
 
                 for model_config_generator in models:
-                    # train
-                    model_config = model_config_generator.for_dataset(dataset)
-                    # train
-                    epochs = config.get_epochs(model_config, dataset, transformation)
-                    p_training = training.Parameters(model_config, dataset, transformation, epochs)
-                    self.experiment_training(p_training)
-                    model, p, o, scores = training.load_model(self.model_path(p_training), load_state=False,
-                                                              use_cuda=False)
-                    loss, acc = scores["test"]
-                    model_scores.append(acc)
+                    mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+                    tc,metric = self.get_train_config(mc,dataset,task,transformation,savepoints=True,verbose=True,batch_size=256)
+                    
+                    p = train.TrainParameters(mc, tc, dataset, transformation, task)
+                    self.train(p)
+
+                    p, model, metrics = train.load_model(self.model_path_new(p), device=device, load_state=False)
+                    model_scores.append(metrics[f"test_{metric}"])
+              
                 transformation_scores.append(model_scores)
             # plot results
             experiment_name = f"{dataset}"
@@ -109,10 +111,7 @@ class CompareModels(InvarianceExperiment):
         measures = normalized_measures
 
         models = [
-            config.SimpleConvConfig,
-            config.AllConvolutionalConfig,
-            config.VGG16DConfig,
-            config.ResNetConfig,
+            
 
         ]
         transformations = common_transformations

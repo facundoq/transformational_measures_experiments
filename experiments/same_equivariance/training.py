@@ -20,9 +20,10 @@ class TrainModels(SameEquivarianceExperiment):
         for dataset, model_config_generator in itertools.product(dataset_names,model_generators):
             transformation_scores = []
             for transformations in transformation_sets:
+                
                 # train
-                mc: ModelConfig = model_config_generator.for_dataset(task,dataset)
-                tc,metric = self.get_regression_trainconfig(mc,dataset,task,transformations)
+                mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+                tc,metric = self.get_train_config(mc,dataset,task,transformations)
                 p = train.TrainParameters(mc, tc, dataset, transformations, task)
                 self.train(p)
 

@@ -87,7 +87,7 @@ class Experiment(abc.ABC):
                 self.print_date(f" Error in: {message}")
                 sys.exit(status)
     @classmethod
-    def print_table(cls, experiments: ['Experiment']):
+    def print_table(cls, experiments: List['Experiment']):
         table = texttable.Texttable()
         header = ["Experiment", "Finished"]
         table.header(header)
@@ -101,7 +101,7 @@ class Experiment(abc.ABC):
         print(table.draw())
 
     @classmethod
-    def parse_args(cls, experiments: Dict[str, List[Experiment]]) -> (List[Experiment], Options):
+    def parse_args(cls, experiments: Dict[str, List[Experiment]]) -> Tuple[List[Experiment], Options]:
         parser = argparse.ArgumentParser(description="Run invariance with transformation measures.")
         group_names = list(experiments.keys())
 

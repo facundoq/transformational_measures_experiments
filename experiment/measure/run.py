@@ -17,18 +17,26 @@ from .parameters import  Parameters,Options,DatasetParameters,MeasureExperimentR
 from .adapt import adapt_dataset
 
 def experiment(p: Parameters, o: Options,model_path:Path):
+    
     assert(len(p.transformations)>0)
-    use_cuda = torch.cuda.is_available()
+    
 
     dataset = datasets.get_classification(p.dataset.name)
     if o.verbose:
         print(dataset.summary())
     if o.verbose:
         print(f"Loading model {model_path}")
-    model, training_parameters, training_options, scores = training.load_model(model_path, use_cuda)
+    
+    use_cuda = torch.cuda.is_available()
+    if use_cuda:
+        device = "cuda"
+    else:
+        device = "cpu"
 
+    model, training_parameters,  scores = training.load_model(model_path, device=device)
 
-    if training_parameters.dataset_name != p.dataset.name:
+    print(type(training_parameters),dir(training_parameters))
+    if training_parameters.dataset != p.dataset.name:
         if o.adapt_dataset:
             if o.verbose:
                 print(f"Adapting dataset {p.dataset.name} to model trained on dataset {training_parameters.dataset_name} (resizing spatial dims and channels)")
@@ -119,7 +127,7 @@ def experiment_pytorch(p: PyTorchParameters,model_path:Path,verbose=False):
         for k,v in scores.items():
             print(f"{k} --→ {v:.3f}")
 
-
+    
     from pytorch.numpy_dataset import NumpyDataset
     new_size = p.dataset.size.get_size(dataset.size(p.dataset.subset))
     dataset = dataset.reduce_size_stratified_fixed(new_size,p.dataset.subset)
@@ -148,6 +156,7 @@ def experiment_pytorch(p: PyTorchParameters,model_path:Path,verbose=False):
 def main_pytorch(p:PyTorchParameters,model_path:Path,verbose=False)->MeasureExperimentResult:
     profiler= Profiler()
     profiler.event("start")
+    
     if verbose:
         print(f"Experimenting with parameters: {p}")
     measures_results=experiment_pytorch(p,model_path,verbose=verbose)

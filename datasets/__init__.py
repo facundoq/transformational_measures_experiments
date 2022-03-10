@@ -1,4 +1,5 @@
 from . import cluttered_mnist,mnist_rot,mnist,fashion_mnist,cifar10,handshape
+
 from typing import List
 from datasets.util import reduce_size_subset_stratified
 import numpy as np
@@ -131,6 +132,7 @@ def get_base(dataset,dataformat:str,path:Path):
 def get_classification(dataset, dataformat="NCHW", path=Path("~/.datasets/").expanduser()) -> ClassificationDataset :
     # the data, shuffled and split between train and test sets
     x_train, y_train, x_test, y_test, input_shape, labels = get_base(dataset,dataformat,path)
+    y_train, y_test = np.expand_dims(y_train,axis=1),np.expand_dims(y_test,axis=1)
     num_classes=len(labels)
     return ClassificationDataset(dataset, x_train, x_test, y_train, y_test, num_classes, np.array(input_shape), labels,dataformat)
 

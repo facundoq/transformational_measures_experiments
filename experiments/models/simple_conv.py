@@ -6,7 +6,8 @@ import numpy as np
 
 from .util import Flatten, SequentialWithIntermediates
 
-from ...tasks import Task
+from ..tasks import Task
+from ..tasks.train import ModelConfig
 
 from enum import Enum
 
@@ -29,7 +30,7 @@ activation_map={ ActivationFunction.ELU:nn.ELU
                 , ActivationFunction.PReLU : nn.PReLU
                 }
 
-from ...tasks.train import ModelConfig
+
 
 class SimpleConvConfig(ModelConfig):
 
@@ -41,13 +42,20 @@ class SimpleConvConfig(ModelConfig):
         return SimpleConvConfig(task,conv=conv[dataset], fc=fc[dataset],bn=bn,kernel_size=k,activation=activation,max_pooling=max_pooling)
 
     def epochs(self,dataset:str,task:Task,transformations:tm.TransformationSet):
-
-        epochs = {'cifar10': 35, 'mnist': 45, 'fashion_mnist': 12, "lsa16": 25, "rwth": 25}
-        return self.scale_by_transformations(epochs[dataset],transformations)
+        if task== Task.TransformationRegression:
+            epochs_dataset = {'cifar10': 35, 'mnist': 45, 'fashion_mnist': 12, "lsa16": 25, "rwth": 25}
+        elif task == Task.Classification:
+            epochs_dataset = {'cifar10': 15, 'mnist': 5, 'fashion_mnist': 4, "lsa16": 5, "rwth": 3}
+        else:
+            raise ValueError(task)
+        epochs = epochs_dataset[dataset]
+        epochs = self.scale_by_transformations(epochs,transformations)
+        return epochs
 
     def __init__(self, task:Task,
                  conv=32, fc=128, bn=False, kernel_size=3, activation=ActivationFunction.ELU,
                  max_pooling=True):
+        super().__init__(SimpleConv)
         self.task=task
         self.conv=conv
         self.fc=fc
@@ -133,6 +141,7 @@ class SimpleConv(ObservableLayersModule):
         self.layers=SequentialWithIntermediates(conv,fc)
 
     def forward(self, x):
+        
         return self.layers(x)
         # return self.fc(self.conv(x))
 

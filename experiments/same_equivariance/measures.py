@@ -22,7 +22,7 @@ class CompareSameEquivarianceNormalized(SameEquivarianceExperiment):
         combinations = itertools.product(model_names, dataset_names, common_transformations)
         for model_config_generator, dataset, transformations in combinations:
             mc: ModelConfig = model_config_generator.for_dataset(task, dataset)
-            tc, metric = self.get_regression_trainconfig(mc, dataset, task, transformations)
+            tc, metric = self.get_train_config(mc, dataset, task, transformations)
             p = train.TrainParameters(mc, tc, dataset, transformations, task)
             self.train(p)
             # train
@@ -56,6 +56,7 @@ class TransformationSampleSizes(SameEquivarianceExperiment):
             tm.pytorch.NormalizedVarianceSameEquivariance(),
             nvse,
         ]
+        
         sample_sizes = [24, 96, 384, 1536] 
         rotations = [RotationGenerator(UniformRotation(n, rotation_max_degrees)) for n in sample_sizes]
         scales = [ScaleGenerator(ScaleUniform(n // 6, scale_min_downscale, scale_max_upscale)) for n in sample_sizes]
@@ -72,21 +73,20 @@ class TransformationSampleSizes(SameEquivarianceExperiment):
         for model_config_generator, dataset, measure, transformation_set in combinations:
             train_transformation, test_transformations = transformation_set
             mc: ModelConfig = model_config_generator.for_dataset(task, dataset)
-            tc, metric = self.get_regression_trainconfig(mc, dataset, task, train_transformation, savepoints=False)
+            tc, metric = self.get_train_config(mc, dataset, task, train_transformation, savepoints=False)
             p = train.TrainParameters(mc, tc, dataset, train_transformation, task)
             self.train(p)
             model_path = self.model_path_new(p)
             # train
             experiment_name = f"{mc.id()}_{dataset}_{train_transformation.id()}_{measure}"
-            k = len(sample_sizes)
-            results = np.empty((k, k), dtype=tm.pytorch.PyTorchMeasureResult)
-
+            s_n = len(sample_sizes)
+            t_n = len(test_transformations)
+            results = np.empty((s_n, t_n), dtype=tm.pytorch.PyTorchMeasureResult)
+            
             for i, sample_size in enumerate(sample_sizes):
                 p_dataset = DatasetParameters(dataset, default_subset, DatasetSizeFixed(sample_size))
                 for j, transformation in enumerate(test_transformations):
-                    mp = PyTorchParameters(mc.id(), p_dataset, transformation, measure, default_measure_options,
-                                           model_filter=simple_conv_sameequivariance_activation_filter)
-
+                    mp = PyTorchParameters(mc.id(), p_dataset, transformation, measure, default_measure_options,model_filter=simple_conv_sameequivariance_activation_filter)
                     results[i, j] = self.measure(model_path, mp, verbose=False).numpy()
 
 
