@@ -37,7 +37,7 @@ nvi = tm.pytorch.NormalizedVarianceInvariance(ca_mean)
 svi = tm.pytorch.SampleVarianceInvariance()
 tvi = tm.pytorch.TransformationVarianceInvariance()
 gf_normal = tm.pytorch.GoodfellowInvariance()
-gf_percent = tm.pytorch.GoodfellowInvariance(threshold_algorithm=tm.pytorch.PercentActivationThreshold(sign=1,percent=0.01))
+gf_percent = tm.pytorch.GoodfellowInvariance(threshold_algorithm=tm.pytorch.PercentActivationThreshold(sign=1,percent=0.99))
 
 # nd = tm.pytorch.NormalizedDistanceInvariance(da_keep, ca_mean)  # TODO change to ca_none, its the same because of da_keep but still..
 # dse = tm.pytorch.NormalizedDistanceSameEquivariance(da_normalize_keep)
