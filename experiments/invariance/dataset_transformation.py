@@ -12,11 +12,11 @@ class TransformationSampleSizes(InvarianceExperiment):
 
     def run(self):
         
-        measures = [nvi, gf_percent, svi,tvi] # anova,
-        measures = [ gf_normal]
-        
+        # measures = [nvi, gf_percent, svi,tvi] # anova,
+        # measures = [ gf_percent ]
+        measures = [nvi] 
 
-        sample_sizes = [24, 96, 384, 1536] 
+        sample_sizes = [24, 96, 384, 1536,2304] 
         rotations = [RotationGenerator(UniformRotation(n, rotation_max_degrees)) for n in sample_sizes]
         scales = [ScaleGenerator(ScaleUniform(n // 6, scale_min_downscale, scale_max_upscale)) for n in sample_sizes]
         translations = [TranslationGenerator(TranslationUniform(n // 8, translation_max)) for n in sample_sizes]
@@ -25,6 +25,7 @@ class TransformationSampleSizes(InvarianceExperiment):
         combinations = itertools.product(simple_models_generators,  measures, dataset_names,transformations_sets)
         labels_samples = [f"{i}" for i in sample_sizes]
         task = Task.Classification
+        
         for model_config_generator, measure,dataset, transformation_set in combinations:
             train_transformation, test_transformations = transformation_set
             # model_config = model_config_generator.for_dataset(task,dataset)

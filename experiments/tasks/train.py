@@ -271,7 +271,15 @@ class ConvergenceError(Exception):
 
 def train(p: TrainParameters, path_config):
     train_dataset, test_dataset, input_shape, dim_output = prepare_dataset(p)
-    
+    if p.tc.epochs == 0:
+        print("Warning: epochs chosen = 0, saving model without training..")
+        model, poutyne_model = prepare_model(p, input_shape, dim_output)
+
+        metrics = poutyne_model.evaluate_dataset(test_dataset, batch_size=p.tc.batch_size, num_workers=p.tc.num_workers,return_dict_format=True, verbose=False, dataloader_kwargs={"pin_memory": True})
+        save_model(p, model, metrics, path_config.model_path_new(p))
+
+        return model,metrics
+
     restarts = 0
     cc = p.tc.convergence_criteria
     converged = False

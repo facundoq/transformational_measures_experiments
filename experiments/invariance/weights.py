@@ -1,3 +1,4 @@
+from torch import save
 from .common import *
 import experiment.measure as measure_package
 import datasets
@@ -7,60 +8,41 @@ class RandomWeights(InvarianceExperiment):
         return """Analyze the invariance of untrained networks, ie, with random weights."""
 
     def run(self):
-        random_models_folderpath = self.models_folder() / "random"
-        random_models_folderpath.mkdir(exist_ok=True, parents=True)
-        o = training.Options(False, 32,4, torch.cuda.is_available(), False, 0)
+        # random_models_folderpath = self.models_folder() / "random"
+        # random_models_folderpath.mkdir(exist_ok=True, parents=True)
+        # o = training.Options(False, 32,4, torch.cuda.is_available(), False, 0)
         measures = normalized_measures
 
         # number of random models to generate
-        random_model_n = 10
-
+        random_model_n = 30
+        task = Task.Classification
         combinations = itertools.product(
             simple_models_generators, dataset_names, common_transformations, measures)
-        for model_config_generator, dataset_name, transformation, measure in combinations:
-            model_config = model_config_generator.for_dataset(dataset_name)
-            p = config.dataset_size_for_measure(measure)
-            # generate `random_model_n` models and save them without training
-            models_paths = []
-            p_training = training.Parameters(model_config, dataset_name, transformation, 0)
-            dataset = datasets.get_classification(dataset_name)
+        for model_config_generator, dataset, transformations, measure in combinations:
+            mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+            results = []
             for i in range(random_model_n):
+                suffix = f"random_weight{i:03}"
+                tc,metric = self.get_train_config(mc,dataset,task,transformations,suffix=suffix,savepoints=False,epochs=0)
+                p = train.TrainParameters(mc, tc, dataset, transformations, task)
+                self.train(p)
+                model_path = self.model_path_new(p)
+                
 
-                model_path = self.model_path(p_training, custom_models_folderpath=random_models_folderpath)
-
-                # append index to model name
-                name, ext = os.path.splitext(str(model_path))
-                name += f"_random{i:03}"
-                model_path = Path(f"{name}{ext}")
-                if not model_path.exists():
-                    model, optimizer = model_config.make_model_and_optimizer(dataset.input_shape, dataset.num_classes, o.use_cuda)
-                    scores = training.eval_scores(model, dataset, p_training.transformations,  TransformationStrategy.random_sample, o.get_eval_options())
-                    training.save_model(p_training, o, model, scores, model_path)
-                    del model
-                models_paths.append(model_path)
-
-            # generate variance params
-            variance_parameters = []
-            p_dataset = measure_package.DatasetParameters(dataset_name, datasets.DatasetSubset.test, p)
-
-            for model_path in models_paths:
-                model_id, ext = os.path.splitext(os.path.basename(model_path))
-                p_variance = measure_package.Parameters(model_id, p_dataset, transformation, measure)
-                self.experiment_measure(p_variance,model_path=model_path)
-                variance_parameters.append(p_variance)
+                result = self.measure_default(dataset,mc.id()+suffix,model_path,transformations,measure,default_measure_options,default_dataset_percentage)
+                results.append(result)
 
             # plot results
-            experiment_name = f"{model_config.name}_{dataset_name}_{transformation.id()}_{measure}"
+            experiment_name = f"{mc.id()}_{dataset}_{transformations.id()}_{measure}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            results = self.load_measure_results(self.results_paths(variance_parameters))
+            # results = self.load_measure_results(self.results_paths(variance_parameters))
             n = len(results)
             labels = [f"{l.random_models} ({n} {l.samples})."] + ([None] * (n - 1))
             # get alpha colors
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True, labels=labels,
-                                                            colors=color)
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)
 
 
 class DuringTraining(InvarianceExperiment):
@@ -75,43 +57,31 @@ class DuringTraining(InvarianceExperiment):
         model_generators = simple_models_generators
         combinations = itertools.product(
             model_generators, dataset_names, common_transformations_combined, measures)
-
-        for model_config_generator, dataset, transformation, measure in combinations:
-            # train
-            model_config = model_config_generator.for_dataset(dataset)
-            epochs = config.get_epochs(model_config, dataset, transformation)
-            savepoints = [sp * epochs // 100 for sp in self.savepoints_percentages]
-            savepoints = sorted(list(set(savepoints)))
-
-            # Training
-            p_training = training.Parameters(model_config, dataset, transformation, epochs, savepoints=savepoints)
-            self.experiment_training(p_training)
+        task = Task.Classification
+        for model_config_generator, dataset, transformations, measure in combinations:
+            mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+            tc,metric = self.get_train_config(mc,dataset,task,transformations,savepoints=True)
+            p = train.TrainParameters(mc, tc, dataset, transformations, task)
+            self.train(p)
 
             # #Measures
-            variance_parameters, model_paths = self.measure(p_training, config, dataset, measure, transformation,
-                                                            savepoints)
+            results, model_paths = self.measure_savepoints(p, dataset, measure, transformations)
 
             # plot results
-            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure}"
+            experiment_name = f"{mc.id()}_{dataset}_{transformations.id()}_{measure}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            results = self.load_measure_results(self.results_paths(variance_parameters))
-            self.plot(results, plot_filepath, model_paths, savepoints, epochs,measure )
+            self.plot(results, plot_filepath, model_paths, tc.savepoints, tc.epochs,measure )
 
-    def measure(self, p_training, config, dataset, measure, transformation, savepoints):
-        variance_parameters = []
+    def measure_savepoints(self, p:train.TrainParameters,  dataset, measure, transformations):
+        results = []
         model_paths = []
-        p = config.dataset_size_for_measure(measure)
-        p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
-        for sp in savepoints:
-            model_path = self.model_path(p_training, savepoint=sp)
-            model_id = p_training.id(savepoint=sp)
-            p_variance = measure_package.Parameters(model_id, p_dataset, transformation, measure)
-            variance_parameters.append(p_variance)
+        for sp in p.tc.savepoints:
+            model_path = self.model_path_new(p,savepoint=sp)
+            model_id = p.mc.id()+f"_sp{sp}"
+            result = self.measure_default(dataset,model_id,model_path,transformations,measure,default_measure_options,default_dataset_percentage)
+            results.append(result)
             model_paths.append(model_path)
-
-        for p_variance, model_path in zip(variance_parameters, model_paths):
-            self.experiment_measure(p_variance)
-        return variance_parameters, model_paths
+        return results, model_paths
 
     def plot(self, results, plot_filepath, model_paths, savepoints, epochs, measure:tm.Measure):
         # TODO implement a heatmap where the x axis is the training time/epoch
@@ -119,8 +89,8 @@ class DuringTraining(InvarianceExperiment):
         # to see it evolve over time.
         accuracies = []
         for model_path in model_paths:
-            _, p, _, score = training.load_model(model_path, False, False)
-            loss, accuracy = score["test"]
+            _, p, score = train.load_model(model_path, "cpu")
+            accuracy = score["test_acc"]
             accuracies.append(accuracy)
         # ({sp * 100 // epochs}%)
         labels = [f"{sp} ({int(accuracy*100)}%)" for (sp, accuracy) in
@@ -128,11 +98,11 @@ class DuringTraining(InvarianceExperiment):
         n = len(savepoints)
         values = list(range(n))
         values.reverse()
-        colors = visualization.get_sequential_colors(values)
+        colors = tmv.get_sequential_colors(values)
 
         legend_location = ("lower left", (0, 0))
         # legend_location= None
-        visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,
+        tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,
                                                         legend_location=legend_location, colors=colors,ylim=get_ylim_normalized(measure))
 
 
@@ -141,35 +111,34 @@ class RandomInitialization(InvarianceExperiment):
         return """Test measures with various instances of the same architecture/transformation/dataset to see if the numpy is dependent on the random initialization in the training or simply on the architecture"""
 
     def run(self):
-        measures = normalized_measures_validation
-        repetitions = 8
+        measures = normalized_measures
 
-        model_generators = simple_models_generators
-        transformations = common_transformations
+        # number of random models to generate
+        random_model_n = 30
+        task = Task.Classification
+        combinations = itertools.product(
+            simple_models_generators, dataset_names, common_transformations, measures)
+        for model_config_generator, dataset, transformations, measure in combinations:
+            mc: train.ModelConfig = model_config_generator.for_dataset(task,dataset)
+            results = []
+            for i in range(random_model_n):
+                suffix = f"random{i:03}"
+                tc,metric = self.get_train_config(mc,dataset,task,transformations,suffix=suffix,savepoints=False)
+                p = train.TrainParameters(mc, tc, dataset, transformations, task)
+                self.train(p)
+                model_path = self.model_path_new(p)
 
-        combinations = itertools.product(model_generators, dataset_names, transformations, measures)
-        for (model_generator, dataset, transformation, measure) in combinations:
-            # train
-            model_config = model_generator.for_dataset(dataset)
-            epochs = config.get_epochs(model_config, dataset, transformation)
-            training_parameters = []
-            for r in range(repetitions):
-                p_training = training.Parameters(model_config, dataset, transformation, epochs, 0, suffix=f"rep{r:02}")
-                self.experiment_training(p_training)
-                training_parameters.append(p_training)
-            # generate variance params
-            variance_parameters = []
-            for p_training in training_parameters:
-                model_path = self.model_path(p_training)
-                p = config.dataset_size_for_measure(measure)
-                p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
-                p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
-                variance_parameters.append(p_variance)
-                # evaluate variance
-                self.experiment_measure(p_variance)
+                result = self.measure_default(dataset,mc.id()+suffix,model_path,transformations,measure,default_measure_options,default_dataset_percentage)
+                results.append(result)
 
             # plot results
-            experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{mc.id()}_{dataset}_{transformations.id()}_{measure}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            results = self.load_measure_results(self.results_paths(variance_parameters))
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True,ylim=get_ylim_normalized(measure))
+            # results = self.load_measure_results(self.results_paths(variance_parameters))
+            n = len(results)
+            labels = [f"{l.random_models} ({n} {l.samples})."] + ([None] * (n - 1))
+            # get alpha colors
+            import matplotlib.pyplot as plt
+            color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
+            color[:, 3] = 0.5
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)

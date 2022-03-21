@@ -29,15 +29,15 @@ small_models_generators = [SimpleConvConfig ]
 
 
 
-def get_ylim_normalized(measure: tm.numpy.NumpyMeasure):
+def get_ylim_normalized(measure: tm.pytorch.PyTorchMeasure):
     # TODO dict
-    if measure.__class__ == tm.numpy.NormalizedDistanceSameEquivariance:
-        return 8
-    elif measure.__class__ == tm.numpy.NormalizedVarianceSameEquivariance:
-        return 8
-    elif measure.__class__ == tm.numpy.NormalizedVarianceInvariance:
+    if measure.__class__ == tm.pytorch.NormalizedVarianceInvariance:
         return 1.4
-    elif measure.__class__ == tm.numpy.NormalizedDistanceInvariance:
-        return 1.4
+    elif measure.__class__ == tm.pytorch.NormalizedVarianceSameEquivariance:
+        return 8
+    # elif measure.__class__ == tm.pytorch.NormalizedDistanceSameEquivariance:
+    #     return 8
+    # elif measure.__class__ == tm.pytorch.NormalizedDistanceInvariance:
+    #     return 1.4
     else:
         raise ValueError(measure)

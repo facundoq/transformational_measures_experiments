@@ -1,26 +1,26 @@
 from .common import *
 import experiment.measure as measure_package
 import transformational_measures.visualization as tmv
-import config.transformations as ct
+
 
 
 class MeasureCorrelationWithTransformation(InvarianceExperiment):
 
     def description(self):
-        return """Train a models M1, M2, Mn with transformation of scales X1,X2,..Xn respectively and then test all models with scale Xn, where Xi<Xi+1. Ie, train with rotations of 0, 30, 60, 90,.. 360 degrees, and then test with rotations of 360 degrees. """
+        return """Train models M1, M2, Mn with transformation of scales X1,X2,..Xn respectively and then test all models with scale Xn, where Xi<Xi+1. Ie, train with rotations of 0, 30, 60, 90,.. 360 degrees, and then test with rotations of 360 degrees. """
 
     def run(self):
-        measures = [nvi, gf, anova,svi,tvi]
+        measures = normalized_measures
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
 
         n=4
-        rotations=np.linspace(0,ct.rotation_max_degrees,n)
+        rotations=np.linspace(0,rotation_max_degrees,n)
         # [(0.875,1.0625),(0.75,1.125),(0.75,1.125),(0.5,1.25)
-        upscale=np.linspace(1,ct.scale_max_upscale,n)
-        downscale=np.flip(np.linspace(ct.scale_min_downscale,1,n))
+        upscale=np.linspace(1,scale_max_upscale,n)
+        downscale=np.flip(np.linspace(scale_min_downscale,1,n))
         scaling= list(zip(downscale,upscale))
-        translation = np.linspace(0,ct.translation_max,n)
-        n_r,n_s,n_t = ct.n_r,ct.n_s,ct.n_t
+        translation = np.linspace(0,translation_max,n)
+        n_r,n_s,n_t = n_rotations, n_scales,n_translations
         train_sets = [[AffineGenerator(r=UniformRotation(n_r,r)) for r in rotations],
                      [AffineGenerator(s=ScaleUniform(n_s,*s)) for s in scaling],
                      [AffineGenerator(t=TranslationUniform(n_t,t)) for t in translation],
@@ -30,32 +30,27 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
             [f"{d*100:.2f}% {l.to} {u*100:.2f}%" for (d,u) in scaling],
             [f"0% {l.to} {i*100:.2f}%" for i in translation],
         ]
+        labels[0][0]="No rotation"
+        labels[1][0]="No scaling"
+        labels[2][0]="No translation"
         test_transformations = common_transformations
 
         for model_config_generator, dataset, measure in combinations:
-            model_config = model_config_generator.for_dataset(dataset)
-
+            
             for train_set, test_transformation,set_labels in zip(train_sets, test_transformations,labels):
                 # TRAIN
-                variance_parameters = []
+                results = []
                 for k, train_transformation in enumerate(train_set):
-                    epochs = config.get_epochs(model_config, dataset, train_transformation)
-                    p_training = training.Parameters(model_config, dataset, train_transformation, epochs, 0)
-                    self.experiment_training(p_training)
+                    mc,tc,p,model_path = self.train_default(Task.Classification,dataset,train_transformation,model_config_generator)
                 # MEASURE
-                    p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, default_dataset_percentage)
-
-                    p_variance = measure_package.Parameters(p_training.id(), p_dataset, test_transformation, measure)
-                    # model_path = self.model_path(p_training)
-                    self.experiment_measure(p_variance)
-                    variance_parameters.append(p_variance)
+                    result = self.measure_default(dataset,mc.id(),model_path,test_transformation,
+                    measure,default_measure_options,default_dataset_percentage)
+                    results.append(result)
                 # PLOT
-                experiment_name = f"{model_config.name}_{dataset}_{measure.id()}_{test_transformation.id()}"
+                experiment_name = f"{mc.id()}_{dataset}_{measure.id()}_{test_transformation.id()}"
                 plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 #title = f" transformation: {train_transformation.id()}"
-
-                results = self.load_measure_results(self.results_paths(variance_parameters))
-                visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
+                tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
 
 
 class InvarianceMeasureCorrelation(InvarianceExperiment):
@@ -65,61 +60,53 @@ class InvarianceMeasureCorrelation(InvarianceExperiment):
     def run(self):
 
         measure_sets = {"Variance": [
-            tm.TransformationVarianceInvariance(),
-            tm.SampleVarianceInvariance(),
+            tvi,
+            svi
         ],
         "ANOVA": [
-            tm.ANOVAInvariance(0.99, bonferroni=True),
 
         ],
         "NormalizedVariance": [
-            tm.NormalizedVarianceInvariance(ca_sum),
+            nvi
         ],
         "Goodfellow": [
-            tm.GoodfellowNormalInvariance(alpha=0.99),
+            gf_normal,
+            gf_percent
         ],
         }
 
-        # model_names=["SimpleConv","VGGLike","AllConvolutional"]
-        # model_names=["ResNet"]
-
-        # model_generators = common_models_generators
         model_generators = simple_models_generators
-        # model_names = ["SimpleConv"]
+        
         transformations = common_transformations_combined
 
         combinations = itertools.product(model_generators, dataset_names, transformations, measure_sets.items())
-        for (model_config_generator, dataset, transformation, measure_set) in combinations:
+        for (model_config_generator, dataset, transformations, measure_set) in combinations:
             # train model with data augmentation and without
-            variance_parameters_both = []
-            for t in [identity_transformation, transformation]:
-                model_config = model_config_generator.for_dataset(dataset)
-                epochs = config.get_epochs(model_config, dataset, t)
-                p_training = training.Parameters(model_config, dataset, t, epochs, 0)
-                self.experiment_training(p_training)
+            results_no_augmentation = []
+            results_augmentation = []
+            for t in [identity_transformation, transformations]:
+                mc,tc,p,model_path = self.train_default(Task.Classification,dataset,t,model_config_generator)
+                # MEASURE
+                   
 
                 # generate variance params
                 variance_parameters = []
                 measure_set_name, measures = measure_set
                 for measure in measures:
-                    p = config.dataset_size_for_measure(measure)
-                    p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
-                    p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
-                    variance_parameters.append(p_variance)
+                    # measure without augmentation
+                    result = self.measure_default(dataset,mc.id(),model_path,identity_transformation, measure,default_measure_options,default_dataset_percentage)
+                    # measure with augmentation
+                    results_no_augmentation.append(result)
+                    result = self.measure_default(dataset,mc.id(),model_path,transformations, measure,default_measure_options,default_dataset_percentage)
+                    results_augmentation.append(result)
                 # evaluate variance
 
-                for p_variance in variance_parameters:
-                    self.experiment_measure(p_variance)
-                variance_parameters_both.append(variance_parameters)
 
-            variance_parameters_id = variance_parameters_both[0]
-            variance_parameters_data_augmentation = variance_parameters_both[1]
-            variance_parameters_all = variance_parameters_id + variance_parameters_data_augmentation
             # plot results
-            experiment_name = f"{measure_set_name}_{model_config.name}_{dataset}_{transformation.id()}"
+            experiment_name = f"{measure_set_name}_{mc.id()}_{dataset}_{transformations.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
-            results = self.load_measure_results(self.results_paths(variance_parameters_all))
+            results = results_no_augmentation+results_augmentation
             labels = [l.measure_name(m) + f" ({l.no_data_augmentation})" for m in measures] + [l.measure_name(m) for m in measures]
             n = len(measures)
 

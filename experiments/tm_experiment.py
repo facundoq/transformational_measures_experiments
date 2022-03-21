@@ -1,3 +1,6 @@
+
+from re import A
+from experiment.measure.parameters import DatasetParameters, PyTorchParameters
 from experiments.language import Spanish,English
 import pickle
 import transformational_measures as tm
@@ -5,11 +8,13 @@ from experiment import measure, training,accuracy
 import torch
 import os
 from pathlib import Path
-from .tasks.train import TrainParameters,Task
+from .tasks.train import TrainParameters,Task,ModelConfig
 from .tasks import train
 
-from typing import List
+
+from typing import List, Type, Union
 from .base import Experiment
+
 
 import config
 import datasets
@@ -191,3 +196,18 @@ class TMExperiment(Experiment):
             train.train(p, self)
         else:
             print(f"Model {p.id()} already trained.")
+
+    
+    def train_default(self,task:Task,dataset:str,transformations:tm.pytorch.PyTorchTransformationSet,mc:Union[ModelConfig,Type[ModelConfig]]):
+        if not isinstance(mc, ModelConfig):
+            mc: train.ModelConfig = mc.for_dataset(task,dataset)
+        tc,metric = self.get_train_config(mc,dataset,task,transformations)
+        p = train.TrainParameters(mc, tc, dataset, transformations, task)
+        self.train(p)
+        model_path = self.model_path_new(p)
+        return mc,tc,p,model_path
+
+    def measure_default(self,dataset:str,model_id:str,model_path:Path,transformation:tm.pytorch.PyTorchTransformationSet,measure:tm.pytorch.PyTorchMeasure,measure_options:tm.pytorch.PyTorchMeasureOptions,dataset_percentage:float,subset = datasets.DatasetSubset.test,adapt_dataset=False):
+        p_dataset = DatasetParameters(dataset,subset, dataset_percentage)
+        mp = PyTorchParameters(model_id, p_dataset, transformation, measure, measure_options,adapt_dataset=adapt_dataset)
+        return self.measure(model_path, mp, verbose=False).numpy()

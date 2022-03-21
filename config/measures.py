@@ -5,14 +5,14 @@ from experiment import measure
 
 from transformational_measures.numpy import *
 
-def dataset_size_for_measure(measure:Measure, subset=DatasetSubset.test)->float:
+def dataset_percentage_for_measure(measure:Measure, subset=DatasetSubset.test)->float:
     if subset == DatasetSubset.test:
-        if measure.__class__.__name__.endswith("Variance"):
+        if measure.__class__.__name__.endswith("Invariance"):
             return 0.5
         else:
             return 0.5
     elif subset == DatasetSubset.train:
-        if measure.__class__.__name__.endswith("Variance"):
+        if measure.__class__.__name__.endswith("Invariance"):
             return 0.1
         else:
             return 0.1
@@ -21,7 +21,7 @@ def dataset_size_for_measure(measure:Measure, subset=DatasetSubset.test)->float:
 
 def default_measure_dataset(dataset:str, m:Measure):
     subset = DatasetSubset.test
-    return measure.DatasetParameters(dataset, subset, dataset_size_for_measure(m, subset))
+    return measure.DatasetParameters(dataset, subset, dataset_percentage_for_measure(m, subset))
 
 da = DistanceAggregation(normalize=False, keep_shape=False)
 da_normalize = DistanceAggregation(normalize=True, keep_shape=False)

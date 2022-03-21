@@ -48,6 +48,7 @@ svse = tm.pytorch.SampleVarianceSameEquivariance()
 
 normalized_measures_validation = [nvi]  # nd, vse]
 normalized_measures = [nvi]  # , vse]
+all_invariance_measures = [nvi, tvi,svi,gf_normal,gf_percent]
 
 dataset_names = ["mnist", "cifar10"]
 handshape_dataset_names = ["lsa16", "rwth"]
@@ -62,7 +63,7 @@ n_transformations = 24
 n_rotations = n_transformations + 1  # 24+1=25 transformations
 n_scales = n_transformations // 6  # 24/6=4 -> 4*6+1=25 transformations
 n_translations = n_transformations // 8  # 24/8=3 -> 3*8+1=25 transformations
-rotation_max_degrees = 1
+rotation_max_degrees = 1.0
 default_uniform_rotation = UniformRotation(n_rotations, rotation_max_degrees)
 scale_min_downscale = 0.5
 scale_max_upscale = 1.25
@@ -81,6 +82,6 @@ hard = AffineGenerator(r=UniformRotation(8, rotation_max_degrees),  # 8
                        s=ScaleUniform(1, scale_min_downscale, scale_max_upscale),  # 7=6+1
                        t=TranslationUniform(1, translation_max))  # 9=8+1
 
-common_transformations_combined = common_transformations + [hard]
+common_transformations_combined = common_transformations #+ [hard]
 common_transformations_da = common_transformations_combined
 identity_transformation = AffineGenerator()

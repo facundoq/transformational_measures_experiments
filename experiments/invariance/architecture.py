@@ -15,38 +15,30 @@ class BatchNormalization(InvarianceExperiment):
         for (model_config_generator, dataset, transformation, measure) in combinations:
             # train
 
-            variance_parameters = []
+            results = []
             for bn in [True, False]:
-                model_config = model_config_generator.for_dataset(dataset, bn=bn)
-                epochs = config.get_epochs(model_config, dataset, transformation)
-                p_training = training.Parameters(model_config, dataset, transformation, epochs)
-                self.experiment_training(p_training)
+                model_config = model_config_generator.for_dataset(Task.Classification,dataset,  bn=bn)
+                mc,tc,p,model_path = self.train_default(Task.Classification,dataset,transformation,model_config)
 
-                p = config.dataset_size_for_measure(measure)
-                p_dataset = measure_package.DatasetParameters(dataset, datasets.DatasetSubset.test, p)
-                p_variance = measure_package.Parameters(p_training.id(), p_dataset, transformation, measure)
-                model_path = self.model_path(p_training)
-                batch_size = 64
-                if model_config.name.startswith("ResNet"):
-                    batch_size = 32
-                self.experiment_measure(p_variance, batch_size=batch_size)
-                variance_parameters.append(p_variance)
+                result = self.measure_default(dataset,mc.id(),model_path,transformation,measure,default_measure_options,default_dataset_percentage)
+                
+                results.append(result)
 
             # plot results
-            bn_result, result = self.load_measure_results(self.results_paths(variance_parameters))
+            bn_result, result = results
             layer_names = bn_result.layer_names
             bn_indices = [i for i, n in enumerate(layer_names) if n.endswith("bn")]
             # single
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            visualization.plot_collapsing_layers_same_model([bn_result], plot_filepath, mark_layers=bn_indices)
+            tmv.plot_collapsing_layers_same_model([bn_result], plot_filepath, mark_layers=bn_indices)
 
             # comparison
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}_comparison"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             bn_result = bn_result.remove_layers(bn_indices)
             labels = [l.with_bn,l.without_bn]
-            visualization.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class ActivationFunctionComparison(InvarianceExperiment):
@@ -59,20 +51,20 @@ class ActivationFunctionComparison(InvarianceExperiment):
 
         combinations = itertools.product(dataset_names, common_transformations, measures)
         for (dataset, transformation, measure) in combinations:
-
-            variance_parameters = []
+            
+            results = []
             for activation_function in activation_functions:
-                model_config = config.SimpleConvConfig.for_dataset(dataset, activation=activation_function)
-                p_training,p_variance,p_dataset=self.train_measure(model_config, dataset, transformation, measure)
-                variance_parameters.append(p_variance)
+                model_config = SimpleConvConfig.for_dataset(Task.Classification,dataset,  activation=activation_function)
+                mc,tc,p,model_path = self.train_default(Task.Classification,dataset,transformation,model_config)
 
-            # plot results
-            results= self.load_measure_results(self.results_paths(variance_parameters))
+                result = self.measure_default(dataset,mc.id(),model_path,transformation,measure,default_measure_options,default_dataset_percentage)
+                
+                results.append(result)
             # single
-            experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{SimpleConvConfig.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [a.value for a in activation_functions]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class KernelSize(InvarianceExperiment):

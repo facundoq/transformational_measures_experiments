@@ -1,4 +1,5 @@
 
+from config.models import ModelConfig
 from .. import TMExperiment, train
 from pathlib import Path
 from experiment import measure, training, accuracy
@@ -20,8 +21,9 @@ class InvarianceExperiment(TMExperiment):
 
 
     def get_train_config(self,mc: train.ModelConfig, dataset: str, task: train.Task,
-                                   transformations: tm.pytorch.PyTorchTransformationSet,savepoints=True,verbose=False,batch_size=64):
-        epochs = mc.epochs(dataset, task, transformations)
+                                   transformations: tm.pytorch.PyTorchTransformationSet,savepoints=True,verbose=False,batch_size=64,suffix="",epochs=None):
+        if epochs ==None:
+            epochs = mc.epochs(dataset, task, transformations)
         if savepoints:
             savepoints_percentages = [0, 1, 2, 5, 10, 25, 50, 75, 100]
             savepoints_epochs = list(range(min(epochs,3))) # add the first 3 epochs
@@ -33,7 +35,7 @@ class InvarianceExperiment(TMExperiment):
         lr_task = {Task.Classification:0.0001,Task.TransformationRegression:0.0001}
         cc = train.MinAccuracyConvergence(mc.min_accuracy(dataset, task, transformations))
         optimizer = dict(optim="adam", lr=lr_task[task])
-        tc = train.TrainConfig(epochs, cc, optimizer=optimizer, savepoints=savepoints, verbose=verbose, num_workers=4,batch_size=batch_size)
+        tc = train.TrainConfig(epochs, cc, optimizer=optimizer, savepoints=savepoints, verbose=verbose, num_workers=4,batch_size=batch_size,suffix=suffix)
         return tc, cc.metric
 
 

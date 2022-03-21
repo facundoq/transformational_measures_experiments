@@ -30,28 +30,29 @@ if __name__ == '__main__':
         # ModelAccuracies(),
         ],
         "Measures":[
+        VisualizeMeasures(),
         TransformationSampleSizes(),            
         # # # InvarianceMeasureCorrelation(),
         
-        # # MeasureCorrelationWithTransformation(),
+        MeasureCorrelationWithTransformation(),
         # # CompareMeasures(),
         # # DistanceApproximation(),
         # # # CompareSameEquivariance(),
         # # #   CompareSameEquivarianceNormalized(),
         # # # CompareSameEquivarianceSimple(),
         ],
-        # # "Weights":[
-        # # RandomInitialization(),
-        # # RandomWeights(),
-        # # DuringTraining(),
+        "Weights":[
+        RandomInitialization(),
+        RandomWeights(),
+        DuringTraining(),
 
-        # # ],
-        # # "Dataset":[
-        # # DatasetSize(),
-        # # DatasetSubset(),
-        # # DatasetTransfer(),
+        ],
+        "Dataset":[
+        DatasetSize(),
+        DatasetSubset(),
+        DatasetTransfer(),
         # # # #
-        # # ]
+        ],
         # # ,"Variants":[
         # # AggregationFunctionsVariance(),
         # # AggregationBeforeAfter(),
@@ -61,16 +62,16 @@ if __name__ == '__main__':
         # # #
         
         "Transformations":[
-        # # TransformationDiversity(),
+        TransformationDiversity(),
         TransformationComplexity(),
-        # # TransformationSetSize(),
+        TransformationSetSize(),
+        ]
+        ,"Hiperparameters":[
+        BatchNormalization(),
+        ActivationFunctionComparison(),
+        MaxPooling(),
+        KernelSize(),
         ],
-        # # ,"Hiperparameters":[
-        # # BatchNormalization(),
-        # # ActivationFunctionComparison(),
-        # # MaxPooling(),
-        # # KernelSize(),
-        # # ],
         # # "Goodfellow":[
         # #     CompareGoodfellowAlpha(),
         # #     CompareGoodfellow(),
