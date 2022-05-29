@@ -93,7 +93,7 @@ class DuringTraining(InvarianceExperiment):
             accuracy = score["test_acc"]
             accuracies.append(accuracy)
         # ({sp * 100 // epochs}%)
-        labels = [f"{sp} ({int(accuracy*100)}%)" for (sp, accuracy) in
+        labels = [f"{sp} ({int(accuracy)}%)" for (sp, accuracy) in
                   zip(savepoints, accuracies)]
         n = len(savepoints)
         values = list(range(n))

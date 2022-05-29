@@ -26,9 +26,9 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
                      [AffineGenerator(t=TranslationUniform(n_t,t)) for t in translation],
                      ]
         labels = [
-            [f"0° {l.to} {d:.0f}°" for d in rotations],
-            [f"{d*100:.2f}% {l.to} {u*100:.2f}%" for (d,u) in scaling],
-            [f"0% {l.to} {i*100:.2f}%" for i in translation],
+            [f"0° {l.to} {int(d*360)}°" for d in rotations],
+            [f"{int(d*100)}% {l.to} {int(u*100)}%" for (d,u) in scaling],
+            [f"0% {l.to} {int(i*100)}%" for i in translation],
         ]
         labels[0][0]="No rotation"
         labels[1][0]="No scaling"
@@ -41,6 +41,7 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
                 # TRAIN
                 results = []
                 for k, train_transformation in enumerate(train_set):
+                    print(train_transformation.id(),test_transformation.id())
                     mc,tc,p,model_path = self.train_default(Task.Classification,dataset,train_transformation,model_config_generator)
                 # MEASURE
                     result = self.measure_default(dataset,mc.id(),model_path,test_transformation,

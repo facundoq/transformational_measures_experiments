@@ -48,7 +48,7 @@ svse = tm.pytorch.SampleVarianceSameEquivariance()
 
 normalized_measures_validation = [nvi]  # nd, vse]
 normalized_measures = [nvi]  # , vse]
-all_invariance_measures = [nvi, tvi,svi,gf_normal,gf_percent]
+all_invariance_measures = [nvi, gf_normal]#,gf_percent,tvi,svi,]
 
 dataset_names = ["mnist", "cifar10"]
 handshape_dataset_names = ["lsa16", "rwth"]
