@@ -2,12 +2,10 @@ import os
 
 from pathlib import Path
 
-import transformational_measures.measure
-from .models import *
+import tmeasures.measure
 from .datasets import *
-from .measures import *
 from .transformations import *
-from transformational_measures.transformations import *
+from tmeasures.transformations import *
 
 def base_path():
     return Path(os.path.expanduser("~/"))

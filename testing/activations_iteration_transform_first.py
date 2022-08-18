@@ -2,10 +2,10 @@ import datasets
 import utils
 from pytorch.numpy_dataset import NumpyDataset
 from testing import util
-import transformational_measures as tm
+import tmeasures as tm
 import matplotlib
 import config
-from transformational_measures.pytorch import ImageDataset
+from tmeasures.pytorch import ImageDataset
 matplotlib.use('Agg')
 
 

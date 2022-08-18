@@ -42,7 +42,7 @@ class RandomWeights(InvarianceExperiment):
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)
+            tmv.plot_average_activations_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)
 
 
 class DuringTraining(InvarianceExperiment):
@@ -102,7 +102,7 @@ class DuringTraining(InvarianceExperiment):
 
         legend_location = ("lower left", (0, 0))
         # legend_location= None
-        tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,
+        tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels,
                                                         legend_location=legend_location, colors=colors,ylim=get_ylim_normalized(measure))
 
 
@@ -141,4 +141,4 @@ class RandomInitialization(InvarianceExperiment):
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)
+            tmv.plot_average_activations_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)

@@ -1,4 +1,4 @@
-import transformational_measures.measure
+import tmeasures.measure
 from ..invariance.common import *
 from .base import TestExperiment
 
@@ -7,7 +7,7 @@ import torch
 from utils import profiler
 from pytorch.numpy_dataset import NumpyDataset
 import config
-import transformational_measures as tm
+import tmeasures as tm
 import matplotlib
 from testing import util
 

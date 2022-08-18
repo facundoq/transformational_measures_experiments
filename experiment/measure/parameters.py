@@ -2,10 +2,10 @@ from __future__ import annotations
 from enum import Enum
 import datasets
 from pathlib import Path
-import transformational_measures as tm
+import tmeasures as tm
 import os
 
-import transformational_measures.measure
+import tmeasures.measure
 
 import abc
 class DatasetSize(abc.ABC):
@@ -79,7 +79,7 @@ class Options:
         return f"Options(verbose={self.verbose},batch_size={self.batch_size},num_workers={self.num_workers},adapt_dataset={self.adapt_dataset})"
 
 class MeasureExperimentResult:
-    def __init__(self, parameters:Parameters, measure_result: transformational_measures.measure.MeasureResult):
+    def __init__(self, parameters:Parameters, measure_result: tm.measure.MeasureResult):
         self.parameters=parameters
         self.measure_result=measure_result
 
@@ -92,7 +92,7 @@ class MeasureExperimentResult:
 
 
 
-def non_filter(model:tm.pytorch.ObservableLayersModule,name:str): return True
+def non_filter(model:tm.pytorch.ActivationsModule,name:str): return True
 
 class PyTorchParameters:
     def __init__(self, model_id:str, dataset:DatasetParameters, transformations:tm.pytorch.PyTorchTransformationSet,

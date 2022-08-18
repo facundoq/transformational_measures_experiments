@@ -1,6 +1,6 @@
 from . import cluttered_mnist,mnist_rot,mnist,fashion_mnist,cifar10,handshape
 
-from typing import List
+
 from datasets.util import reduce_size_subset_stratified
 import numpy as np
 import os
@@ -64,7 +64,7 @@ class TrainTestDataset:
 class ClassificationDataset(TrainTestDataset):
     def __init__(self, name: str,
                  x_train: np.ndarray, x_test: np.ndarray, y_train: np.ndarray, y_test: np.ndarray,
-                 num_classes: int, input_shape: np.ndarray, labels: List[str], dataformat: str):
+                 num_classes: int, input_shape: np.ndarray, labels: list[str], dataformat: str):
 
         super().__init__(name,x_train,x_test,input_shape,dataformat)
         self.y_train = y_train

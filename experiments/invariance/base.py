@@ -1,9 +1,7 @@
-
-from config.models import ModelConfig
-from .. import TMExperiment, train
+from .. import TMExperiment
 from pathlib import Path
-from experiment import measure, training, accuracy
-import transformational_measures as tm
+from experiment import measure
+import tmeasures as tm
 import datasets
 import config
 import torch
@@ -80,13 +78,6 @@ class InvarianceExperiment(TMExperiment):
     #     measure_experiment_result=measure.main(p, o,model_path)
     #     return measure_experiment_result.measure_result
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    default_accuracy_options = accuracy.Options(False, 64, 0, device=device)
-
-    def experiment_accuracy(self, p: accuracy.Parameters, o=default_accuracy_options):
-        results_path = self.accuracy_path(p)
-        if results_path.exists():
-            return self.load_accuracy(results_path)
-        return accuracy.main(p, o)
 
     # def train_measure(self, model_config: config.ModelConfig, dataset: str, transformation: tm.TransformationSet,
     #                   m: tm.numpy.NumpyMeasure, p=None):

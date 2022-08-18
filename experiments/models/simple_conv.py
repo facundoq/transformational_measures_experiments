@@ -1,8 +1,8 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from transformational_measures.pytorch import ObservableLayersModule
+from tmeasures.pytorch import ActivationsModule
 import numpy as np
-
+import torch
 
 from .util import Flatten, SequentialWithIntermediates
 
@@ -11,7 +11,7 @@ from ..tasks.train import ModelConfig
 
 from enum import Enum
 
-import transformational_measures as tm
+import tmeasures as tm
 
 class ActivationFunction(Enum):
     ELU="ELU"
@@ -72,7 +72,7 @@ class SimpleConvConfig(ModelConfig):
         return SimpleConv(input_shape,output_dim,self)
 
 
-class SimpleConv(ObservableLayersModule):
+class SimpleConv(ActivationsModule):
     def __init__(self, input_shape:np.ndarray, output_dim:int, c:SimpleConvConfig):
         super(SimpleConv, self).__init__()
         self.name = self.__class__.__name__
@@ -145,11 +145,8 @@ class SimpleConv(ObservableLayersModule):
         return self.layers(x)
         # return self.fc(self.conv(x))
 
-    def forward_intermediates(self, x)->(object,[]):
-        return self.layers.forward_intermediates(x)
-        # x,conv_intermediates = self.conv.forward_intermediates(x)
-        # x,fc_intermediates = self.fc.forward_intermediates(x)
-        # return x,conv_intermediates+fc_intermediates
+    def forward_activations(self, x)->list[torch.Tensor]:
+        return  self.layers.forward_activations(x)
 
     def conv_layers(self):
         return self.conv.layer_names()

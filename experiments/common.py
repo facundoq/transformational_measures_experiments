@@ -1,8 +1,8 @@
 import config
-import transformational_measures as tm
+import tmeasures as tm
 
 import itertools
-from transformational_measures import visualization as tmv
+from tmeasures import visualization as tmv
 from . import visualization as vis
 from .tasks import train, Task
 import datasets
@@ -54,15 +54,15 @@ dataset_names = ["mnist", "cifar10"]
 handshape_dataset_names = ["lsa16", "rwth"]
 
 
-from transformational_measures.pytorch.transformations.affine import AffineGenerator, RotationGenerator, ScaleGenerator, \
+from tmeasures.pytorch.transformations.affine import AffineGenerator, RotationGenerator, ScaleGenerator, \
     TranslationGenerator, AffineTransformation
-from transformational_measures.transformations.parameters import UniformRotation, ScaleUniform, TranslationUniform
+from tmeasures.transformations.parameters import UniformRotation, ScaleUniform, TranslationUniform
 
 
-n_transformations = 24
-n_rotations = n_transformations + 1  # 24+1=25 transformations
-n_scales = n_transformations // 6  # 24/6=4 -> 4*6+1=25 transformations
-n_translations = n_transformations // 8  # 24/8=3 -> 3*8+1=25 transformations
+n_transformations = 48
+n_rotations = n_transformations + 1  # 48+1=49 transformations
+n_scales = n_transformations // 6  # 48/6=8 -> 8*6+1=49 transformations
+n_translations = n_transformations // 8  # 48/8=6 -> 6*8+1=49 transformations
 rotation_max_degrees = 1.0
 default_uniform_rotation = UniformRotation(n_rotations, rotation_max_degrees)
 scale_min_downscale = 0.5
@@ -82,6 +82,6 @@ hard = AffineGenerator(r=UniformRotation(8, rotation_max_degrees),  # 8
                        s=ScaleUniform(1, scale_min_downscale, scale_max_upscale),  # 7=6+1
                        t=TranslationUniform(1, translation_max))  # 9=8+1
 
-common_transformations_combined = common_transformations #+ [hard]
+common_transformations_combined = common_transformations + [hard]
 common_transformations_da = common_transformations_combined
 identity_transformation = AffineGenerator()

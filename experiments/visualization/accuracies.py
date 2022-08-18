@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from ..language import l
 
-from transformational_measures.visualization import default_discrete_colormap
+from tmeasures.visualization import default_discrete_colormap
 
 def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[str], group_names:[str]):
     # set width of bar
@@ -45,7 +45,7 @@ def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[s
     plt.savefig(plot_filepath,bbox_inches='tight')
     plt.close()
 
-def plot_metrics_single_model(plot_filepath:Path, metrics:[float], labels:[str], metric="accuracy"):
+def plot_metrics_single_model(metrics:[float], labels:[str], metric="accuracy"):
     # set width of bar
     f=plt.figure(dpi=300)
     n=len(labels)
@@ -83,7 +83,6 @@ def plot_metrics_single_model(plot_filepath:Path, metrics:[float], labels:[str],
 
     # Create legend & save
     plt.legend(fontsize=8)
-    plt.savefig(plot_filepath,bbox_inches='tight')
-    plt.close()
+ 
 
 

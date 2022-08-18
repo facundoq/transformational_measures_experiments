@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 # PYTHON_ARGCOMPLETE_OK
-import transformational_measures.measure
-from transformational_measures import MeasureResult
+import tmeasures.measure
+from tmeasures import MeasureResult
 import config
 import matplotlib as mpl
 mpl.use('Agg')
 import matplotlib.pyplot as plt
-from typing import List
+
 plt.rcParams['image.cmap'] = 'gray'
 import numpy as np
-from transformational_measures import visualization
+from tmeasures import visualization
 
-import transformational_measures as tm
+import tmeasures as tm
 
 # def plot_last_layers_per_class(results,folderpath):
 #
@@ -49,7 +49,7 @@ import transformational_measures as tm
 #     plt.close()
 #
 #
-# def plot_heatmaps(results:List[variance.VarianceExperimentResult]):
+# def plot_heatmaps(results:list[variance.VarianceExperimentResult]):
 #
 #     measure_results=[r.measure_result for r in results]
 #     vmin, vmax = visualization.outlier_range_all(measure_results, iqr_away=3)
@@ -104,7 +104,7 @@ def pearson_outlier_range(values,iqr_away):
     return range
 
 
-def outlier_range_all(results:List[MeasureResult],iqr_away=5):
+def outlier_range_all(results:list[MeasureResult],iqr_away=5):
     all_values = []
     for r in results:
         for layer in r.layers():

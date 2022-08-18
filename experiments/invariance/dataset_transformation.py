@@ -1,6 +1,6 @@
 from .common import *
 import experiment.measure as measure_package
-import transformational_measures.visualization as tmv
+import tmeasures.visualization as tmv
 
 import config.transformations as ct
 

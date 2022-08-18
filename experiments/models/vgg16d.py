@@ -1,9 +1,9 @@
 import torch.nn as nn
 from torch.nn.functional import dropout
 import numpy as np
-from .util import SequentialWithIntermediates, task_to_head
-from transformational_measures.pytorch import ObservableLayersModule
-import transformational_measures as tm
+from .util import Flatten,SequentialWithIntermediates,task_to_head
+from tmeasures.pytorch import ActivationsModule
+import tmeasures as tm
 
 from ..tasks import Task
 from ..tasks.train import ModelConfig
@@ -41,12 +41,11 @@ class VGG16DConfig(ModelConfig):
     def make(self,input_shape:np.ndarray, output_dim:int):
         return VGG16D(input_shape,output_dim,self)
 
-import torch.nn as nn
-from models import Flatten
-from models import SequentialWithIntermediates
-from transformational_measures.pytorch import ObservableLayersModule
 
-class ConvBNRelu(ObservableLayersModule):
+
+
+
+class ConvBNRelu(ActivationsModule):
 
     def __init__(self,input:int,output:int,bn:bool):
         super(ConvBNRelu, self).__init__()
@@ -71,8 +70,8 @@ class ConvBNRelu(ObservableLayersModule):
     def forward(self,x):
         return self.layers.forward(x)
 
-    def forward_intermediates(self,x):
-        return self.layers.forward_intermediates(x)
+    def forward_activations(self,x):
+        return self.layers.forward_activations(x)
 
 def block(filters_in:int,feature_maps:int,n_conv:int,bn:bool):
     '''
@@ -92,7 +91,7 @@ def block(filters_in:int,feature_maps:int,n_conv:int,bn:bool):
     return layers
 
 
-class VGG16D(ObservableLayersModule):
+class VGG16D(ActivationsModule):
 
     def __init__(self, input_shape, output_dim, c:VGG16DConfig):
         super().__init__()
@@ -140,8 +139,8 @@ class VGG16D(ObservableLayersModule):
     def forward(self, x):
         return self.layers(x)
 
-    def forward_intermediates(self,x)->(object,[]):
-        return self.layers.forward_intermediates(x)
+    def forward_activations(self,x)->list[object,list]:
+        return self.layers.forward_activations(x)
 
     def activation_names(self):
         return self.layers.activation_names()

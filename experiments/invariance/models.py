@@ -39,7 +39,8 @@ class TrainModels(InvarianceExperiment):
                 
             experiment_name = f"{dataset}_{model_config_generator}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            accuracies.plot_metrics_single_model(plot_filepath, transformation_scores, transformation_labels)
+            accuracies.plot_metrics_single_model( transformation_scores, transformation_labels)
+            self.savefig(plot_filepath)
 
 class SimpleConvAccuracies(InvarianceExperiment):
     def description(self):
@@ -141,10 +142,10 @@ class CompareModels(InvarianceExperiment):
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             results = self.load_measure_results(self.results_paths(variance_parameters))
-            visualization.plot_collapsing_layers_different_models(results, plot_filepath, labels=model_names,
+            tmv.plot_average_activations_different_models(results, plot_filepath, labels=model_names,
                                                                   markers=self.fc_layers_indices(results),ylim=get_ylim_normalized(measure))
 
-    def fc_layers_indices(self, results: [tm.MeasureResult]) -> [[int]]:
+    def fc_layers_indices(self, results: list[tm.MeasureResult]) -> list[list[int]]:
         indices = []
         for r in results:
             layer_names = r.layer_names

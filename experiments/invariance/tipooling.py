@@ -1,6 +1,6 @@
-import transformational_measures.measure
+import tmeasures.measure
 from .common import *
-from transformational_measures.numpy.stats_running import RunningMeanWelford
+from tmeasures.numpy.stats_running import RunningMeanWelford
 import experiment.measure as measure_package
 
 class TIPooling(InvarianceExperiment):

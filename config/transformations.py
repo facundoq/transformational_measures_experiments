@@ -1,5 +1,5 @@
-from transformational_measures.pytorch.transformations.affine import AffineGenerator,RotationGenerator,ScaleGenerator,TranslationGenerator
-from transformational_measures.transformations.parameters import UniformRotation,ScaleUniform,TranslationUniform
+from tmeasures.pytorch.transformations.affine import AffineGenerator,RotationGenerator,ScaleGenerator,TranslationGenerator
+from tmeasures.transformations.parameters import UniformRotation,ScaleUniform,TranslationUniform
 
 n_transformations=24
 n_r=n_transformations+1 #24+1=25 transformations

@@ -5,7 +5,7 @@ import os
 from experiment import measure, training
 import texttable
 import config
-import transformational_measures as tm
+import tmeasures as tm
 import shutil
 
 if __name__ == '__main__':

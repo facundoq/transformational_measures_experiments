@@ -3,7 +3,7 @@ from utils import profiler
 from pytorch.numpy_dataset import NumpyDataset
 from testing import util
 
-import transformational_measures as tm
+import tmeasures as tm
 import matplotlib
 from pytorch.pytorch_image_dataset import ImageClassificationDataset
 matplotlib.use('Agg')

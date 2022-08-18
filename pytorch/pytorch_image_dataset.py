@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 
 import numpy as np
-import transformational_measures as tm
+import tmeasures as tm
 from enum import Enum
 
 class TransformationStrategy(Enum):

@@ -9,7 +9,7 @@ class DatasetSize(InvarianceExperiment):
         return '''Vary the test dataset size and see how it affects the numpy's value. That is, vary the size of the dataset used to compute the invariance (not the training dataset) and see how it affects the calculation of the numpy.'''
 
     def run(self):
-        dataset_percentages = [0.01, 0.05, 0.1, 0.5, 1.0]
+        dataset_percentages = [0.01, 0.05] #, 0.1, 0.5, 1.0]
         model_names = simple_models_generators
         measures = normalized_measures_validation
         combinations = list(itertools.product(
@@ -32,8 +32,9 @@ class DatasetSize(InvarianceExperiment):
             values = list(range(n))
             values.reverse()
             colors = tmv.get_sequential_colors(values)
-
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels, colors=colors,ylim=get_ylim_normalized(measure))
+            
+            tmv.plot_average_activations_same_model(results, colors=colors,ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)
 
 
 
@@ -62,7 +63,8 @@ class DatasetSubset(InvarianceExperiment):
             labels = [f"{l.format_subset(subset)}" for subset in dataset_subsets]
             experiment_name = f"{mc.id()}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_average_activations_same_model(results, labels=labels,ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)
 
 
 class DatasetTransfer(InvarianceExperiment):
@@ -100,4 +102,5 @@ class DatasetTransfer(InvarianceExperiment):
             experiment_name = f"{mc.id()}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = dataset_names
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_average_activations_same_model(results, labels=labels,ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)

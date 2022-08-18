@@ -1,4 +1,4 @@
-from poutyne import register_batch_metric
+from poutyne import register_metric_func
 import torch
 import math
 
@@ -67,20 +67,20 @@ def absolute_error(x, y, feature_normalize: bool):
 
 
 # Root Mean Squared Error (RMSE)
-@register_batch_metric('mse2')
+@register_metric_func('mse2')
 def mse(y_pred, y_true, feature_normalize=False):
     se = squared_error(y_pred, y_true, feature_normalize)
     return torch.mean(se)
 
 
 # Root Mean Squared Error (RMSE)
-@register_batch_metric('rmse')
+@register_metric_func('rmse')
 def rmse(y_pred, y_true, feature_normalize=False):
     return torch.sqrt(mse(y_pred, y_true, feature_normalize=feature_normalize))
 
 # Mean Normalized Root Mean Squared Error (MNRMSE)
 # https://en.wikipedia.org/wiki/Root-mean-square_deviation#Normalization
-@register_batch_metric('mnrmse')
+@register_metric_func('mnrmse')
 def nrmse(y_pred, y_true, feature_normalize=False):
     r = rmse(y_pred,y_true,feature_normalize=feature_normalize)
     rnorm2 = torch.sqrt(norm2(y_true,feature_normalize))
@@ -88,7 +88,7 @@ def nrmse(y_pred, y_true, feature_normalize=False):
 
 # Range Normalized Root Mean Squared Error (RNRMSE)
 # https://en.wikipedia.org/wiki/Root-mean-square_deviation#Normalization
-@register_batch_metric('rnrmse')
+@register_metric_func('rnrmse')
 def nrmse(y_pred, y_true, feature_normalize=False):
     r = rmse(y_pred,y_true,feature_normalize=feature_normalize)
     rnorm2=torch.sqrt(norm2(y_true, feature_normalize))
@@ -97,7 +97,7 @@ def nrmse(y_pred, y_true, feature_normalize=False):
 
 
 # Mean Absolute Error (MAE)
-@register_batch_metric('mae')
+@register_metric_func('mae')
 def mae(y_pred, y_true, feature_normalize=False):
     ae = absolute_error(y_pred, y_true, feature_normalize)
     return torch.mean(ae)
@@ -105,7 +105,7 @@ def mae(y_pred, y_true, feature_normalize=False):
 
 # https://www.sciencedirect.com/science/article/pii/S0024379501005729
 # Relative Squared Error (RSE)
-@register_batch_metric('rse')
+@register_metric_func('rse')
 def rse(y_pred, y_true, feature_normalize=False, eps=default_eps):
     se = mse(y_pred, y_true, feature_normalize=feature_normalize)
     scale = mse(y_true, y_true.mean(0, keepdim=True), feature_normalize=feature_normalize)
@@ -114,7 +114,7 @@ def rse(y_pred, y_true, feature_normalize=False, eps=default_eps):
 
 # https://www.sciencedirect.com/science/article/pii/S0024379501005729
 # Relative Absolute Error (RAE)
-@register_batch_metric('rae')
+@register_metric_func('rae')
 def rae(y_pred, y_true, feature_normalize=False, eps=default_eps):
     se = mae(y_pred, y_true, feature_normalize=feature_normalize)
     scale = mae(y_true, y_true.mean(0, keepdim=True), feature_normalize=feature_normalize)
@@ -123,7 +123,7 @@ def rae(y_pred, y_true, feature_normalize=False, eps=default_eps):
 
 # https://en.wikipedia.org/wiki/Mean_absolute_percentage_error
 # Mean Absolute Percentage Error (MAPE)
-@register_batch_metric('mape')
+@register_metric_func('mape')
 def mape(y_pred, y_true, feature_normalize=False, eps=default_eps):
     ae = absolute_error(y_pred, y_true, feature_normalize)
     scale = y_true.abs()
@@ -134,7 +134,7 @@ def mape(y_pred, y_true, feature_normalize=False, eps=default_eps):
 # Armstrong1985
 # https://en.wikipedia.org/wiki/Symmetric_mean_absolute_percentage_error
 # Adjusted Mean Absolute Percentage Error (AMAPE)
-@register_batch_metric('amape')
+@register_metric_func('amape')
 def smape(y_pred, y_true, feature_normalize=False, eps=default_eps):
     ae = absolute_error(y_pred, y_true, feature_normalize=feature_normalize)
     scale = norm1(y_pred + y_true, feature_normalize)
@@ -144,7 +144,7 @@ def smape(y_pred, y_true, feature_normalize=False, eps=default_eps):
 
 # https://en.wikipedia.org/wiki/Symmetric_mean_absolute_percentage_error
 # Symmetric Mean Absolute Percentage Error (SMAPE)
-@register_batch_metric('smape')
+@register_metric_func('smape')
 def smape(y_pred, y_true, feature_normalize=False, eps=default_eps):
     ae = absolute_error(y_pred, y_true, feature_normalize=feature_normalize)
     scale = norm1(y_pred, feature_normalize) + norm1(y_true,feature_normalize)

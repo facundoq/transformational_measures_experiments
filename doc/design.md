@@ -7,7 +7,7 @@
 
 # Folders
 
-* config: general experiment configurations
+* config: general experiment configurations (deprecated?)
 * datasets: Dataset loading code
 * experiment: General experiment code
 * experiments: actual experiments

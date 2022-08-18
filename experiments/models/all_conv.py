@@ -2,8 +2,8 @@ import torch.nn as nn
 from torch.nn.functional import dropout
 import numpy as np
 from .util import SequentialWithIntermediates, task_to_head
-from transformational_measures.pytorch import ObservableLayersModule
-import transformational_measures as tm
+from tmeasures.pytorch import ActivationsModule
+import tmeasures as tm
 
 from ..tasks import Task
 from ..tasks.train import ModelConfig
@@ -47,7 +47,7 @@ class AllConvolutionalConfig(ModelConfig):
 
     
 
-class ConvBNAct(ObservableLayersModule):
+class ConvBNAct(ActivationsModule):
     def __init__(self,in_filters,out_filters,kernel_size,stride=1,bn=False):
         super(ConvBNAct, self).__init__()
         if kernel_size==0:
@@ -67,9 +67,9 @@ class ConvBNAct(ObservableLayersModule):
     def forward(self,x):
         return self.model.forward(x)
 
-    def forward_intermediates(self,x):
-        return self.model.forward_intermediates(x)
-    def activation_names(self)->[str]:
+    def forward_activations(self,x):
+        return self.model.forward_activations(x)
+    def activation_names(self)->list[str]:
         return self.model.activation_names()
 
 
@@ -79,7 +79,7 @@ class PoolOut(nn.Module):
         return x.reshape(x.size(0), x.size(1), -1).mean(-1)
 
 
-class AllConvolutional( ObservableLayersModule):
+class AllConvolutional( ActivationsModule):
     def __init__(self, input_shape, output_dim,config:AllConvolutionalConfig):
         super(AllConvolutional, self).__init__()
         self.name = self.__class__.__name__
@@ -109,10 +109,10 @@ class AllConvolutional( ObservableLayersModule):
     def forward(self, x):
         return self.layers.forward(x)
 
-    def forward_intermediates(self, x):
-        return self.layers.forward_intermediates(x)
+    def forward_activations(self, x):
+        return self.layers.forward_activations(x)
 
-    def activation_names(self)->[str]:
+    def activation_names(self)->list[str]:
         return self.layers.activation_names()
 
 

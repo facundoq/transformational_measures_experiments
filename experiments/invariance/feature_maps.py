@@ -3,7 +3,7 @@ import torch
 import datasets
 import experiment.measure as measure_package
 from pytorch.numpy_dataset import NumpyDataset
-from transformational_measures.pytorch import NormalPytorchActivationsIterator, ObservableLayersModule
+from tmeasures.pytorch import NormalPytorchActivationsIterator, ObservableLayersModule
 
 
 class VisualizeInvariantFeatureMaps(InvarianceExperiment):

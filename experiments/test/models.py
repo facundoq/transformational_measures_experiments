@@ -1,4 +1,4 @@
-import transformational_measures.measure
+import tmeasures.measure
 from ..invariance.common import *
 from .base import TestExperiment
 import config

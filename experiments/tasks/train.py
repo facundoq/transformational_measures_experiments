@@ -1,14 +1,15 @@
 import matplotlib.pyplot as plt
 import pytorch.metrics
-import transformational_measures as tm
+import tmeasures as tm
 from . import Task
 import torch
 import numpy as np
 import datasets
-from typing import Dict, List
+
 from pathlib import Path
 
-from poutyne import Model, Callback
+from utils.poutyne import TotalProgressCallback
+from poutyne import Model, Callback,EpochProgressionCallback
 
 from pytorch.pytorch_image_dataset import ImageClassificationDataset, TransformationStrategy, \
     ImageTransformRegressionNormalizedDataset
@@ -29,7 +30,7 @@ class ModelConfig(ABC):
         return self.klass.__name__
 
     @abstractmethod
-    def make(self, input_shape: np.ndarray, output_dim: int) -> tm.pytorch.ObservableLayersModule:
+    def make(self, input_shape: np.ndarray, output_dim: int) -> tm.pytorch.ActivationsModule:
         pass
 
     @abstractmethod
@@ -88,7 +89,7 @@ class ModelConfig(ABC):
 
 class ConvergenceCriteria(ABC):
     @abstractmethod
-    def converged(self, metrics: Dict[str, float]):
+    def converged(self, metrics: dict[str, float]):
         pass
 
     @abstractmethod
@@ -101,7 +102,7 @@ class MinMetricConvergence(ConvergenceCriteria):
         self.minimum_value = minimum_value
         self.metric = metric
 
-    def converged(self, metrics: Dict[str, float]):
+    def converged(self, metrics: dict[str, float]):
         return metrics[f"test_{self.metric}"] > self.minimum_value
 
     def metrics(self):
@@ -116,7 +117,7 @@ class MaxMetricConvergence(ConvergenceCriteria):
         self.maximum_value = maximum_value
         self.metric = metric
 
-    def converged(self, metrics: Dict[str, float]):
+    def converged(self, metrics: dict[str, float]):
         return metrics[f"test_{self.metric}"] < self.maximum_value
 
     def metrics(self):
@@ -138,7 +139,7 @@ class MaxRMSEConvergence(MaxMetricConvergence):
 
 class TrainConfig:
     def __init__(self, epochs: int, cc: ConvergenceCriteria, optimizer="adam", save_model=True, max_restarts: int = 5,
-                 savepoints: List[int] = None,
+                 savepoints: list[int] = None,
                  device=default_device(), suffix="",
                  verbose=False, num_workers=2, batch_size=64, plots=True):
         self.epochs = epochs
@@ -181,26 +182,26 @@ class TrainParameters:
 
         return result
 
+    
 
-def prepare_dataset(p: TrainParameters):
-    tc, transformations, dataset_name, task = p.tc, p.transformations, p.dataset_name, p.task
+def prepare_dataset(transformations:tm.TransformationSet, dataset_name:str, task:Task):
+
     strategy = TransformationStrategy.random_sample
-    if p.task == Task.TransformationRegression:
+    if task == Task.TransformationRegression:
         dataset = datasets.get_regression(dataset_name)
         dim_output = len(transformations[0].parameters())
         dataset.normalize_features()
         train_dataset = ImageTransformRegressionNormalizedDataset(
-            NumpyDataset(dataset.x_train), p.transformations, strategy)
+            NumpyDataset(dataset.x_train), transformations, strategy)
         test_dataset = ImageTransformRegressionNormalizedDataset(
-            NumpyDataset(dataset.x_test), p.transformations, strategy)
+            NumpyDataset(dataset.x_test), transformations, strategy)
     elif task == Task.Classification:
         dataset = datasets.get_classification(dataset_name)
         dim_output = dataset.num_classes
         dataset.normalize_features()
         
-        train_dataset = ImageClassificationDataset(NumpyDataset(dataset.x_train, dataset.y_train), p.transformations, strategy)
-        test_dataset = ImageClassificationDataset(NumpyDataset(dataset.x_test, dataset.y_test), p.transformations, strategy)
-
+        train_dataset = ImageClassificationDataset(NumpyDataset(dataset.x_train, dataset.y_train), transformations, strategy)
+        test_dataset = ImageClassificationDataset(NumpyDataset(dataset.x_test, dataset.y_test), transformations, strategy)
     else:
         raise ValueError(task)
 
@@ -242,11 +243,11 @@ class SavepointCallback(Callback):
         self.pc = pc
         super().__init__()
 
-    def on_train_begin(self, logs: Dict):
+    def on_train_begin(self, logs: dict):
         if 0 in self.p.tc.savepoints:
             self.save_model_with_scores(0)
 
-    def on_epoch_end(self, epoch_number: int, logs: Dict):
+    def on_epoch_end(self, epoch_number: int, logs: dict):
         if epoch_number in self.p.tc.savepoints:
             self.save_model_with_scores(epoch_number)
 
@@ -254,11 +255,11 @@ class SavepointCallback(Callback):
         tc = self.p.tc
         scores = self.model.evaluate_dataset(
             self.test_set, num_workers=tc.num_workers, batch_size=tc.batch_size, verbose=False, return_dict_format=True)
-        if self.p.tc.verbose:
-            print(
-                f"Saving model {self.model.network.name} at epoch {epoch_number}/{tc.epochs}.")
+        # if self.p.tc.verbose:
+        #     print(f"Saving model {self.model.network.name} at epoch {epoch_number}/{tc.epochs}.")
         save_model(self.p, self.model.network, scores,
                    self.pc.model_path_new(self.p, epoch_number))
+
 
 
 class ConvergenceError(Exception):
@@ -268,9 +269,17 @@ class ConvergenceError(Exception):
         self.message = f"Convergence Criteria {convergence} not reached (metrics={metrics})"
         super().__init__(self.message)
 
+def replace_in_keys(d:dict,a:str,b:str):
+    n = len(a)
+    keys = d.copy()
+    for k in keys:
+            if k.startswith(a):
+                new_k = b+k[n:]
+                d[new_k] = d[k]
+                del d[k]
 
 def train(p: TrainParameters, path_config):
-    train_dataset, test_dataset, input_shape, dim_output = prepare_dataset(p)
+    train_dataset, test_dataset, input_shape, dim_output = prepare_dataset(p.transformations, p.dataset_name, p.task)
     if p.tc.epochs == 0:
         print("Warning: epochs chosen = 0, saving model without training..")
         model, poutyne_model = prepare_model(p, input_shape, dim_output)
@@ -285,15 +294,16 @@ def train(p: TrainParameters, path_config):
     converged = False
     # train until convergence or p.tc.max_restarts
     model, loss, metrics = None, None, None
+    
+    progress = TotalProgressCallback()
     while restarts < p.tc.max_restarts and not converged:
         model, poutyne_model = prepare_model(p, input_shape, dim_output)
 
         savepoint_callback = SavepointCallback(
             p, poutyne_model, test_dataset, path_config)
 
-        history = poutyne_model.fit_dataset(train_dataset, test_dataset, batch_size=p.tc.batch_size,
-                                            epochs=p.tc.epochs, callbacks=[
-                                                savepoint_callback], verbose=p.tc.verbose,
+        history = poutyne_model.fit_dataset(train_dataset, test_dataset, batch_size=p.tc.batch_size, epochs=p.tc.epochs, callbacks=[
+                                                savepoint_callback,progress], verbose=False,
                                             num_workers=p.tc.num_workers,
                                             dataloader_kwargs={"shuffle": True, "pin_memory": True,"drop_last":True})
 
@@ -301,11 +311,8 @@ def train(p: TrainParameters, path_config):
                                                  return_dict_format=True, verbose=False, dataloader_kwargs={"pin_memory": True})
         train_metrics = poutyne_model.evaluate_dataset(train_dataset, batch_size=p.tc.batch_size, num_workers=p.tc.num_workers,
                                                        return_dict_format=True, verbose=False, dataloader_kwargs={"pin_memory": True})
-        for k in train_metrics:
-            if k.startswith("test"):
-                new_k = "train"+k[4:]
-                train_metrics[new_k] = train_metrics[k]
-                del train_metrics[k]
+
+        replace_in_keys(train_metrics,"test","train")
 
         plot_history(history, p, path_config.training_plots_path())
         if cc.converged(metrics):
@@ -319,7 +326,7 @@ def train(p: TrainParameters, path_config):
         raise ConvergenceError(metrics, cc)
 
     save_model(p, model, metrics, path_config.model_path_new(p))
-    return model, metrics
+    return model, metrics, train_metrics
 
 
 def save_model(p: TrainParameters, model: torch.nn.Module, scores, filepath: Path):

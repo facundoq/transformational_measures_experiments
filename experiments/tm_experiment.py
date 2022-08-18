@@ -3,16 +3,16 @@ from re import A
 from experiment.measure.parameters import DatasetParameters, PyTorchParameters
 from experiments.language import Spanish,English
 import pickle
-import transformational_measures as tm
-from experiment import measure, training,accuracy
+import tmeasures as tm
+from experiment import measure
 import torch
 import os
 from pathlib import Path
 from .tasks.train import TrainParameters,Task,ModelConfig
 from .tasks import train
+from typing import Union,Type
+import matplotlib.pyplot as plt
 
-
-from typing import List, Type, Union
 from .base import Experiment
 
 
@@ -63,12 +63,10 @@ class TMExperiment(Experiment):
     def results_folder(self,) -> Path:
         return self.commons_folder() / "results"
 
-    def accuracies_folder(self,) -> Path:
-        return self.commons_folder() / "accuracies"
 
     ########## TRANSFORMATIONAL MEASURES EXPERIMENTS #######################
 
-    def results_paths(self,ps: List[measure.Parameters], custom_results_folder=None) -> List[Path]:
+    def results_paths(self,ps: list[measure.Parameters], custom_results_folder=None) -> list[Path]:
         custom_results_folder = self.results_folder() if custom_results_folder is None else custom_results_folder
         variance_paths = [self.results_path(p,custom_results_folder) for p in ps]
         return variance_paths
@@ -91,31 +89,31 @@ class TMExperiment(Experiment):
     def load_measure_result(self,path: Path) -> tm.measure.MeasureResult:
         return self.load_experiment_result(path).measure_result
 
-    def load_results(self,filepaths: List[Path]) -> List[measure.MeasureExperimentResult]:
+    def load_results(self,filepaths: list[Path]) -> list[measure.MeasureExperimentResult]:
         results = []
         for filepath in filepaths:
             result = self.load_experiment_result(filepath)
             results.append(result)
         return results
 
-    def load_measure_results_p(self, ps:List[measure.Parameters], custom_results_folder=None) -> List[tm.measure.MeasureResult]:
+    def load_measure_results_p(self, ps:list[measure.Parameters], custom_results_folder=None) -> list[tm.measure.MeasureResult]:
         return self.load_measure_results(self.results_paths(ps,custom_results_folder=custom_results_folder))
 
-    def load_measure_results(self,filepaths: List[Path]) -> List[tm.measure.MeasureResult]:
+    def load_measure_results(self,filepaths: list[Path]) -> list[tm.measure.MeasureResult]:
         results = self.load_results(filepaths)
         results = [r.measure_result for r in results]
         return results
 
-    def load_measure_results(self,filepaths: List[Path]) -> List[tm.measure.MeasureResult]:
+    def load_measure_results(self,filepaths: list[Path]) -> list[tm.measure.MeasureResult]:
         results = self.load_results(filepaths)
         results = [r.measure_result for r in results]
         return results
 
-    def load_all_results(self,folderpath: Path) -> List[measure.MeasureExperimentResult]:
+    def load_all_results(self,folderpath: Path) -> list[measure.MeasureExperimentResult]:
         filepaths = [f for f in folderpath.iterdir() if f.is_file()]
         return self.load_results(filepaths)
 
-    def results_filepaths_for_model(self,training_parameters) -> [measure.MeasureExperimentResult]:
+    def results_filepaths_for_model(self,training_parameters) -> list[measure.MeasureExperimentResult]:
         model_id = training_parameters.id()
         results_folderpath = self.results_folder()
         all_results_filepaths = results_folderpath.iterdir()
@@ -126,36 +124,6 @@ class TMExperiment(Experiment):
 
     def plots_base_folder(self,):
         return self.base_path() / "plots"
-
-    ########## ACCURACY EXPERIMENTS #######################
-
-    def accuracy_path(self,p: accuracy.Parameters, custom_accuracies_folder=None) -> Path:
-        custom_accuracies_folder  = self.accuracies_folder() if custom_accuracies_folder is None else custom_accuracies_folder
-        return custom_accuracies_folder / f"{p.id()}.pickle"
-
-    def save_accuracy(self,r: accuracy.AccuracyExperimentResult,custom_accuracies_folder=None):
-        custom_accuracies_folder = self.accuracies_folder() if custom_accuracies_folder is None else custom_accuracies_folder
-        path = self.accuracy_path(r.parameters, custom_accuracies_folder)
-        basename: Path = path.parent
-        basename.mkdir(exist_ok=True, parents=True)
-        pickle.dump(r, path.open(mode="wb"))
-
-    def load_accuracy(self,path: Path) -> accuracy.AccuracyExperimentResult:
-        r: accuracy.AccuracyExperimentResult = pickle.load(path.open(mode="rb"))
-        return r
-
-    def accuracies_paths(self,ps: List[accuracy.Parameters], custom_accuracies_folder=None) -> List[Path]:
-        custom_accuracies_folder = self.accuracies_folder() if custom_accuracies_folder is None else custom_accuracies_folder
-        variance_paths = [self.accuracy_path(p, custom_accuracies_folder) for p in ps]
-        return variance_paths
-
-    def load_accuracies(self,filepaths: List[Path]) -> List[accuracy.AccuracyExperimentResult]:
-        results = []
-        for filepath in filepaths:
-            result = self.load_accuracy(filepath)
-            results.append(result)
-        return results
-
 
     ################ NEW STUFF
 
@@ -192,13 +160,16 @@ class TMExperiment(Experiment):
 
     def train(self,p:TrainParameters):
         if not self.model_trained(p):
-            print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria})...")
+            print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria}), savepoints at epochs: {p.tc.savepoints})...")
             train.train(p, self)
         else:
             print(f"Model {p.id()} already trained.")
-
     
-    def train_default(self,task:Task,dataset:str,transformations:tm.pytorch.PyTorchTransformationSet,mc:Union[ModelConfig,Type[ModelConfig]]):
+    def savefig(self,path:Path):
+        plt.savefig(path,bbox_inches='tight')
+        plt.close()
+
+    def train_default(self,task:Task,dataset:str,transformations:tm.pytorch.PyTorchTransformationSet,mc:Union[ModelConfig,type[ModelConfig]]):
         if not isinstance(mc, ModelConfig):
             mc: train.ModelConfig = mc.for_dataset(task,dataset)
         tc,metric = self.get_train_config(mc,dataset,task,transformations)

@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
-from transformational_measures.pytorch import ObservableLayersModule
-from transformational_measures import TransformationSet,Transformation
+from tmeasures.pytorch import ActivationsModule
+from tmeasures import TransformationSet,Transformation
 import torch
 from models import SequentialWithIntermediates
 
@@ -14,7 +14,7 @@ class TIPoolingSimpleConvConfig():
         self.fc_filters=fc_filters
         self.bn=False
 
-class TIPoolingSimpleConv(ObservableLayersModule):
+class TIPoolingSimpleConv(ActivationsModule):
     def __init__(self, input_shape, num_classes, transformations:TransformationSet,conv_filters=32, fc_filters=128,bn=False):
         super().__init__()
         self.name = self.__class__.__name__
@@ -80,13 +80,14 @@ class TIPoolingSimpleConv(ObservableLayersModule):
         x = self.fc(x)
         return x
 
-    def forward_intermediates(self, x)->(object,[]):
+    def forward_activations(self, x)->tuple[object,list]:
         results = []
         conv_intermediates = []
 
         for t in self.transformations:
             transformed_x = t(x)
-            feature_maps,intermediates = self.conv.forward_intermediates(transformed_x)
+            intermediates = self.conv.forward_activations(transformed_x)
+            feature_maps= intermediates[-1]
             conv_intermediates.extend(intermediates)
             flattened_feature_maps = feature_maps.view(feature_maps.shape[0], -1)
             results.append(flattened_feature_maps)
@@ -96,16 +97,16 @@ class TIPoolingSimpleConv(ObservableLayersModule):
 
         pooled, _ = x.max(dim=1)
 
-        x, fc_activations = self.fc.forward_intermediates(pooled)
-        return x, conv_intermediates+[pooled]+fc_activations
+        x, fc_activations = self.fc.forward_activations(pooled)
+        return conv_intermediates+[pooled]+fc_activations
 
     def layer_before_pooling_each_transformation(self)->int:
         return len(self.original_conv_names())
 
-    def original_conv_names(self)->[str]:
+    def original_conv_names(self)->list[str]:
         return self.conv.activation_names()
 
-    def fc_names(self)->[str]:
+    def fc_names(self)->list[str]:
         return self.fc.activation_names()
 
     def activation_names(self):

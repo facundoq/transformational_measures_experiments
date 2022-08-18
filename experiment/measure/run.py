@@ -2,13 +2,13 @@ import os
 import typing
 
 import datasets
-import transformational_measures as tm
+import tmeasures as tm
 from enum import Enum
 
 from pathlib import Path
 import datasets
 import torch,config
-from experiment import training
+
 from experiments.tasks import train
 
 from utils.profiler import Profiler
@@ -33,7 +33,7 @@ def experiment(p: Parameters, o: Options,model_path:Path):
     else:
         device = "cpu"
 
-    model, training_parameters,  scores = training.load_model(model_path, device=device)
+    model, training_parameters,  scores = train.load_model(model_path, device=device)
 
     print(type(training_parameters),dir(training_parameters))
     if training_parameters.dataset != p.dataset.name:
@@ -50,9 +50,9 @@ def experiment(p: Parameters, o: Options,model_path:Path):
     if o.verbose:
         print("### ", model)
         print("### Scores obtained:")
-        training.print_scores(scores)
+        train.print_scores(scores)
 
-    import transformational_measures as tm
+    import tmeasures as tm
 
     from pytorch.numpy_dataset import NumpyDataset
     dataset = dataset.reduce_size_stratified(p.dataset.percentage)
@@ -95,7 +95,8 @@ def main(p:Parameters,o:Options,model_path:Path)->MeasureExperimentResult:
     return measures_results
 
 
-from transformational_measures.pytorch.model import FilteredActivationsModel
+
+from tmeasures.pytorch.model import FilteredActivationsModule
 
 def experiment_pytorch(p: PyTorchParameters,model_path:Path,verbose=False):
     assert(len(p.transformations)>0)
@@ -107,8 +108,8 @@ def experiment_pytorch(p: PyTorchParameters,model_path:Path,verbose=False):
         print(f"Loading model {model_path}")
 
     model, training_parameters, scores = train.load_model(model_path, p.options.model_device)
-
-    model = FilteredActivationsModel(model,p.model_filter)
+    
+    model = FilteredActivationsModule(model,p.model_filter)
 
     if training_parameters.dataset_name != p.dataset.name:
         if p.adapt_dataset:

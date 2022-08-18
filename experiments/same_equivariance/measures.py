@@ -38,7 +38,7 @@ class CompareSameEquivarianceNormalized(SameEquivarianceExperiment):
                 results.append(result)
 
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels)
 
 
 class TransformationSampleSizes(SameEquivarianceExperiment):

@@ -1,5 +1,5 @@
 from .common import *
-from models.simple_conv import ActivationFunction as af
+from ..models.simple_conv import ActivationFunction as af
 import experiment.measure as measure_package
 import datasets
 
@@ -31,14 +31,14 @@ class BatchNormalization(InvarianceExperiment):
             # single
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            tmv.plot_collapsing_layers_same_model([bn_result], plot_filepath, mark_layers=bn_indices)
+            tmv.plot_average_activations_same_model([bn_result], plot_filepath, mark_layers=bn_indices)
 
             # comparison
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}_comparison"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             bn_result = bn_result.remove_layers(bn_indices)
             labels = [l.with_bn,l.without_bn]
-            tmv.plot_collapsing_layers_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_average_activations_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class ActivationFunctionComparison(InvarianceExperiment):
@@ -64,7 +64,7 @@ class ActivationFunctionComparison(InvarianceExperiment):
             experiment_name = f"{SimpleConvConfig.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [a.value for a in activation_functions]
-            tmv.plot_collapsing_layers_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_average_activations_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
 
 
 class KernelSize(InvarianceExperiment):

@@ -1,4 +1,6 @@
-
+# Default packages provided here but
 # see https://pytorch.org/ to choose the correct torch version
+# to optimize the performance on specific hardward/os configurations (cuda/cudnn versions)
 
+torch
 torchvision

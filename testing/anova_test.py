@@ -1,14 +1,14 @@
 import torch
 import os
 import numpy as np
-import transformational_measures as tm
-from typing import Generator,Any,Tuple,List
-from nptyping import Array
+import tmeasures as tm
 
+from nptyping import Array
+from typing import Generator
 ndarray=Array[np.float]
 
-SingleActivationsGenerator=Generator[Tuple[ndarray,List[ndarray]],None,None]
-ActivationsGenerator=Generator[Tuple[tm.Transformation,SingleActivationsGenerator],None,None]
+SingleActivationsGenerator=Generator[tuple[ndarray,list[ndarray]],None,None]
+ActivationsGenerator=Generator[tuple[tm.Transformation,SingleActivationsGenerator],None,None]
 
 class FakeActivationsIterator(tm.ActivationsIterator):
     def __init__(self,batch_size=6):
@@ -46,7 +46,7 @@ class FakeActivationsIterator(tm.ActivationsIterator):
         n, t = self.data.shape
         yield np.zeros(t),[self.data[i,:]]
 
-    def layer_names(self) -> [str]:
+    def layer_names(self) -> list[str]:
         return ["x"]
 
 activations_iterator=FakeActivationsIterator()

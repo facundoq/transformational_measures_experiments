@@ -16,7 +16,7 @@ if __name__ == '__main__':
 
     all_experiments = {
         "Initial":[
-        # TrainModels(),
+        TrainModels(),
         ],
         "SamplePlots":[
         DatasetTransformationPlots(),

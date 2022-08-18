@@ -1,5 +1,3 @@
-
-from models.all_conv import AllConvolutional
 from .base import InvarianceExperiment
 from ..common import *
 from ..models import *

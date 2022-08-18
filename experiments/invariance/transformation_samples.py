@@ -2,7 +2,7 @@ from .common import *
 import experiment.measure as measure_package
 
 import skimage.io
-import transformational_measures as tm
+import tmeasures as tm
 import numpy as np
 from pathlib import Path
 import config

@@ -2,8 +2,8 @@ import datasets
 from testing.util import plot_image_grid
 
 from pytorch.numpy_dataset import NumpyDataset
-from transformational_measures.pytorch import ImageDataset
-import transformational_measures as tm
+from tmeasures.pytorch import ImageDataset
+import tmeasures as tm
 dataformat="NCHW"
 dataset = datasets.get_classification("cifar10", dataformat=dataformat)
 print(dataset.summary())

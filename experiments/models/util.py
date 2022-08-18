@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from transformational_measures.pytorch import ObservableLayersModule
+from tmeasures.pytorch import ActivationsModule
 
 import torch.nn.functional as F
 
@@ -12,33 +12,32 @@ class Flatten(nn.Module):
     def forward(self, input:torch.Tensor):
         return input.view(input.size(0), -1)
 
-class SequentialWithIntermediates(nn.Sequential, ObservableLayersModule):
+class SequentialWithIntermediates(nn.Sequential, ActivationsModule):
     def __init__(self,*args):
         super().__init__(*args)
 
-    def forward_intermediates(self,input_tensor)->(object,[]):
+    def forward_activations(self,input_tensor)->list[torch.Tensor]:
         submodules=self._modules.values()
-        if len(submodules)==0:
-            return  input_tensor,[input_tensor]
 
-        outputs=[]
+        activations=[]
         for module in submodules:
-            if isinstance(module, ObservableLayersModule):
-                input_tensor,intermediates=module.forward_intermediates(input_tensor)
-                outputs+=(intermediates)
+            if isinstance(module, ActivationsModule):
+                recursive_activations=module.forward_activations(input_tensor)
+                activations += recursive_activations
+                input_tensor = recursive_activations[-1]
             else:
                 input_tensor= module(input_tensor)
-                outputs.append(input_tensor)
-        return input_tensor,outputs
+                activations.append(input_tensor)
+        return activations
 
-    def activation_names(self)->[str]:
+    def activation_names(self)->list[str]:
         submodules = self._modules.values()
         if len(submodules) == 0:
             return ["identity"]
         if len(submodules) == 1:
             module = list(submodules)[0]
 
-            if isinstance(module, ObservableLayersModule):
+            if isinstance(module, ActivationsModule):
                 return ["0_"+name for name in module.activation_names()]
             else:
                 name = module.__class__.__name__
@@ -49,7 +48,7 @@ class SequentialWithIntermediates(nn.Sequential, ObservableLayersModule):
         index=0
 
         for module in submodules:
-            if isinstance(module, ObservableLayersModule):
+            if isinstance(module, ActivationsModule):
                 index += 1
                 module_name=self.abbreviation(module.__class__.__name__)
                 names=[f"{module_name}{index}_{name}" for name in module.activation_names()]
@@ -85,9 +84,9 @@ class SequentialWithIntermediates(nn.Sequential, ObservableLayersModule):
             name = "b"
         return name
 
-class Add(ObservableLayersModule):
+class Add(ActivationsModule):
 
-    def __init__(self, left:ObservableLayersModule, right:ObservableLayersModule):
+    def __init__(self, left:ActivationsModule, right:ActivationsModule):
         super().__init__()
         self.left=left
         self.right=right
@@ -97,11 +96,11 @@ class Add(ObservableLayersModule):
         right_x = self.right(x)
         return left_x+right_x
 
-    def forward_intermediates(self,x):
-        left_x,left_outputs = self.left.forward_intermediates(x)
-        right_x,right_outputs = self.right.forward_intermediates(x)
+    def forward_activations(self,x):
+        left_x,left_outputs = self.left.forward_activations(x)
+        right_x,right_outputs = self.right.forward_activations(x)
         output=left_x + right_x
-        return output,left_outputs+right_outputs+[output]
+        return left_outputs+right_outputs+[output]
 
     def activation_names(self):
         left_names=self.left.activation_names()
@@ -122,8 +121,8 @@ class GlobalAvgPool2d(nn.Module):
 def task_to_head(task:Task):
     if task == Task.Classification:
         return nn.LogSoftmax(dim=-1)
-    elif c.task == Task.TransformationRegression:
+    elif task == Task.TransformationRegression:
         return nn.Sigmoid()
     else:
-        raise ValueError(f"Unsupported task {c.task}")
+        raise ValueError(f"Unsupported task {task}")
 

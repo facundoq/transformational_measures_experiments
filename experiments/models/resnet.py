@@ -1,9 +1,9 @@
-from typing import List
+
 import torch.nn as nn
 import numpy as np
-from transformational_measures.pytorch import ObservableLayersModule
+from tmeasures.pytorch import ActivationsModule
 from .util import SequentialWithIntermediates,Flatten,Add,GlobalAvgPool2d,task_to_head
-import transformational_measures as tm
+import tmeasures as tm
 
 from ..tasks import Task
 from ..tasks.train import ModelConfig
@@ -51,7 +51,7 @@ class ResNetConfig(ModelConfig):
 
 
 
-class Block(ObservableLayersModule):
+class Block(ActivationsModule):
     expansion = 1
 
     def __init__(self, in_planes, planes, stride=1,bn=False):
@@ -86,13 +86,13 @@ class Block(ObservableLayersModule):
     def forward(self, x):
         return self.add(x)
 
-    def forward_intermediates(self,x):
-        return self.add.forward_intermediates(x)
+    def forward_activations(self,x):
+        return self.add.forward_activations(x)
 
-    def activation_names(self)->List[str]:
+    def activation_names(self)->list[str]:
         return self.add.activation_names()
 
-class Bottleneck(ObservableLayersModule):
+class Bottleneck(ActivationsModule):
     expansion = 4
 
     def __init__(self, in_planes, planes, stride=1,bn=False):
@@ -127,14 +127,12 @@ class Bottleneck(ObservableLayersModule):
         )
 
     def forward(self, x):
-        out=self.add(x)
-        return out
+        return self.add(x)
 
-    def forward_intermediates(self,x):
-        out,outputs=self.add.forward_intermediates(x)
-        return out,outputs
+    def forward_activations(self,x):
+        return self.add.forward_activations(x)
 
-    def activation_names(self)->List[str]:
+    def activation_names(self)->list[str]:
         return self.add.activation_names()
 
 
@@ -153,7 +151,7 @@ resnet_block_type =  {18:Block,
                   152:Bottleneck
                  }  
 
-class ResNet( ObservableLayersModule):
+class ResNet( ActivationsModule):
     def __init__(self, input_shape,output_dim,config:ResNetConfig):        
         super(ResNet, self).__init__()
         self.name = self.__class__.__name__
@@ -185,7 +183,7 @@ class ResNet( ObservableLayersModule):
             ,task_to_head(config.task)
             )
 
-
+        self.layers = SequentialWithIntermediates(self.conv,self.linear)
 
 
     def _make_layer(self, block, planes, num_blocks, stride,bn):
@@ -197,17 +195,12 @@ class ResNet( ObservableLayersModule):
         return SequentialWithIntermediates(*layers)
 
     def forward(self, x):
-        x=self.conv(x)
-        out = self.linear(x)
-        return out
+        return self.layers.forward(x)
 
-    def forward_intermediates(self,x):
-        x,outputs=self.conv.forward_intermediates(x)
-        x,fc_outputs=self.linear.forward_intermediates(x)
-        outputs+=fc_outputs
-        return x,outputs
+    def forward_activations(self,x):
+        return self.layers.forward_activations(x)
 
-    def activation_names(self)->List[str]:
+    def activation_names(self)->list[str]:
         return self.conv.activation_names()+self.linear.activation_names()
 
 

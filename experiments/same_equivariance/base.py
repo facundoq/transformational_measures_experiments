@@ -6,7 +6,7 @@ from ..language import English
 
 from ..tasks.train import TrainParameters,Task
 from ..tasks import train
-import transformational_measures as tm
+import tmeasures as tm
 from experiment import measure
 
 from ..models import ModelConfig

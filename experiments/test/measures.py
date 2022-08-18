@@ -1,4 +1,4 @@
-import transformational_measures.measure
+import tmeasures.measure
 from ..invariance.common import *
 
 class ValidateMeasure(InvarianceExperiment):
