@@ -163,7 +163,7 @@ class TMExperiment(Experiment):
             print(f"Training model {p.id()} for {p.tc.epochs} epochs ({p.tc.convergence_criteria}), savepoints at epochs: {p.tc.savepoints})...")
             train.train(p, self)
         else:
-            print(f"Model {p.id()} already trained.")
+            print(f"Model {p.id()} (savepoints {p.tc.savepoints}) already trained.")
     
     def savefig(self,path:Path):
         plt.savefig(path,bbox_inches='tight')

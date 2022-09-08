@@ -51,7 +51,8 @@ class MeasureCorrelationWithTransformation(InvarianceExperiment):
                 experiment_name = f"{mc.id()}_{dataset}_{measure.id()}_{test_transformation.id()}"
                 plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 #title = f" transformation: {train_transformation.id()}"
-                tmv.plot_average_activations_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
+                tmv.plot_average_activations_same_model(results, labels=set_labels,ylim=1.4)
+                self.savefig(plot_filepath)
 
 
 class InvarianceMeasureCorrelation(InvarianceExperiment):
@@ -116,7 +117,8 @@ class InvarianceMeasureCorrelation(InvarianceExperiment):
             colors = np.vstack([color, color])
             linestyles = ["--" for i in range(n)] + ["-" for i in range(n)]
             # ylim = self.get_ylim(measure_set_name, dataset)
-            tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels,linestyles=linestyles,colors=colors)
+            tmv.plot_average_activations_same_model(results, labels=labels,linestyles=linestyles,colors=colors)
+            self.savefig(plot_filepath)
             #TODO also plot conv only
 
     # def get_ylim(self, measure_set_name, dataset):
@@ -204,7 +206,8 @@ class CompareMeasures(InvarianceExperiment):
             colors = np.vstack([color, color])
       #      linestyles = ["--" for i in range(n)] + ["-" for i in range(n)]
             ylim = self.get_ylim(measure_set_name, dataset)
-            tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels, ylim=ylim)
+            tmv.plot_average_activations_same_model(results,  labels=labels, ylim=ylim)
+            self.savefig(plot_filepath)
 
     def get_ylim(self, measure_set_name, dataset):
         if measure_set_name == "Distance":
@@ -243,7 +246,8 @@ class CompareGoodfellowAlpha(InvarianceExperiment):
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             results = self.load_measure_results(self.results_paths(variance_parameters))
             labels = [f"α={alpha}" for alpha in alphas]
-            tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_average_activations_same_model(results, labels=labels)
+            self.savefig(plot_filepath)
 
 
 class CompareGoodfellow(InvarianceExperiment):
@@ -266,7 +270,8 @@ class CompareGoodfellow(InvarianceExperiment):
             local_result, global_result = result.extra_values[tm.GoodfellowNormalInvariance.l_key], result.extra_values[
                 tm.GoodfellowNormalInvariance.g_key]
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            tmv.plot_average_activations_same_model([local_result, global_result], plot_filepath,labels=labels, ylim=0.1)
+            tmv.plot_average_activations_same_model([local_result, global_result], labels=labels, ylim=0.1)
+            self.savefig(plot_filepath)
 
 
 
@@ -298,7 +303,9 @@ class CompareSameEquivarianceSimple(InvarianceExperiment):
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             results = self.load_measure_results(self.results_paths(variance_parameters))
 
-            tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_average_activations_same_model(results, labels=labels)
+            self.savefig(plot_filepath)
+            
 class CompareSameEquivariance(InvarianceExperiment):
 
     def description(self):
@@ -323,7 +330,8 @@ class CompareSameEquivariance(InvarianceExperiment):
             transformation_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.transformation_key]
             sample_results=normalized_results.extra_values[tm.NormalizedVarianceSameEquivariance.sample_key]
             results=[transformation_results,sample_results]
-            tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_average_activations_same_model(results, labels=labels)
+            self.savefig(plot_filepath)
 
 
 
@@ -377,4 +385,5 @@ class DistanceApproximation(InvarianceExperiment):
             colors = np.vstack([color])
             linestyles = ["--"] + ["-" for b in batch_sizes]
 
-            tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels,linestyles=linestyles,colors=colors)
+            tmv.plot_average_activations_same_model(results, labels=labels,linestyles=linestyles,colors=colors)
+            self.savefig(plot_filepath)

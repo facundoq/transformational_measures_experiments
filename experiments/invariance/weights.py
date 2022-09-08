@@ -1,4 +1,6 @@
 from torch import save
+
+from utils.hypothesis_tests import anova_same_mean_test
 from .common import *
 import experiment.measure as measure_package
 import datasets
@@ -42,7 +44,8 @@ class RandomWeights(InvarianceExperiment):
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-            tmv.plot_average_activations_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)
+            tmv.plot_average_activations_same_model(results, plot_mean=True, labels=labels,colors=color)
+            self.savefig(plot_filepath)
 
 
 class DuringTraining(InvarianceExperiment):
@@ -70,7 +73,8 @@ class DuringTraining(InvarianceExperiment):
             # plot results
             experiment_name = f"{mc.id()}_{dataset}_{transformations.id()}_{measure}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            self.plot(results, plot_filepath, model_paths, tc.savepoints, tc.epochs,measure )
+            self.plot(results, model_paths, tc.savepoints, tc.epochs,measure )
+            self.savefig(plot_filepath)                                                   
 
     def measure_savepoints(self, p:train.TrainParameters,  dataset, measure, transformations):
         results = []
@@ -83,7 +87,7 @@ class DuringTraining(InvarianceExperiment):
             model_paths.append(model_path)
         return results, model_paths
 
-    def plot(self, results, plot_filepath, model_paths, savepoints, epochs, measure:tm.Measure):
+    def plot(self, results,  model_paths, savepoints, epochs, measure:tm.Measure):
         # TODO implement a heatmap where the x axis is the training time/epoch
         # and the y axis indicates the layer, and the color indicates the invariance
         # to see it evolve over time.
@@ -102,8 +106,10 @@ class DuringTraining(InvarianceExperiment):
 
         legend_location = ("lower left", (0, 0))
         # legend_location= None
-        tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels,
+        tmv.plot_average_activations_same_model(results, labels=labels,
                                                         legend_location=legend_location, colors=colors,ylim=get_ylim_normalized(measure))
+        
+        
 
 
 class RandomInitialization(InvarianceExperiment):
@@ -141,4 +147,8 @@ class RandomInitialization(InvarianceExperiment):
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-            tmv.plot_average_activations_same_model(results, plot_filepath, plot_mean=True, labels=labels,colors=color)
+            p_value = anova_same_mean_test(results)
+            print(f"{experiment_name}: p_value {p_value}")
+            plt.annotate(f"Min p_value:{p_value:.2f}", (0,0))
+            tmv.plot_average_activations_same_model(results, plot_mean=True, labels=labels,colors=color)
+            self.savefig(plot_filepath)

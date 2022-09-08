@@ -101,7 +101,8 @@ class ModelAccuracies(InvarianceExperiment):
             experiment_name = f"{dataset}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             transformation_scores = np.array(transformation_scores)
-            accuracies.plot_accuracies(plot_filepath, transformation_scores, transformation_labels, model_names)
+            accuracies.plot_accuracies(transformation_scores, transformation_labels, model_names)
+            self.savefig(plot_filepath)
 
 
 class CompareModels(InvarianceExperiment):
@@ -115,6 +116,7 @@ class CompareModels(InvarianceExperiment):
             
 
         ]
+        # TODO fix
         transformations = common_transformations
         model_names = [m.for_dataset("mnist").name for m in models]
         combinations = itertools.product(dataset_names, transformations, measures)
@@ -142,8 +144,9 @@ class CompareModels(InvarianceExperiment):
             experiment_name = f"{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             results = self.load_measure_results(self.results_paths(variance_parameters))
-            tmv.plot_average_activations_different_models(results, plot_filepath, labels=model_names,
+            tmv.plot_average_activations_different_models(results, labels=model_names,
                                                                   markers=self.fc_layers_indices(results),ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)
 
     def fc_layers_indices(self, results: list[tm.MeasureResult]) -> list[list[int]]:
         indices = []

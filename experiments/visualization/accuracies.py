@@ -5,7 +5,7 @@ from ..language import l
 
 from tmeasures.visualization import default_discrete_colormap
 
-def plot_accuracies(plot_filepath:Path, accuracies_by_label:[[float]], labels:[str], group_names:[str]):
+def plot_accuracies(accuracies_by_label:[[float]], labels:[str], group_names:[str]):
     # set width of bar
     f=plt.figure(dpi=300)
     patterns = ["...","**","\\\\\\","///",  "+" , "x", "o", "O", ".", "*" ,"/" , "\\" , "|" , "-" ,]

@@ -16,7 +16,7 @@ class TransformationSampleSizes(InvarianceExperiment):
         # measures = [ gf_percent ]
         measures = [nvi] 
 
-        sample_sizes = [24, 96, 384, 1536,2304] 
+        sample_sizes = [24, 48, 96, 384, 1536,2304] 
         rotations = [RotationGenerator(UniformRotation(n, rotation_max_degrees)) for n in sample_sizes]
         scales = [ScaleGenerator(ScaleUniform(n // 6, scale_min_downscale, scale_max_upscale)) for n in sample_sizes]
         translations = [TranslationGenerator(TranslationUniform(n // 8, translation_max)) for n in sample_sizes]
@@ -53,5 +53,6 @@ class TransformationSampleSizes(InvarianceExperiment):
 
             labels_transformations = [f"{len(ts)}" for ts in test_transformations]
             heatmap = tmv.get_relative_errors(results, results[-1, -1])
-            tmv.plot_relative_error_heatmap(heatmap, plot_filepath, labels_samples,labels_transformations)
+            tmv.plot_relative_error_heatmap(heatmap, labels_samples,labels_transformations)
+            self.savefig(plot_filepath)
                 

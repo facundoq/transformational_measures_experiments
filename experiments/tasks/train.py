@@ -329,7 +329,7 @@ def train(p: TrainParameters, path_config):
     return model, metrics, train_metrics
 
 
-def save_model(p: TrainParameters, model: torch.nn.Module, scores, filepath: Path):
+def save_model(p: TrainParameters, model: torch.nn.Module, scores:dict, filepath: Path):
     filepath.parent.mkdir(exist_ok=True, parents=True)
     torch.save({"parameters": p,
                 "models": model,

@@ -31,6 +31,7 @@ class SameEquivarianceNormalization(InvarianceExperiment):
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             results = self.load_measure_results(self.results_paths(variance_parameters))
             labels = [l.normalized,l.unnormalized]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=400)
+            tmv.plot_average_activations_same_model()(results, labels=labels,ylim=400)
+            self.savefig(plot_filepath)
 
 

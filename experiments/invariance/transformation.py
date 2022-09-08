@@ -42,7 +42,8 @@ class TransformationSetSize(InvarianceExperiment):
                 experiment_name = f"{mc.id()}_{dataset}_{measure.id()}_{train_transformation.id()}"
                 plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 
-                tmv.plot_average_activations_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
+                tmv.plot_average_activations_same_model(results,  labels=set_labels,ylim=1.4)
+                self.savefig(plot_filepath)
 
 
 
@@ -93,7 +94,8 @@ class TransformationComplexity(InvarianceExperiment):
                 plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 
 
-                tmv.plot_average_activations_same_model(results, plot_filepath, labels=set_labels,ylim=1.4)
+                tmv.plot_average_activations_same_model(results, labels=set_labels,ylim=1.4)
+                self.savefig(plot_filepath)
 
 
 # class TransformationComplexityDetailed(Experiment):
@@ -168,5 +170,6 @@ class TransformationDiversity(InvarianceExperiment):
                 experiment_name = f"{mc.id()}_{dataset}_{train_transformation}_{measure.id()}"
                 plot_filepath = self.folderpath / f"{experiment_name}.jpg"
                 # title = f"Train transformation: {train_transformation.id()}"
-                tmv.plot_average_activations_same_model(results, plot_filepath, labels=labels)
+                tmv.plot_average_activations_same_model(results, labels=labels)
+                self.savefig(plot_filepath)
 

@@ -4,7 +4,9 @@ This repository contains the code necessary to obtain the experimental results p
 
 ## Abstract
 
-`Coming soon` 
+``
+  Invariances in neural networks are useful and necessary for many tasks. Currently, there are various proposals on how to achieve invariance, based on both specialized model design and data augmentation. However, the actual representation of the invariance, especially for models trained with data augmentation, has received little attention. We define efficient and interpretable measures to quantify the invariance of neural networks in terms of their internal representation. The measures can be applied to any neural network model, but can also be specialized for specific modules such as convolutional layers. Through various experiments, we validate the measures and their properties in the domain of affine transformations and the CIFAR10 and MNIST datasets, including their stability, their relation to sample and transformation size, and interpretability.
+  ``
 
 ## What can you do with this code
 
@@ -32,7 +34,7 @@ The available models are:
 
 ## How to run
 
-These instructions have been tested on a modern ubuntu-based (18.10/19.10) distro with python version>=3.5. All experiments are based on models defined and trained with PyTorch.  
+These instructions have been tested on a modern ubuntu-based (22.04) distro with python version>=3.10. All experiments are based on models defined and trained with PyTorch.  
 
 1. Clone the repository and cd to it:
     * `git clone https://github.com/facundoq/transformational_measures_experiments.git`
@@ -44,11 +46,9 @@ These instructions have been tested on a modern ubuntu-based (18.10/19.10) distr
     *  pip install --upgrade pip wheel setuptools
 4. Install libraries 
     * `pip install -r requirements.txt`
-    * Also install a distribution of Pytorch (requirements-torch.txt is the one we used for cuda 10 but you should the appropriate version for your hardward/drivers/cuda).
+    * Also install a distribution of Pytorch (requirements-torch.txt is the one we used for cuda 10 but you should the appropriate version for your hardware/drivers/cuda).
 5. (optional) Install the Computer Modern fonts if you want to recreate the figures as in the paper.
     1. `sudo apt install cm-super` in ubuntu
 6. Run the experiments:
-    * `train.py` trains individual models with a given dataset, and set of transformation as data augmentation. Models are stored by default in `~/variance/models` and a plot of their loss/accuracy history while training can be found in `~/variance/training_plots`
-    * `measure.py`  calculates an invariance/equivariance measure for a given model /dataset/transformation/measure combination. Results are saved by default to `~/variance/results/`
-    * `run.py` uses the previous scripts to generate the plots and analysis found in the paper. Classes that subclass `Experiment` can be run independently or as a group when executing `experiment.py`. Results are stored by default in `~/variance/plots/`. Each `Experiment` subclass contains a plaintext `description` field with a briefly summary of its goal and methods.
-        * Execute run.py -e <experiment name>, where <experiment name> is one of the experiments defined in run.py
+    * `./invariance_run.py` Executes invariance experiments (see folder `experiments/invariance/` for their individual description)
+    * `./same_equivariance_run.py` Executes same-equivariance experiments (see folder `experiments/same_equivariance/` for their individual description)

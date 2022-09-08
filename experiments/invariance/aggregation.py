@@ -40,7 +40,9 @@ class AggregationBeforeAfter(InvarianceExperiment):
             all_results = normal_results + ca_none_results
             labels = [f"{l.aggregation}: {ca.f}, {l.after_normalization}." for ca in before_functions] + [
                 f"{l.aggregation}: {ca.f}, {l.before_normalization}." for ca in after_functions ]
-            plot_collapsing_layers_same_model(all_results, plot_filepath, labels=labels)
+            tmv.plot_collapsing_layers_same_model(all_results, labels=labels)
+            self.savefig(plot_filepath)
+
 
 
 class AggregationFunctionsVariance(InvarianceExperiment):
@@ -72,7 +74,9 @@ class AggregationFunctionsVariance(InvarianceExperiment):
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [f"{l.aggregation}: {l.format_aggregation(ca.f)}, {l.before_normalization}." for ca in before_functions]
 
-            plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_collapsing_layers_same_model(results, labels=labels)
+            self.savefig(plot_filepath)
+
 
 class AggregationFunctionsDistance(InvarianceExperiment):
     def description(self):
@@ -107,4 +111,5 @@ class AggregationFunctionsDistance(InvarianceExperiment):
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
 
-            plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels)
+            self.savefig(plot_filepath)

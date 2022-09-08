@@ -25,5 +25,7 @@ class VisualizeMeasures(InvarianceExperiment):
             bylayer_filepath = self.folderpath / f"{experiment_name}_bylayer.jpg"
             heatmap_filepath = self.folderpath / f"{experiment_name}_heatmap.jpg"
 
-            tmv.plot_average_activations_same_model([result], bylayer_filepath)
-            tmv.plot_heatmap(result,heatmap_filepath)
+            tmv.plot_average_activations_same_model([result], )
+            self.savefig(bylayer_filepath)
+            tmv.plot_heatmap(result)
+            self.savefig(heatmap_filepath)

@@ -31,14 +31,16 @@ class BatchNormalization(InvarianceExperiment):
             # single
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
-            tmv.plot_average_activations_same_model([bn_result], plot_filepath, mark_layers=bn_indices)
+            tmv.plot_average_activations_same_model([bn_result],  mark_layers=bn_indices)
+            self.savefig(plot_filepath)
 
             # comparison
             experiment_name = f"{model_config.name}_{dataset}_{transformation.id()}_{measure.id()}_comparison"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             bn_result = bn_result.remove_layers(bn_indices)
             labels = [l.with_bn,l.without_bn]
-            tmv.plot_average_activations_same_model([bn_result, result], plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_average_activations_same_model([bn_result, result], labels=labels,ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)
 
 
 class ActivationFunctionComparison(InvarianceExperiment):
@@ -64,7 +66,8 @@ class ActivationFunctionComparison(InvarianceExperiment):
             experiment_name = f"{SimpleConvConfig.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [a.value for a in activation_functions]
-            tmv.plot_average_activations_same_model(results, plot_filepath,labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_average_activations_same_model(results, labels=labels,ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)
 
 
 class KernelSize(InvarianceExperiment):
@@ -87,10 +90,11 @@ class KernelSize(InvarianceExperiment):
             # plot results
             results = self.load_measure_results(self.results_paths(variance_parameters))
             # single
-            experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{SimpleConvConfig.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [f"k={k}" for k in kernel_sizes]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_collapsing_layers_same_model(results, labels=labels,ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)
 
 
 class MaxPooling(InvarianceExperiment):
@@ -114,8 +118,9 @@ class MaxPooling(InvarianceExperiment):
             # plot results
             results = self.load_measure_results(self.results_paths(variance_parameters))
             # single
-            experiment_name = f"{models.SimpleConv.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
+            experiment_name = f"{SimpleConvConfig.__name__}_{dataset}_{transformation.id()}_{measure.id()}"
             plot_filepath = self.folderpath / f"{experiment_name}.jpg"
             labels = [l.maxpooling,l.strided_convolution]
-            visualization.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            tmv.plot_collapsing_layers_same_model(results, plot_filepath, labels=labels,ylim=get_ylim_normalized(measure))
+            self.savefig(plot_filepath)
 
