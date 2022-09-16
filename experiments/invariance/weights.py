@@ -1,6 +1,5 @@
 from torch import save
 
-from utils.hypothesis_tests import anova_same_mean_test
 from .common import *
 import experiment.measure as measure_package
 import datasets
@@ -44,7 +43,10 @@ class RandomWeights(InvarianceExperiment):
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-            tmv.plot_average_activations_same_model(results, plot_mean=True, labels=labels,colors=color)
+            tmv.plot_average_activations_same_model(results, plot_mean=True, labels=labels,colors=color,plot_p_values=True)
+            self.savefig(plot_filepath)
+            tmv.scatter_same_model(results,colors=color)
+            plot_filepath = self.folderpath / f"{experiment_name}_scatter.jpg"
             self.savefig(plot_filepath)
 
 
@@ -147,8 +149,13 @@ class RandomInitialization(InvarianceExperiment):
             import matplotlib.pyplot as plt
             color = plt.cm.hsv(np.linspace(0.1, 0.9, n))
             color[:, 3] = 0.5
-            p_value = anova_same_mean_test(results)
-            print(f"{experiment_name}: p_value {p_value}")
-            plt.annotate(f"Min p_value:{p_value:.2f}", (0,0))
-            tmv.plot_average_activations_same_model(results, plot_mean=True, labels=labels,colors=color)
+            # p_value = anova_same_mean_test(results)
+            # alpha = 0.001
+            # percentage_p = (p_value<alpha).mean()
+            # print(f"{experiment_name}: p_value {percentage_p}")
+            # plt.annotate(f"Percentage of layers with different means:{percentage_p:.2f}", (100,100))
+            tmv.plot_average_activations_same_model(results, plot_mean=True, labels=labels,colors=color,plot_p_values=True)
+            self.savefig(plot_filepath)
+            tmv.scatter_same_model(results,colors=color)
+            plot_filepath = self.folderpath / f"{experiment_name}_scatter.jpg"
             self.savefig(plot_filepath)

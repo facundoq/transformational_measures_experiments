@@ -15,16 +15,13 @@ import matplotlib.pyplot as plt
 
 from .base import Experiment
 
-
-import config
 import datasets
-
 
 
 
 class TMExperiment(Experiment):
 
-
+    
     def base_path(self,):
         return self.base_folderpath
     def commons_folder(self,):

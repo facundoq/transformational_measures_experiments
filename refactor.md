@@ -1,8 +1,3 @@
-* Update to new version of tmeasures
-  * imports
-  * model definitions
-  * measure running
-  * visualization functions
 * Save elapsed time for measures
 * delete config module (should be inside each Experiment)?
 * Change rotation parameter so that it's naturally from 0 to 1 and therefore combined measures have a controlled range

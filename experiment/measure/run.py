@@ -7,7 +7,7 @@ from enum import Enum
 
 from pathlib import Path
 import datasets
-import torch,config
+import torch
 
 from experiments.tasks import train
 
@@ -81,18 +81,6 @@ def experiment(p: Parameters, o: Options,model_path:Path):
     torch.cuda.empty_cache()
 
     return MeasureExperimentResult(p, measure_result)
-
-
-def main(p:Parameters,o:Options,model_path:Path)->MeasureExperimentResult:
-    profiler= Profiler()
-    profiler.event("start")
-    if o.verbose:
-        print(f"Experimenting with parameters: {p}")
-    measures_results=experiment(p,o,model_path)
-    profiler.event("end")
-    print(profiler.summary(human=True))
-    config.save_experiment_results(measures_results)
-    return measures_results
 
 
 

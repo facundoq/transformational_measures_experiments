@@ -10,13 +10,16 @@ import tmeasures as tm
 from experiment import measure
 
 from ..models import ModelConfig
+from pathlib import Path
+
+default_base_folderpath = Path("~/same_equivariance").expanduser()
+default_base_folderpath.mkdir(parents=True,exist_ok=True)
 
 class SameEquivarianceExperiment(TMExperiment):
 
     def __init__(self,l=English()):
         self.l=l
-        base_folderpath = config.base_path() / "same_equivariance"
-        super().__init__(base_folderpath)
+        super().__init__(default_base_folderpath)
 
 
 

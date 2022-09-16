@@ -2,7 +2,7 @@ from .common import *
 import experiment.measure as measure_package
 import tmeasures.visualization as tmv
 
-import config.transformations as ct
+
 
 
 class TransformationSampleSizes(InvarianceExperiment):

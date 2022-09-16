@@ -3,19 +3,20 @@ from pathlib import Path
 from experiment import measure
 import tmeasures as tm
 import datasets
-import config
+
 import torch
 from ..language import English
 
 from ..tasks  import Task, train
 
+default_base_folderpath = Path("~/invariance").expanduser()
+default_base_folderpath.mkdir(parents=True,exist_ok=True)
 
 class InvarianceExperiment(TMExperiment):
 
     def __init__(self,l=English()):
         self.l=l
-        base_folderpath = config.base_path() / "invariance"
-        super().__init__(base_folderpath)
+        super().__init__(default_base_folderpath)
 
 
     def get_train_config(self,mc: train.ModelConfig, dataset: str, task: train.Task,

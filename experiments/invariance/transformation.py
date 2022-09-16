@@ -1,8 +1,7 @@
 from .common import *
-import experiment.measure as measure_package
 
 
-import config.transformations
+
 class TransformationSetSize(InvarianceExperiment):
 
     def description(self):
@@ -10,17 +9,18 @@ class TransformationSetSize(InvarianceExperiment):
 
     def run(self):
         measures = normalized_measures
+        
         combinations = itertools.product(simple_models_generators, dataset_names, measures)
-        nr,ns,nt=config.transformations.n_r,config.transformations.n_s,config.transformations.n_t
-        n_rotations= [nr-20,nr-10,nr,nr+10,nr+20,nr+30]
-        n_scales=  [ns-2,ns-1,ns,ns+2,ns+4,nt+6]
-        n_translations =  [nt-2,nt-1,nt,nt+1,nt+2, nt+3]
+        nr,ns,nt=n_rotations,n_scales,n_transformations
+        rotations= [nr-20,nr-10,nr,nr+10,nr+20,nr+30]
+        scales=  [ns-2,ns-1,ns,ns+2,ns+4,nt+6]
+        translations =  [nt-2,nt-1,nt,nt+1,nt+2, nt+3]
         r = config.transformations.rotation_max_degrees
         down,up=config.transformations.scale_min_downscale,config.transformations.scale_max_upscale
         t = config.transformations.translation_max
-        test_sets = [[AffineGenerator(r=UniformRotation(i,r)) for i in n_rotations],
-                     [AffineGenerator(s=ScaleUniform(i,down,up)) for i in n_scales],
-                     [AffineGenerator(t=TranslationUniform(i, t)) for i in n_translations],
+        test_sets = [[AffineGenerator(r=UniformRotation(i,r)) for i in rotations],
+                     [AffineGenerator(s=ScaleUniform(i,down,up)) for i in scales],
+                     [AffineGenerator(t=TranslationUniform(i, t)) for i in translations],
                      ]
 
         labels = [ [f"{len(s)} {l.transformations}" for s in set] for set in test_sets ]
