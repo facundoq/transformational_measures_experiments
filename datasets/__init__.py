@@ -1,4 +1,4 @@
-from . import cluttered_mnist,mnist_rot,mnist,fashion_mnist,cifar10,handshape
+from . import cluttered_mnist,mnist_rot,mnist,fashion_mnist,cifar10#,handshape
 
 
 from datasets.util import reduce_size_subset_stratified
@@ -105,8 +105,8 @@ class ClassificationDataset(TrainTestDataset):
 
 
 datasets={"mnist":mnist,
-          "lsa16":handshape.HandshapeLoader("lsa16"),
-          "rwth":handshape.HandshapeLoader("rwth", min_samples_per_class=15),
+         # "lsa16":handshape.HandshapeLoader("lsa16"),
+         # "rwth":handshape.HandshapeLoader("rwth", min_samples_per_class=15),
           # ,"fashion_mnist":fashion_mnist
           "cifar10":cifar10,
           # ,"mnist_rot":mnist_rot

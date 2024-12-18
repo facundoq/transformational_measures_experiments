@@ -8,6 +8,7 @@ import os
 import argparse,argcomplete
 
 
+type Experiments =  dict[str, list[Experiment]]
 
 class Options:
     def __init__(self, show_list: bool, force: bool):
@@ -25,7 +26,8 @@ class Experiment(abc.ABC):
 
     def id(self):
         return self.__class__.__name__
-
+    def tags(self):
+        return []
 
     def __call__(self, force=False,  *args, **kwargs):
         stars = "*" * 15
@@ -101,7 +103,16 @@ class Experiment(abc.ABC):
         print(table.draw())
 
     @classmethod
-    def parse_args(cls, experiments: Dict[str, list[Experiment]]) -> tuple[list[Experiment], Options]:
+    def run(cls,experiments:Experiments):
+        experiments, o = Experiment.parse_args(experiments)
+        if o.show_list:
+            Experiment.print_table(experiments)
+        else:
+            for e in experiments:
+                e(force=o.force)
+
+    @classmethod
+    def parse_args(cls, experiments:Experiments) -> tuple[list[Experiment], Options]:
         parser = argparse.ArgumentParser(description="Run invariance with transformation measures.")
         group_names = list(experiments.keys())
 

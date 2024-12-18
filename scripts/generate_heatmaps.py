@@ -82,10 +82,10 @@ for f in sorted(folder.iterdir()):
     visualization.plot_heatmap(result.measure_result,filepath)
 
     measure_result= result.measure_result
-    if measure_result.__class__ == transformational_measures.measure.StratifiedMeasureResult:
+    if measure_result.__class__ == tmeasures.measure.StratifiedMeasureResult:
         stratified_folderpath = model_folderpath / f"{result.id()}_stratified"
         stratified_folderpath.mkdir(exist_ok=True,parents=True)
-        measure_result: transformational_measures.measure.StratifiedMeasureResult = measure_result
+        measure_result: tmeasures.measure.StratifiedMeasureResult = measure_result
         n = len(measure_result.class_labels)
         for i,class_name,measure in zip(range(n),measure_result.class_labels,measure_result.class_measures):
             title = f"{i:02}_{class_name}"

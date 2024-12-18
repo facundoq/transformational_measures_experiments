@@ -1,4 +1,4 @@
-#git+git://github.com/facundoq/transformational_measures.git
+#git+git://github.com/facundoq/tmeasures.git
 numpy
 scipy
 protobuf

@@ -1,0 +1,31 @@
+[project]
+name = "tmexp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "argcomplete>=3.5.2",
+    "handshape-datasets>=0.2.01",
+    "imageio>=2.36.1",
+    "ipython>=8.30.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.0",
+    "nptyping>=2.0.1",
+    "numpy>=2.2.0",
+    "opencv-python>=4.10.0.84",
+    "pillow>=11.0.0",
+    "poutyne>=1.17.3",
+    "scikit-image>=0.25.0",
+    "scikit-learn>=1.6.0",
+    "scipy>=1.14.1",
+    "statsmodels>=0.14.4",
+    "texttable>=1.7.0",
+    "tqdm>=4.67.1",
+    "torchvision",
+    "tinyimagenet",
+    "tmeasures",
+]
+
+[tool.uv.sources]
+tmeasures = { path = "../tm" }
